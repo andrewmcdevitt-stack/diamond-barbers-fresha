@@ -29,7 +29,10 @@ async def download_csv(email, password):
             await page.wait_for_timeout(3000)
 
             print("Entering email...")
-            await page.fill('input[type="email"]', email)
+            email_field = page.locator('input[placeholder="Enter your email address"]')
+            await email_field.wait_for(timeout=10000)
+            await email_field.click()
+            await page.keyboard.type(email, delay=50)
             await page.wait_for_timeout(1000)
 
             print("Clicking Continue...")
