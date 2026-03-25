@@ -5,7 +5,6 @@ from datetime import datetime
 from pathlib import Path
 
 from browser_use import Agent
-from browser_use.browser.browser import Browser, BrowserConfig
 from langchain_anthropic import ChatAnthropic
 from dotenv import load_dotenv
 
@@ -51,13 +50,6 @@ async def run():
         stop=None,
     )
 
-    browser = Browser(
-        config=BrowserConfig(
-            headless=True,
-            disable_security=False,
-        )
-    )
-
     task = f"""
 You are extracting business data from Fresha, a salon/barbershop management platform.
 
@@ -86,7 +78,6 @@ Important:
     agent = Agent(
         task=task,
         llm=llm,
-        browser=browser,
     )
 
     print(f"[{datetime.now()}] Starting Fresha agent...")
@@ -95,7 +86,6 @@ Important:
     raw = result.final_result() or ""
     print(f"[{datetime.now()}] Agent finished. Raw output length: {len(raw)}")
 
-    # Parse JSON from agent response
     data = {}
     try:
         start = raw.find("{")
@@ -110,11 +100,9 @@ Important:
         print(f"WARNING: JSON parse error: {e}. Saving raw text.")
         data = {"raw_output": raw}
 
-    # Attach metadata
     data["report_date"] = datetime.now().strftime("%Y-%m-%d")
     data["report_type"] = "performance_summary"
 
-    # Load existing history or start fresh
     output_file = DATA_DIR / "performance_summary.json"
     if output_file.exists():
         with open(output_file, "r") as f:
@@ -131,8 +119,6 @@ Important:
 
     print(f"[{datetime.now()}] Data saved to {output_file}")
     print(json.dumps(data, indent=2))
-
-    await browser.close()
 
 
 if __name__ == "__main__":
