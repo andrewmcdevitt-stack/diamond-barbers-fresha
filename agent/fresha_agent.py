@@ -16,7 +16,6 @@ DATA_DIR.mkdir(exist_ok=True)
 
 async def download_csv(email, password):
     csv_path = None
-
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         context = await browser.new_context(
@@ -24,55 +23,75 @@ async def download_csv(email, password):
             viewport={"width": 1920, "height": 1080}
         )
         page = await context.new_page()
-
         try:
-            # Step 1: Go to login page
             print("Going to Fresha login page...")
             await page.goto("https://partners.fresha.com/users/sign-in", wait_until="networkidle")
             await page.wait_for_timeout(3000)
 
-            # Step 2: Enter email
             print("Entering email...")
             await page.fill('input[type="email"]', email)
             await page.wait_for_timeout(1000)
 
-            # Step 3: Click Continue
             print("Clicking Continue...")
             await page.click('[data-qa="continue"]', force=True)
             await page.wait_for_load_state("networkidle")
             await page.wait_for_timeout(3000)
 
-            # Step 4: Enter password
             print("Entering password...")
             await page.fill('input[type="password"]', password)
             await page.wait_for_timeout(1000)
 
-            # Step 5: Click Log in
             print("Pressing Enter to log in...")
             await page.keyboard.press("Enter")
-            await page.wait_for_load_state("networkidle")
-            await page.wait_for_timeout(5000)
-            print(f"Logged in. Current URL: {page.url}")
 
-            # Step 6: Click Reports in left sidebar
-            print("Navigating to Reports...")
+            # Wait for the URL to change away from the sign-in page (up to 15 seconds)
             try:
-                await page.click('a[href*="report"]', timeout=5000)
+                await page.wait_for_url(lambda url: "sign-in" not in url, timeout=15000)
             except Exception:
-                try:
-                    await page.get_by_text("Reports").first.click()
-                except Exception:
-                    await page.goto(page.url.split("/")[0] + "//" + page.url.split("/")[2] + "/reports")
-            await page.wait_for_load_state("networkidle")
-            await page.wait_for_timeout(3000)
+                pass
 
-            # Step 7: Click Performance Summary
+            await page.wait_for_timeout(3000)
+            print(f"After login. Current URL: {page.url}")
+
+            # Save a screenshot so we can see exactly what happened
+            await page.screenshot(path=str(DATA_DIR / "after_login.png"))
+
+            # If still on sign-in page, login failed
+            if "sign-in" in page.url:
+                raise Exception("Login failed — URL is still sign-in after waiting. Check credentials or screenshot.")
+
+            # Build the base URL (e.g. https://partners.fresha.com/en-AU/booking-partner/venues/12345)
+            # Reports URL is typically at /reports within the venue path
+            current_url = page.url
+            print(f"Login succeeded. Navigating to Reports...")
+
+            # Try clicking Reports in the sidebar first
+            try:
+                await page.get_by_text("Reports", exact=True).first.click(timeout=8000)
+                await page.wait_for_load_state("networkidle")
+                await page.wait_for_timeout(3000)
+            except Exception:
+                # Fall back: navigate directly by appending /reports to the venue base URL
+                # The venue URL looks like: https://partners.fresha.com/.../venues/12345/...
+                # We want: https://partners.fresha.com/.../venues/12345/reports
+                if "/venues/" in current_url:
+                    venue_part = current_url.split("/venues/")[1].split("/")[0]
+                    base = current_url.split("/venues/")[0]
+                    reports_url = f"{base}/venues/{venue_part}/reports"
+                else:
+                    reports_url = current_url.rstrip("/") + "/reports"
+                print(f"Sidebar click failed. Going directly to: {reports_url}")
+                await page.goto(reports_url, wait_until="networkidle")
+                await page.wait_for_timeout(3000)
+
+            print(f"Reports page URL: {page.url}")
+            await page.screenshot(path=str(DATA_DIR / "reports_page.png"))
+
             print("Clicking Performance Summary...")
-            await page.get_by_text("Performance summary", exact=False).first.click()
+            await page.get_by_text("Performance summary", exact=False).first.click(timeout=15000)
             await page.wait_for_load_state("networkidle")
             await page.wait_for_timeout(5000)
 
-            # Step 8: Set date filter to Last week if not already set
             print("Checking date filter...")
             page_content = await page.content()
             if "Last week" not in page_content:
@@ -93,13 +112,11 @@ async def download_csv(email, password):
             else:
                 print("Filter already set to Last week.")
 
-            # Step 9: Click Options then CSV to download
             print("Downloading CSV...")
             async with page.expect_download(timeout=30000) as download_info:
                 await page.get_by_role("button", name="Options").click()
                 await page.wait_for_timeout(1500)
                 await page.get_by_text("CSV").click()
-
             download = await download_info.value
             csv_path = str(DATA_DIR / f"fresha_report_{datetime.now().strftime('%Y%m%d')}.csv")
             await download.save_as(csv_path)
@@ -110,10 +127,8 @@ async def download_csv(email, password):
             screenshot_path = str(DATA_DIR / "error_screenshot.png")
             await page.screenshot(path=screenshot_path)
             print(f"Screenshot saved to {screenshot_path} for debugging")
-
         finally:
             await browser.close()
-
     return csv_path
 
 
@@ -122,79 +137,37 @@ def extract_data_from_csv(csv_path, api_key):
         csv_content = f.read()
 
     client = anthropic.Anthropic(api_key=api_key)
-
     message = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=4096,
-        messages=[
-            {
-                "role": "user",
-                "content": f"""This is a CSV export from Fresha's Performance Summary report for last week.
-
+        messages=[{"role": "user", "content": f"""This is a CSV export from Fresha's Performance Summary report for last week.
 Extract the data and return ONLY a valid JSON object in this exact structure:
-
 {{
   "period_start": "YYYY-MM-DD",
   "period_end": "YYYY-MM-DD",
   "sales_summary": {{
-    "services": 0.00,
-    "service_addons": 0.00,
-    "products": 0.00,
-    "memberships": 0.00,
-    "late_cancellation_fees": 0.00,
-    "no_show_fees": 0.00,
-    "total_sales": 0.00,
-    "service_charges": 0.00,
-    "tips": 0.00,
-    "total_sales_and_other": 0.00
+    "services": 0.00, "service_addons": 0.00, "products": 0.00,
+    "memberships": 0.00, "late_cancellation_fees": 0.00, "no_show_fees": 0.00,
+    "total_sales": 0.00, "service_charges": 0.00, "tips": 0.00, "total_sales_and_other": 0.00
   }},
   "appointments": {{
-    "total": 0,
-    "online": 0,
-    "offline": 0,
-    "cancelled": 0,
-    "no_shows": 0,
-    "pct_online": 0.0,
-    "pct_cancelled": 0.0,
-    "pct_no_show": 0.0
+    "total": 0, "online": 0, "offline": 0, "cancelled": 0, "no_shows": 0,
+    "pct_online": 0.0, "pct_cancelled": 0.0, "pct_no_show": 0.0
   }},
   "sales_performance": {{
-    "services_sold": 0,
-    "avg_service_value": 0.00,
-    "products_sold": 0,
-    "avg_product_value": 0.00
+    "services_sold": 0, "avg_service_value": 0.00, "products_sold": 0, "avg_product_value": 0.00
   }},
-  "upsell": {{
-    "total": 0.00,
-    "pct": 0.0
-  }},
-  "staff": [
-    {{
-      "name": "Staff Name",
-      "services": 0.00,
-      "products": 0.00,
-      "total_sales": 0.00,
-      "tips": 0.00,
-      "total_appts": 0,
-      "cancelled_appts": 0,
-      "no_show_appts": 0,
-      "services_sold": 0
-    }}
-  ]
+  "upsell": {{"total": 0.00, "pct": 0.0}},
+  "staff": [{{
+    "name": "Staff Name", "services": 0.00, "products": 0.00,
+    "total_sales": 0.00, "tips": 0.00, "total_appts": 0,
+    "cancelled_appts": 0, "no_show_appts": 0, "services_sold": 0
+  }}]
 }}
-
-Rules:
-- Return ONLY the JSON object. No other text.
-- All monetary values as plain numbers with no currency symbols or commas.
-- Include every single staff member from the CSV.
-- Use 0 or 0.00 for any missing values.
-
+Rules: Return ONLY the JSON. All monetary values as plain numbers. Include ALL staff members.
 CSV DATA:
-{csv_content[:10000]}"""
-            }
-        ]
+{csv_content[:10000]}"""}]
     )
-
     raw = message.content[0].text
     start = raw.find("{")
     end = raw.rfind("}") + 1
@@ -207,7 +180,6 @@ async def run():
     api_key = os.environ["ANTHROPIC_API_KEY"]
 
     print(f"[{datetime.now()}] Starting Fresha data extraction...")
-
     csv_path = await download_csv(email, password)
 
     if not csv_path or not Path(csv_path).exists():
