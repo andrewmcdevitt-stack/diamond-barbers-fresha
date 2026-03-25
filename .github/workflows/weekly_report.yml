@@ -32,6 +32,11 @@ jobs:
       - name: Install virtual display
         run: sudo apt-get install -y xvfb
 
+      - name: Decode session
+        env:
+          FRESHA_SESSION: ${{ secrets.FRESHA_SESSION }}
+        run: echo "$FRESHA_SESSION" | base64 -d > data/session.json
+
       - name: Run Fresha agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
