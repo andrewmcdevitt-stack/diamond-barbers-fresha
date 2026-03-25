@@ -50,7 +50,7 @@ async def download_csv(email, password):
             print("Entering password...")
             pwd_field = page.locator('input[type="password"]')
             await pwd_field.wait_for(timeout=10000)
-            await pwd_field.click()
+            await pwd_field.click(force=True)
             await page.keyboard.type(password, delay=50)
             await page.wait_for_timeout(1000)
 
