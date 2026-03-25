@@ -49,7 +49,7 @@ async def download_csv(email, password):
 
             # Step 5: Click Log in
             print("Clicking Log in...")
-            await page.get_by_role("button", name="Log in").click()
+            await page.click('[data-qa="login"]', force=True)
             await page.wait_for_load_state("networkidle")
             await page.wait_for_timeout(5000)
             print(f"Logged in. Current URL: {page.url}")
