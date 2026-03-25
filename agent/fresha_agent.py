@@ -16,10 +16,12 @@ DATA_DIR.mkdir(exist_ok=True)
 
 SESSION_FILE = DATA_DIR / "session.json"
 
+
 async def download_csv(email, password):
     csv_path = None
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        headless = os.environ.get("CI", "false").lower() == "true"
+        browser = await p.chromium.launch(headless=headless)
 
         if SESSION_FILE.exists():
             print("Loading saved session...")
@@ -125,7 +127,6 @@ async def download_csv(email, password):
             await download.save_as(csv_path)
             print(f"CSV saved to: {csv_path}")
 
-            # Always save the refreshed session after a successful run
             await context.storage_state(path=str(SESSION_FILE))
             print("Session refreshed and saved.")
 
@@ -137,6 +138,7 @@ async def download_csv(email, password):
         finally:
             await browser.close()
     return csv_path
+
 
 def extract_data_from_csv(csv_path, api_key):
     with open(csv_path, "r", encoding="utf-8-sig") as f:
@@ -179,6 +181,7 @@ CSV DATA:
     end = raw.rfind("}") + 1
     return json.loads(raw[start:end])
 
+
 async def run():
     email = os.environ["FRESHA_EMAIL"]
     password = os.environ["FRESHA_PASSWORD"]
@@ -202,3 +205,24 @@ async def run():
             data = {"error": str(e)}
 
     data["report_date"] = datetime.now().strftime("%Y-%m-%d")
+
+    output_file = DATA_DIR / "performance_summary.json"
+    if output_file.exists():
+        with open(output_file, "r") as f:
+            history = json.load(f)
+        if not isinstance(history, list):
+            history = [history]
+    else:
+        history = []
+
+    history.append(data)
+
+    with open(output_file, "w") as f:
+        json.dump(history, f, indent=2)
+
+    print(f"[{datetime.now()}] Saved to {output_file}")
+    print(json.dumps(data, indent=2))
+
+
+if __name__ == "__main__":
+    asyncio.run(run())
