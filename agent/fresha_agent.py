@@ -28,13 +28,12 @@ async def download_csv(email, password):
             await page.goto("https://partners.fresha.com/users/sign-in", wait_until="networkidle")
             await page.wait_for_timeout(3000)
 
-            # Dismiss cookie banner if it appears
             try:
-            await page.get_by_role("button", name="Accept all").click(timeout=5000)
-            print("Dismissed cookie banner.")
-            await page.wait_for_timeout(1000)
+                await page.get_by_role("button", name="Accept all").click(timeout=5000)
+                print("Dismissed cookie banner.")
+                await page.wait_for_timeout(1000)
             except Exception:
-            print("No cookie banner found, continuing.")
+                print("No cookie banner found, continuing.")
 
             print("Entering email...")
             email_field = page.locator('input[placeholder="Enter your email address"]')
@@ -49,13 +48,21 @@ async def download_csv(email, password):
             await page.wait_for_timeout(3000)
 
             print("Entering password...")
-            await page.fill('input[type="password"]', password)
+            pwd_field = page.locator('input[type="password"]')
+            await pwd_field.wait_for(timeout=10000)
+            await pwd_field.click()
+            await page.keyboard.type(password, delay=50)
             await page.wait_for_timeout(1000)
 
-            print("Pressing Enter to log in...")
-            await page.keyboard.press("Enter")
+            print("Submitting login form...")
+            try:
+                await page.locator('button[type="submit"]').click(force=True, timeout=5000)
+            except Exception:
+                try:
+                    await page.get_by_role("button", name="Log in").click(force=True, timeout=5000)
+                except Exception:
+                    await page.keyboard.press("Enter")
 
-            # Wait for the URL to change away from the sign-in page (up to 15 seconds)
             try:
                 await page.wait_for_url(lambda url: "sign-in" not in url, timeout=15000)
             except Exception:
@@ -63,28 +70,19 @@ async def download_csv(email, password):
 
             await page.wait_for_timeout(3000)
             print(f"After login. Current URL: {page.url}")
-
-            # Save a screenshot so we can see exactly what happened
             await page.screenshot(path=str(DATA_DIR / "after_login.png"))
 
-            # If still on sign-in page, login failed
             if "sign-in" in page.url:
                 raise Exception("Login failed — URL is still sign-in after waiting. Check credentials or screenshot.")
 
-            # Build the base URL (e.g. https://partners.fresha.com/en-AU/booking-partner/venues/12345)
-            # Reports URL is typically at /reports within the venue path
             current_url = page.url
-            print(f"Login succeeded. Navigating to Reports...")
+            print("Login succeeded. Navigating to Reports...")
 
-            # Try clicking Reports in the sidebar first
             try:
                 await page.get_by_text("Reports", exact=True).first.click(timeout=8000)
                 await page.wait_for_load_state("networkidle")
                 await page.wait_for_timeout(3000)
             except Exception:
-                # Fall back: navigate directly by appending /reports to the venue base URL
-                # The venue URL looks like: https://partners.fresha.com/.../venues/12345/...
-                # We want: https://partners.fresha.com/.../venues/12345/reports
                 if "/venues/" in current_url:
                     venue_part = current_url.split("/venues/")[1].split("/")[0]
                     base = current_url.split("/venues/")[0]
