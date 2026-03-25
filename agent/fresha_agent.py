@@ -13,134 +13,128 @@ load_dotenv()
 DATA_DIR = Path(__file__).parent.parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
+SESSION_FILE = DATA_DIR / "session.json"
+
 
 async def download_csv(email, password):
     csv_path = None
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
-        context = await browser.new_context(
-            accept_downloads=True,
-            viewport={"width": 1920, "height": 1080}
-        )
+
+        # Load saved session if it exists (skips login + 2FA)
+        if SESSION_FILE.exists():
+            print("Loading saved session...")
+            context = await browser.new_context(
+                storage_state=str(SESSION_FILE),
+                accept_downloads=True,
+                viewport={"width": 1280, "height": 800}
+            )
+        else:
+            print("No saved session. Will do full login.")
+            context = await browser.new_context(
+                accept_downloads=True,
+                viewport={"width": 1280, "height": 800}
+            )
+
         page = await context.new_page()
         try:
-            print("Going to Fresha login page...")
-            await page.goto("https://partners.fresha.com/users/sign-in", wait_until="networkidle")
+            # Try going directly to reports first (works if session is valid)
+            print("Going to reports page...")
+            await page.goto("https://partners.fresha.com/reports", wait_until="networkidle")
             await page.wait_for_timeout(3000)
 
-            # Dismiss cookie banner if it appears
-            try:
-                await page.get_by_role("button", name="Accept all").click(timeout=5000)
-                print("Dismissed cookie banner.")
-                await page.wait_for_timeout(1000)
-            except Exception:
-                print("No cookie banner found, continuing.")
+            # If redirected to sign-in, session expired — do full login
+            if "/users/sign-in" in page.url:
+                print("Session expired or not found. Logging in...")
+                SESSION_FILE.unlink(missing_ok=True)
 
-            print("Entering email...")
-            email_field = page.locator('input[placeholder="Enter your email address"]')
-            await email_field.wait_for(timeout=10000)
-            await email_field.fill(email)
-            await page.wait_for_timeout(1000)
-            await page.screenshot(path=str(DATA_DIR / "after_email.png"))
-            print(f"Email typed. Field value: {await email_field.input_value()}")
-
-            print("Clicking Continue...")
-            await page.click('[data-qa="continue"]', force=True)
-            # Wait specifically for the password field to appear (proves page transitioned)
-            await page.wait_for_selector('input[type="password"]:not([tabindex="-1"])', timeout=15000)
-            await page.wait_for_timeout(1000)
-            print("Password page loaded.")
-
-            print("Entering password...")
-            # Exclude the hidden off-screen field (tabindex=-1) and target the visible one
-            pwd_field = page.locator('input[type="password"]:not([tabindex="-1"])')
-            await pwd_field.wait_for(timeout=10000)
-            await pwd_field.fill(password)
-            await page.wait_for_timeout(1000)
-
-            print("Submitting login form...")
-            # Try clicking the submit button first, fall back to Enter
-            try:
-                await page.locator('button[type="submit"]').click(force=True, timeout=5000)
-            except Exception:
+                # Dismiss cookie banner if present
                 try:
-                    await page.get_by_role("button", name="Log in").click(force=True, timeout=5000)
+                    await page.get_by_role("button", name="Accept all").click(timeout=5000)
+                    print("Dismissed cookie banner.")
+                    await page.wait_for_timeout(1000)
                 except Exception:
-                    await page.keyboard.press("Enter")
+                    pass
 
-            # Wait for the URL to change away from the sign-in page (up to 15 seconds)
-            try:
-                await page.wait_for_url(lambda url: "sign-in" not in url, timeout=15000)
-            except Exception:
-                pass
+                # Enter email
+                print("Entering email...")
+                email_field = page.locator('input[placeholder="Enter your email address"]')
+                await email_field.wait_for(timeout=10000)
+                await email_field.click()
+                await email_field.type(email, delay=50)
+                await page.wait_for_timeout(1000)
 
-            await page.wait_for_timeout(3000)
-            print(f"After login. Current URL: {page.url}")
+                # Click Continue
+                print("Clicking Continue...")
+                await page.click('[data-qa="continue"]', force=True)
+                await page.wait_for_selector('input[type="password"]:not([tabindex="-1"])', timeout=15000)
+                await page.wait_for_timeout(1000)
 
-            # Save a screenshot so we can see exactly what happened
-            await page.screenshot(path=str(DATA_DIR / "after_login.png"))
+                # Enter password
+                print("Entering password...")
+                pwd_field = page.locator('input[type="password"]:not([tabindex="-1"])')
+                await pwd_field.fill(password)
+                await page.wait_for_timeout(1000)
 
-            # If still on sign-in page, login failed
-            if "sign-in" in page.url:
-                raise Exception("Login failed — URL is still sign-in after waiting. Check credentials or screenshot.")
-
-            # Build the base URL (e.g. https://partners.fresha.com/en-AU/booking-partner/venues/12345)
-            # Reports URL is typically at /reports within the venue path
-            current_url = page.url
-            print(f"Login succeeded. Navigating to Reports...")
-
-            # Try clicking Reports in the sidebar first
-            try:
-                await page.get_by_text("Reports", exact=True).first.click(timeout=8000)
-                await page.wait_for_load_state("networkidle")
-                await page.wait_for_timeout(3000)
-            except Exception:
-                # Fall back: navigate directly by appending /reports to the venue base URL
-                # The venue URL looks like: https://partners.fresha.com/.../venues/12345/...
-                # We want: https://partners.fresha.com/.../venues/12345/reports
-                if "/venues/" in current_url:
-                    venue_part = current_url.split("/venues/")[1].split("/")[0]
-                    base = current_url.split("/venues/")[0]
-                    reports_url = f"{base}/venues/{venue_part}/reports"
-                else:
-                    reports_url = current_url.rstrip("/") + "/reports"
-                print(f"Sidebar click failed. Going directly to: {reports_url}")
-                await page.goto(reports_url, wait_until="networkidle")
-                await page.wait_for_timeout(3000)
-
-            print(f"Reports page URL: {page.url}")
-            await page.screenshot(path=str(DATA_DIR / "reports_page.png"))
-
-            print("Clicking Performance Summary...")
-            await page.get_by_text("Performance summary", exact=False).first.click(timeout=15000)
-            await page.wait_for_load_state("networkidle")
-            await page.wait_for_timeout(5000)
-
-            print("Checking date filter...")
-            page_content = await page.content()
-            if "Last week" not in page_content:
-                print("Setting filter to Last week...")
+                # Submit
+                print("Submitting login...")
                 try:
-                    await page.get_by_text("Month to date").click()
-                    await page.wait_for_timeout(1000)
-                    await page.get_by_text("Last week").click()
-                    await page.wait_for_timeout(1000)
+                    await page.locator('button[type="submit"]').click(force=True, timeout=5000)
+                except Exception:
                     try:
-                        await page.get_by_role("button", name="Apply").click()
+                        await page.get_by_role("button", name="Log in").click(force=True, timeout=5000)
                     except Exception:
-                        pass
-                    await page.wait_for_load_state("networkidle")
-                    await page.wait_for_timeout(5000)
-                except Exception as e:
-                    print(f"Could not set date filter: {e}")
-            else:
-                print("Filter already set to Last week.")
+                        await page.keyboard.press("Enter")
+
+                # Wait up to 90 seconds — enter 2FA code in the browser if prompted
+                print("==============================================")
+                print("CHECK THE BROWSER WINDOW NOW.")
+                print("Enter the 2FA code sent to your phone.")
+                print("You have 5 minutes.")
+                print("==============================================")
+                try:
+                    await page.wait_for_url(
+                        lambda url: "/users/sign-in" not in url,
+                        timeout=300000
+                    )
+                except Exception:
+                    pass
+
+                if "/users/sign-in" in page.url:
+                    raise Exception("Login failed after 5 minutes.")
+
+                # Save session so next run skips login
+                await context.storage_state(path=str(SESSION_FILE))
+                print("Session saved. Future runs will skip login and 2FA.")
+
+                # Now go to reports
+                await page.goto("https://partners.fresha.com/reports", wait_until="networkidle")
+                await page.wait_for_timeout(3000)
+
+            # Calculate last week's Monday and Sunday
+            from datetime import timedelta
+            today = datetime.now()
+            days_since_monday = today.weekday()
+            last_monday = today - timedelta(days=days_since_monday + 7)
+            last_sunday = last_monday + timedelta(days=6)
+            date_from = last_monday.strftime("%Y-%m-%d")
+            date_to = last_sunday.strftime("%Y-%m-%d")
+
+            # Navigate directly to Performance Summary with last week filter pre-applied
+            report_url = f"https://partners.fresha.com/reports/table/performance-summary?shortcut=last_week&dateFrom={date_from}&dateTo={date_to}"
+            print(f"Navigating to: {report_url}")
+            await page.goto(report_url, wait_until="networkidle")
+            await page.wait_for_timeout(3000)
+            print(f"Performance Summary URL: {page.url}")
 
             print("Downloading CSV...")
+            print("Downloading CSV...")
             async with page.expect_download(timeout=30000) as download_info:
-                await page.get_by_role("button", name="Options").click()
+                await page.get_by_role("button", name="Options").click(timeout=10000)
                 await page.wait_for_timeout(1500)
-                await page.get_by_text("CSV").click()
+                # Click the CSV menu item specifically (not the "Export" section header)
+                await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
+                print("Clicked CSV menuitem.")
             download = await download_info.value
             csv_path = str(DATA_DIR / f"fresha_report_{datetime.now().strftime('%Y%m%d')}.csv")
             await download.save_as(csv_path)
