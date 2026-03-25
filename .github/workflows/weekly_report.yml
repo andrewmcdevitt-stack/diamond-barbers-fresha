@@ -45,6 +45,19 @@ jobs:
           DISPLAY: ":99"
         run: xvfb-run --auto-servernum python -u agent/fresha_agent.py
 
+      - name: Refresh session secret
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          python -c "
+          import json, base64
+          with open('data/session.json') as f:
+              data = json.load(f)
+          cookies = [c for c in data.get('cookies', []) if 'fresha' in c['domain'] and c.get('httpOnly')]
+          filtered = {'cookies': cookies, 'origins': []}
+          print(base64.b64encode(json.dumps(filtered).encode()).decode())
+          " | gh secret set FRESHA_SESSION --repo ${{ github.repository }}
+
       - name: Commit and push updated data
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
