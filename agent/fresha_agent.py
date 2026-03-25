@@ -1,6 +1,8 @@
 import asyncio
 import os
 import json
+import csv
+import glob
 from datetime import datetime
 from pathlib import Path
 
@@ -14,30 +16,8 @@ load_dotenv()
 DATA_DIR = Path(__file__).parent.parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
-SCHEMA = """
-{
-  "period_start": "YYYY-MM-DD",
-  "period_end": "YYYY-MM-DD",
-  "gross_sales": 0.00,
-  "net_sales": 0.00,
-  "taxes": 0.00,
-  "tips": 0.00,
-  "discounts": 0.00,
-  "total_appointments": 0,
-  "completed_appointments": 0,
-  "cancelled_appointments": 0,
-  "no_shows": 0,
-  "new_clients": 0,
-  "returning_clients": 0,
-  "staff": [
-    {"name": "Staff Name", "revenue": 0.00, "appointments": 0}
-  ],
-  "services": [
-    {"name": "Service Name", "revenue": 0.00, "count": 0}
-  ]
-}
-"""
-
+DOWNLOAD_DIR = Path("/tmp/fresha_downloads")
+DOWNLOAD_DIR.mkdir(exist_ok=True)
 
 async def run():
     email = os.environ["FRESHA_EMAIL"]
@@ -58,34 +38,90 @@ async def run():
     )
 
     task = f"""
-You are extracting business data from Fresha, a salon/barbershop management platform.
+You are controlling a web browser. Follow these steps EXACTLY in order.
+Do not skip any step. Wait for each page to fully load before moving to the next step.
 
-STEPS:
-1. Go to https://partners.fresha.com
-2. Log in with:
-   - Email: {email}
-   - Password: {password}
-3. After logging in, navigate to the Reports section (look in the left sidebar or top navigation).
-4. Find the "Performance Summary" report and open it.
-5. Set the date range / period filter to "Last Week".
-6. Wait for the report to fully load.
-7. Extract ALL visible data from the report.
+STEP 1:
+Go to this exact URL: https://partners.fresha.com/users/sign-in
+Wait for the page to fully load.
 
-OUTPUT FORMAT:
-Return ONLY a valid JSON object matching this exact schema (fill in real values, use 0 if not shown):
-{SCHEMA}
+STEP 2:
+Find the email input field on the page.
+Click on it and type this email address: {email}
 
-Important:
-- Return ONLY the JSON object, no other text before or after.
-- All monetary values should be numbers (not strings), e.g. 1250.50 not "$1,250.50".
-- If a field is not visible in the report, use 0 or an empty list [].
-- For period_start and period_end, use the actual dates shown in the report.
+STEP 3:
+Find and click the "Continue" button.
+Wait for the next page to fully load.
+
+STEP 4:
+Find the password input field on the page.
+Click on it and type this password: {password}
+
+STEP 5:
+Find and click the "Log in" button.
+Wait for the dashboard to fully load. This may take a few seconds.
+
+STEP 6:
+Look for "Reports" in the left sidebar navigation menu.
+Click on "Reports".
+Wait for the reports page to fully load.
+
+STEP 7:
+Find "Performance Summary" in the list of reports.
+Click on it.
+Wait for the report to fully load.
+
+STEP 8:
+Find the date range filter button. It likely says "Month to date" or shows a date range at the top of the report.
+Click on it.
+Select "Last week" from the options that appear.
+Click "Apply" to confirm.
+Wait for the report to reload with the new date range.
+
+STEP 9:
+Find the "Options" button or export button on the report page (it may be a button with three dots, a gear icon, or say "Export" or "Options").
+Click it.
+Look for a "CSV" or "Download CSV" option in the menu that appears.
+Click on CSV to download the file.
+Wait for the download to complete.
+
+STEP 10:
+Now read ALL the data visible on the report page and return it as a JSON object in this exact format:
+
+{{
+  "period_start": "YYYY-MM-DD",
+  "period_end": "YYYY-MM-DD",
+  "gross_sales": 0.00,
+  "net_sales": 0.00,
+  "taxes": 0.00,
+  "tips": 0.00,
+  "discounts": 0.00,
+  "total_appointments": 0,
+  "completed_appointments": 0,
+  "cancelled_appointments": 0,
+  "no_shows": 0,
+  "new_clients": 0,
+  "returning_clients": 0,
+  "staff": [
+    {{"name": "Staff Name", "revenue": 0.00, "appointments": 0}}
+  ],
+  "services": [
+    {{"name": "Service Name", "revenue": 0.00, "count": 0}}
+  ]
+}}
+
+Rules:
+- Return ONLY the JSON object. No other text.
+- All money values must be plain numbers e.g. 1250.50 not "$1,250.50"
+- Use 0 or empty list [] for anything not visible on the page.
+- Use the actual dates shown in the report for period_start and period_end.
 """
 
     agent = Agent(
         task=task,
         llm=llm,
         browser=browser,
+        max_failures=5,
     )
 
     print(f"[{datetime.now()}] Starting Fresha agent...")
@@ -95,18 +131,32 @@ Important:
     print(f"[{datetime.now()}] Agent finished. Raw output length: {len(raw)}")
 
     data = {}
-    try:
-        start = raw.find("{")
-        end = raw.rfind("}") + 1
-        if start != -1 and end > start:
-            data = json.loads(raw[start:end])
-            print("JSON parsed successfully.")
-        else:
-            print("WARNING: No JSON found in output. Saving raw text.")
+    csv_files = glob.glob(str(DOWNLOAD_DIR / "*.csv"))
+    if csv_files:
+        latest_csv = max(csv_files, key=os.path.getctime)
+        print(f"Found CSV: {latest_csv}")
+        try:
+            with open(latest_csv, newline="", encoding="utf-8-sig") as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
+                data["csv_rows"] = rows
+                print(f"CSV parsed: {len(rows)} rows")
+        except Exception as e:
+            print(f"CSV parse error: {e}")
+
+    if not data:
+        try:
+            start = raw.find("{")
+            end = raw.rfind("}") + 1
+            if start != -1 and end > start:
+                data = json.loads(raw[start:end])
+                print("JSON parsed from agent output.")
+            else:
+                print("WARNING: No JSON found in agent output.")
+                data = {"raw_output": raw}
+        except json.JSONDecodeError as e:
+            print(f"WARNING: JSON parse error: {e}")
             data = {"raw_output": raw}
-    except json.JSONDecodeError as e:
-        print(f"WARNING: JSON parse error: {e}. Saving raw text.")
-        data = {"raw_output": raw}
 
     data["report_date"] = datetime.now().strftime("%Y-%m-%d")
     data["report_type"] = "performance_summary"
@@ -129,7 +179,3 @@ Important:
     print(json.dumps(data, indent=2))
 
     await browser.close()
-
-
-if __name__ == "__main__":
-    asyncio.run(run())
