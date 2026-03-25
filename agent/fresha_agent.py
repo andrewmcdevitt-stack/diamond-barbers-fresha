@@ -88,6 +88,8 @@ async def download_csv(email, password):
                         pass
                     await page.wait_for_load_state("networkidle")
                     await page.wait_for_timeout(5000)
+                except Exception as e:
+                    print(f"Could not set date filter: {e}")
             else:
                 print("Filter already set to Last week.")
 
