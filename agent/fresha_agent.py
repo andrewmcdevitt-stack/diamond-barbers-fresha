@@ -48,8 +48,8 @@ async def download_csv(email, password):
             await page.wait_for_timeout(1000)
 
             # Step 5: Click Log in
-            print("Clicking Log in...")
-            await page.click('[data-qa="login"]', force=True)
+            print("Pressing Enter to log in...")
+            await page.keyboard.press("Enter")
             await page.wait_for_load_state("networkidle")
             await page.wait_for_timeout(5000)
             print(f"Logged in. Current URL: {page.url}")
