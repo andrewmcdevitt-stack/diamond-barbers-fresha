@@ -209,9 +209,12 @@ async def run():
             data = extract_data_from_csv(csv_path, api_key)
             data["report_type"] = "performance_summary"
             print("Data extracted successfully.")
-        except Exception as e:
+            except Exception as e:
+            import traceback
             print(f"ERROR extracting data: {e}")
+            traceback.print_exc()
             data = {"error": str(e)}
+
 
     data["report_date"] = datetime.now().strftime("%Y-%m-%d")
 
