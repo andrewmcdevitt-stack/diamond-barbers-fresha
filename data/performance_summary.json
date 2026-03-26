@@ -1011,5 +1011,276 @@
     ],
     "report_type": "performance_summary",
     "report_date": "2026-03-26"
+  },
+  {
+    "period_start": "2026-03-16",
+    "period_end": "2026-03-22",
+    "sales_summary": {
+      "services": 51257.14,
+      "service_addons": 70.0,
+      "products": 1275.1,
+      "memberships": 0.0,
+      "late_cancellation_fees": 41.5,
+      "no_show_fees": 87.5,
+      "total_sales": 52731.24,
+      "service_charges": 1126.76,
+      "tips": 1250.99,
+      "total_sales_and_other": 55984.98
+    },
+    "appointments": {
+      "total": 1243,
+      "online": 714,
+      "offline": 529,
+      "cancelled": 44,
+      "no_shows": 14,
+      "pct_online": 57.44,
+      "pct_cancelled": 3.54,
+      "pct_no_show": 1.13
+    },
+    "sales_performance": {
+      "services_sold": 1269,
+      "avg_service_value": 40.39,
+      "products_sold": 42,
+      "avg_product_value": 30.36
+    },
+    "upsell": {
+      "total": 396.0,
+      "pct": 0.75
+    },
+    "staff": [
+      {
+        "name": "Abuel Basallo",
+        "services": 2850.0,
+        "products": 111.95,
+        "total_sales": 3009.45,
+        "tips": 110.55,
+        "total_appts": 65,
+        "cancelled_appts": 3,
+        "no_show_appts": 2,
+        "services_sold": 75
+      },
+      {
+        "name": "Anthony Crispo",
+        "services": 3367.0,
+        "products": 68.0,
+        "total_sales": 3445.0,
+        "tips": 131.4,
+        "total_appts": 76,
+        "cancelled_appts": 3,
+        "no_show_appts": 0,
+        "services_sold": 95
+      },
+      {
+        "name": "Avinash Borade",
+        "services": 3364.0,
+        "products": 95.5,
+        "total_sales": 3459.5,
+        "tips": 5.0,
+        "total_appts": 74,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 85
+      },
+      {
+        "name": "David Garcia",
+        "services": 2553.5,
+        "products": 0.0,
+        "total_sales": 2553.5,
+        "tips": 83.35,
+        "total_appts": 60,
+        "cancelled_appts": 2,
+        "no_show_appts": 2,
+        "services_sold": 62
+      },
+      {
+        "name": "Erol Basallo",
+        "services": 3003.75,
+        "products": 0.0,
+        "total_sales": 3016.25,
+        "tips": 119.2,
+        "total_appts": 70,
+        "cancelled_appts": 4,
+        "no_show_appts": 1,
+        "services_sold": 85
+      },
+      {
+        "name": "Jack Matthew",
+        "services": 2633.5,
+        "products": 34.0,
+        "total_sales": 2697.5,
+        "tips": 54.95,
+        "total_appts": 65,
+        "cancelled_appts": 5,
+        "no_show_appts": 2,
+        "services_sold": 69
+      },
+      {
+        "name": "Jairo Espinosa",
+        "services": 3141.25,
+        "products": 66.0,
+        "total_sales": 3227.25,
+        "tips": 1.9,
+        "total_appts": 72,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 78
+      },
+      {
+        "name": "Jamaine McGee",
+        "services": 1210.14,
+        "products": 0.0,
+        "total_sales": 1210.14,
+        "tips": 47.5,
+        "total_appts": 30,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 33
+      },
+      {
+        "name": "JoJo Aligam",
+        "services": 2725.0,
+        "products": 130.0,
+        "total_sales": 2855.0,
+        "tips": 125.6,
+        "total_appts": 64,
+        "cancelled_appts": 0,
+        "no_show_appts": 1,
+        "services_sold": 76
+      },
+      {
+        "name": "John Zagorianos",
+        "services": 1330.0,
+        "products": 146.0,
+        "total_sales": 1476.0,
+        "tips": 64.95,
+        "total_appts": 29,
+        "cancelled_appts": 1,
+        "no_show_appts": 1,
+        "services_sold": 31
+      },
+      {
+        "name": "Krish",
+        "services": 1798.75,
+        "products": 0.0,
+        "total_sales": 1798.75,
+        "tips": 26.58,
+        "total_appts": 46,
+        "cancelled_appts": 2,
+        "no_show_appts": 1,
+        "services_sold": 50
+      },
+      {
+        "name": "Laura Marshall",
+        "services": 1724.96,
+        "products": 0.0,
+        "total_sales": 1724.96,
+        "tips": 12.35,
+        "total_appts": 39,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 51
+      },
+      {
+        "name": "Liem Nguyen",
+        "services": 2719.4,
+        "products": 163.95,
+        "total_sales": 2883.35,
+        "tips": 85.43,
+        "total_appts": 55,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 72
+      },
+      {
+        "name": "Luca Marzocchi",
+        "services": 2945.7,
+        "products": 0.0,
+        "total_sales": 2945.7,
+        "tips": 11.97,
+        "total_appts": 64,
+        "cancelled_appts": 3,
+        "no_show_appts": 1,
+        "services_sold": 80
+      },
+      {
+        "name": "Marianne Escobar",
+        "services": 1489.15,
+        "products": 94.8,
+        "total_sales": 1583.95,
+        "tips": 36.3,
+        "total_appts": 36,
+        "cancelled_appts": 2,
+        "no_show_appts": 1,
+        "services_sold": 43
+      },
+      {
+        "name": "Nico Diamantis",
+        "services": 1040.0,
+        "products": 18.0,
+        "total_sales": 1058.0,
+        "tips": 12.5,
+        "total_appts": 26,
+        "cancelled_appts": 1,
+        "no_show_appts": 0,
+        "services_sold": 27
+      },
+      {
+        "name": "Robert Jugan",
+        "services": 2902.25,
+        "products": 68.0,
+        "total_sales": 2980.25,
+        "tips": 0.0,
+        "total_appts": 64,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 79
+      },
+      {
+        "name": "Sean Maguire",
+        "services": 2081.0,
+        "products": 29.95,
+        "total_sales": 2119.95,
+        "tips": 12.3,
+        "total_appts": 51,
+        "cancelled_appts": 5,
+        "no_show_appts": 0,
+        "services_sold": 53
+      },
+      {
+        "name": "TAM Nguyen",
+        "services": 2480.0,
+        "products": 47.95,
+        "total_sales": 2537.95,
+        "tips": 182.13,
+        "total_appts": 57,
+        "cancelled_appts": 1,
+        "no_show_appts": 2,
+        "services_sold": 67
+      },
+      {
+        "name": "Vince Vincenzo",
+        "services": 3732.5,
+        "products": 66.0,
+        "total_sales": 3848.5,
+        "tips": 3.4,
+        "total_appts": 82,
+        "cancelled_appts": 5,
+        "no_show_appts": 1,
+        "services_sold": 104
+      },
+      {
+        "name": "Wilfred Vidal",
+        "services": 3363.25,
+        "products": 136.0,
+        "total_sales": 3509.25,
+        "tips": 123.08,
+        "total_appts": 72,
+        "cancelled_appts": 3,
+        "no_show_appts": 2,
+        "services_sold": 86
+      }
+    ],
+    "report_type": "performance_summary",
+    "report_date": "2026-03-26"
   }
 ]
