@@ -67,7 +67,7 @@ body, p, span, div, label, td, th {{
     color: {MUTED};
 }}
 
-/* ── Filter pill buttons ── */
+/* ── Filter pill buttons (decorative, matching Fresha style) ── */
 .db-filter-row {{
     display: flex;
     gap: 0.5rem;
@@ -128,7 +128,7 @@ body, p, span, div, label, td, th {{
     margin-bottom: 0.4rem;
 }}
 
-/* ── Change badge ── */
+/* ── Change badge (green / red / grey / amber) ── */
 .chg-pill {{
     display: inline-flex;
     align-items: center;
@@ -143,7 +143,7 @@ body, p, span, div, label, td, th {{
 .chg-pill.down {{ background: {RED_BG};   color: {RED_FG};   }}
 .chg-pill.flat {{ background: {GREY_BG};  color: {GREY_FG};  }}
 
-/* ── Breakdown rows ── */
+/* ── Breakdown rows inside card ── */
 .bd-row {{
     display: flex;
     justify-content: space-between;
@@ -156,7 +156,7 @@ body, p, span, div, label, td, th {{
 .bd-label {{ color: {MUTED}; }}
 .bd-value {{ font-weight: 600; color: {TEXT}; margin-right: 0.5rem; }}
 
-/* ── KPI stat card ── */
+/* ── KPI stat card (top row) ── */
 .kpi-card {{
     background: {CARD};
     border: 1px solid {BORDER};
@@ -202,7 +202,9 @@ body, p, span, div, label, td, th {{
     border-collapse: collapse;
     font-size: 0.85rem;
 }}
-.staff-table thead tr {{ border-bottom: 2px solid {BORDER}; }}
+.staff-table thead tr {{
+    border-bottom: 2px solid {BORDER};
+}}
 .staff-table thead th {{
     color: {MUTED};
     font-size: 0.7rem;
@@ -215,11 +217,21 @@ body, p, span, div, label, td, th {{
     background: transparent;
 }}
 .staff-table thead th.r {{ text-align: right; }}
-.staff-table tbody tr {{ border-bottom: 1px solid {BORDER}; transition: background 0.1s; }}
+.staff-table tbody tr {{
+    border-bottom: 1px solid {BORDER};
+    transition: background 0.1s;
+}}
 .staff-table tbody tr:last-child {{ border-bottom: none; }}
 .staff-table tbody tr:hover {{ background: #FAFAFA; }}
-.staff-table tbody td {{ padding: 0.65rem 0.85rem; color: {TEXT}; white-space: nowrap; }}
-.staff-table tbody td.r {{ text-align: right; font-variant-numeric: tabular-nums; }}
+.staff-table tbody td {{
+    padding: 0.65rem 0.85rem;
+    color: {TEXT};
+    white-space: nowrap;
+}}
+.staff-table tbody td.r {{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}}
 
 /* ── Rank pills ── */
 .rank-pill {{
@@ -248,6 +260,38 @@ body, p, span, div, label, td, th {{
     white-space: nowrap;
 }}
 
+/* ── Appointments mini grid ── */
+.appt-grid {{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}}
+.appt-cell {{
+    background: #FAFAFA;
+    border: 1px solid {BORDER};
+    border-radius: 10px;
+    padding: 0.75rem;
+    text-align: center;
+}}
+.appt-label {{
+    font-size: 0.68rem;
+    color: {MUTED};
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.2rem;
+}}
+.appt-val {{
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: {TEXT};
+}}
+.appt-pct {{
+    font-size: 0.68rem;
+    color: {MUTED};
+    margin-top: 0.1rem;
+}}
+
 /* ── Selectbox ── */
 .stSelectbox [data-baseweb="select"] {{
     background: {CARD} !important;
@@ -270,7 +314,7 @@ body, p, span, div, label, td, th {{
 [data-testid="column"]:last-child {{ padding-right: 0 !important; }}
 
 /* ── Logo ── */
-[data-testid="stImage"] img {{ max-height: 38px; width: auto; }}
+[data-testid="stImage"] img {{ max-height: 64px; width: auto; }}
 [data-testid="stImage"] {{ margin: 0 !important; padding: 0 !important; }}
 
 /* ── Occupancy unified card (wraps title + chart + legend) ── */
@@ -283,6 +327,17 @@ div[data-testid="stVerticalBlock"]:has(.occ-card-marker) {{
     margin-bottom: 0.9rem;
 }}
 .occ-card-marker {{ display: none; }}
+
+/* ── Trend chart unified card (wraps title + chart) ── */
+div[data-testid="stVerticalBlock"]:has(.trend-card-marker) {{
+    background: {CARD};
+    border: 1px solid {BORDER};
+    border-radius: 16px;
+    padding: 1.2rem 1rem 0.9rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    margin-bottom: 0.9rem;
+}}
+.trend-card-marker {{ display: none; }}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {{
@@ -366,18 +421,19 @@ if not history:
 reversed_history = list(reversed(history))
 
 # ── Page header ────────────────────────────────────────────────────────────────
-hdr_l, hdr_r = st.columns([4, 2])
-with hdr_l:
-    if LOGO_FILE.exists():
-        st.image(str(LOGO_FILE))
-    st.markdown(
-        "<div class='db-page-title'>Performance dashboard</div>"
-        "<div class='db-page-sub'>Weekly performance report for Diamond Barbers</div>",
-        unsafe_allow_html=True,
-    )
-with hdr_r:
+if LOGO_FILE.exists():
+    st.image(str(LOGO_FILE))
+st.markdown(
+    "<div class='db-page-title'>Performance dashboard</div>"
+    "<div class='db-page-sub'>Weekly performance report for Diamond Barbers</div>",
+    unsafe_allow_html=True,
+)
+
+# ── Week selector ───────────────────────────────────────────────────────────────
+sel_col, _ = st.columns([2, 3])
+with sel_col:
     selected_idx = st.selectbox(
-        "week",
+        "Select week",
         options=range(len(reversed_history)),
         format_func=lambda i: (
             f"{fmt_date_long(reversed_history[i].get('period_start','?'))}  →  "
@@ -428,6 +484,16 @@ st.markdown(f"""
 t1, t2, t3 = st.columns(3)
 
 with t1:
+    occ_col_top = occ_color(overall_occ) if overall_occ is not None else MUTED
+    if overall_occ is not None:
+        if overall_occ >= 80:   occ_bg_top = "#EEF2FF"
+        elif overall_occ >= 65: occ_bg_top = WARN_BG
+        else:                   occ_bg_top = RED_BG
+    else:
+        occ_bg_top = "#F3F4F6"
+
+    occ_display = pct(overall_occ) if overall_occ is not None else "No data"
+
     st.markdown(f"""
     <div class="kpi-card">
         <div class="kpi-label">Net Service Sales</div>
@@ -446,15 +512,6 @@ with t2:
     """, unsafe_allow_html=True)
 
 with t3:
-    occ_col_top = occ_color(overall_occ) if overall_occ is not None else MUTED
-    if overall_occ is not None:
-        if overall_occ >= 80:   occ_bg_top = "#EEF2FF"
-        elif overall_occ >= 65: occ_bg_top = WARN_BG
-        else:                   occ_bg_top = RED_BG
-    else:
-        occ_bg_top = "#F3F4F6"
-    occ_display = pct(overall_occ) if overall_occ is not None else "No data"
-
     st.markdown(f"""
     <div class="kpi-card">
         <div class="kpi-label">Overall Occupancy</div>
@@ -562,27 +619,39 @@ with col_sales:
         </div>
         <div class="bd-row">
             <span class="bd-label">Services</span>
-            <span class="bd-value">{c(net_svc)}</span>
+            <span style="display:flex;align-items:center;gap:0.4rem;">
+                <span class="bd-value">{c(net_svc)}</span>
+            </span>
         </div>
         <div class="bd-row">
             <span class="bd-label">Products</span>
-            <span class="bd-value">{c(net_prod)}</span>
+            <span style="display:flex;align-items:center;gap:0.4rem;">
+                <span class="bd-value">{c(net_prod)}</span>
+            </span>
         </div>
         <div class="bd-row">
             <span class="bd-label">Tips</span>
-            <span class="bd-value">{c(tips_val)}</span>
+            <span style="display:flex;align-items:center;gap:0.4rem;">
+                <span class="bd-value">{c(tips_val)}</span>
+            </span>
         </div>
         <div class="bd-row">
             <span class="bd-label">No-show fees</span>
-            <span class="bd-value">{c(noshow_f)}</span>
+            <span style="display:flex;align-items:center;gap:0.4rem;">
+                <span class="bd-value">{c(noshow_f)}</span>
+            </span>
         </div>
         <div class="bd-row">
             <span class="bd-label">Cancellation fees</span>
-            <span class="bd-value">{c(canc_fee)}</span>
+            <span style="display:flex;align-items:center;gap:0.4rem;">
+                <span class="bd-value">{c(canc_fee)}</span>
+            </span>
         </div>
         <div class="bd-row">
             <span class="bd-label">Service add-ons</span>
-            <span class="bd-value">{c(svc_add)}</span>
+            <span style="display:flex;align-items:center;gap:0.4rem;">
+                <span class="bd-value">{c(svc_add)}</span>
+            </span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -618,15 +687,15 @@ with col_trend:
             showlegend=False,
             hovermode="x unified",
         )
-        st.markdown(f"""
-        <div class="db-card">
-            <div class="db-card-header">
+        with st.container():
+            st.markdown(f"""
+            <span class="trend-card-marker"></span>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
                 <div class="db-card-title">Total sales over time</div>
                 <span class="db-view-link">View report</span>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        st.plotly_chart(fig_trend, use_container_width=True, config={"displayModeBar": False})
+            """, unsafe_allow_html=True)
+            st.plotly_chart(fig_trend, use_container_width=True, config={"displayModeBar": False})
     else:
         st.markdown(f"""
         <div class="db-card" style="height:100%;display:flex;align-items:center;justify-content:center;">
