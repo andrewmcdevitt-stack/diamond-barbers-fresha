@@ -12,23 +12,23 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ── Fresha colour palette ──────────────────────────────────────────────────────
-BG       = "#F7F7F5"   # warm light grey page background (matches Fresha)
-CARD     = "#FFFFFF"   # white cards
-BORDER   = "#E8E8E6"   # subtle card border
-TEXT     = "#1A1A1A"   # near-black body text
-MUTED    = "#6B6B6B"   # muted grey
-PURPLE   = "#5B5BD6"   # Fresha purple accent (links, chart lines)
-PURPLE_L = "#9B9BE8"   # lighter purple (comparison lines / secondary)
-GREEN_BG = "#DCFCE7"
-GREEN_FG = "#16A34A"
-RED_BG   = "#FEE2E2"
-RED_FG   = "#DC2626"
-GREY_BG  = "#F3F4F6"
-GREY_FG  = "#6B7280"
-WARN_FG  = "#D97706"
-WARN_BG  = "#FEF3C7"
-GRID     = "#ECECEC"
+# ── Dark colour palette ────────────────────────────────────────────────────────
+BG       = "#000000"   # black background
+CARD     = "#1A1A1A"   # dark grey cards
+BORDER   = "#2E2E2E"   # subtle dark border
+TEXT     = "#FFFFFF"   # white body text
+MUTED    = "#9B9B9B"   # muted grey
+PURPLE   = "#7B7BFF"   # purple accent
+PURPLE_L = "#9B9BE8"   # lighter purple
+GREEN_BG = "#0D2E1A"
+GREEN_FG = "#34D399"
+RED_BG   = "#2E0D0D"
+RED_FG   = "#F87171"
+GREY_BG  = "#2A2A2A"
+GREY_FG  = "#9B9B9B"
+WARN_FG  = "#FBBF24"
+WARN_BG  = "#2E1F00"
+GRID     = "#2E2E2E"
 
 DATA_FILE = Path(__file__).parent.parent / "data" / "performance_summary.json"
 LOGO_FILE = Path(__file__).parent / "logo.png"
@@ -37,30 +37,6 @@ LOGO_FILE = Path(__file__).parent / "logo.png"
 st.markdown(f"""
 <style>
 /* ── Base ── */
-.stApp {{ background-color: {BG} !important; }}
-.stApp > div,
-.stApp > div > div,
-.stApp > div > div > div,
-.main,
-section.main,
-[data-testid="stMain"],
-[data-testid="stAppViewContainer"],
-[data-testid="stAppViewContainer"] > div,
-[data-testid="stAppViewBlockContainer"],
-[data-testid="stMainBlockContainer"],
-[data-testid="stVerticalBlock"],
-[data-testid="stVerticalBlockBorderWrapper"] {{
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-}}
-.main .block-container {{
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-}}
 section[data-testid="stSidebar"] {{ display: none !important; }}
 #MainMenu, footer, header {{ visibility: hidden !important; }}
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -90,7 +66,7 @@ body, p, span, div, label, td, th {{
     color: {MUTED};
 }}
 
-/* ── Filter pill buttons (decorative, matching Fresha style) ── */
+/* ── Filter pill buttons ── */
 .db-filter-row {{
     display: flex;
     gap: 0.5rem;
@@ -111,13 +87,13 @@ body, p, span, div, label, td, th {{
     white-space: nowrap;
 }}
 
-/* ── White card ── */
+/* ── Card ── */
 .db-card {{
     background: {CARD};
     border: 1px solid {BORDER};
     border-radius: 16px;
     padding: 1.4rem 1.5rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     margin-bottom: 0.9rem;
 }}
 
@@ -151,7 +127,7 @@ body, p, span, div, label, td, th {{
     margin-bottom: 0.4rem;
 }}
 
-/* ── Change badge (green / red / grey / amber) ── */
+/* ── Change badge ── */
 .chg-pill {{
     display: inline-flex;
     align-items: center;
@@ -166,7 +142,7 @@ body, p, span, div, label, td, th {{
 .chg-pill.down {{ background: {RED_BG};   color: {RED_FG};   }}
 .chg-pill.flat {{ background: {GREY_BG};  color: {GREY_FG};  }}
 
-/* ── Breakdown rows inside card ── */
+/* ── Breakdown rows ── */
 .bd-row {{
     display: flex;
     justify-content: space-between;
@@ -179,13 +155,13 @@ body, p, span, div, label, td, th {{
 .bd-label {{ color: {MUTED}; }}
 .bd-value {{ font-weight: 600; color: {TEXT}; margin-right: 0.5rem; }}
 
-/* ── KPI stat card (top row) ── */
+/* ── KPI card ── */
 .kpi-card {{
     background: {CARD};
     border: 1px solid {BORDER};
     border-radius: 16px;
     padding: 1.3rem 1.5rem 1.2rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }}
 .kpi-label {{
     font-size: 0.82rem;
@@ -225,9 +201,7 @@ body, p, span, div, label, td, th {{
     border-collapse: collapse;
     font-size: 0.85rem;
 }}
-.staff-table thead tr {{
-    border-bottom: 2px solid {BORDER};
-}}
+.staff-table thead tr {{ border-bottom: 2px solid {BORDER}; }}
 .staff-table thead th {{
     color: {MUTED};
     font-size: 0.7rem;
@@ -240,21 +214,11 @@ body, p, span, div, label, td, th {{
     background: transparent;
 }}
 .staff-table thead th.r {{ text-align: right; }}
-.staff-table tbody tr {{
-    border-bottom: 1px solid {BORDER};
-    transition: background 0.1s;
-}}
+.staff-table tbody tr {{ border-bottom: 1px solid {BORDER}; transition: background 0.1s; }}
 .staff-table tbody tr:last-child {{ border-bottom: none; }}
-.staff-table tbody tr:hover {{ background: #FAFAFA; }}
-.staff-table tbody td {{
-    padding: 0.65rem 0.85rem;
-    color: {TEXT};
-    white-space: nowrap;
-}}
-.staff-table tbody td.r {{
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-}}
+.staff-table tbody tr:hover {{ background: #222222; }}
+.staff-table tbody td {{ padding: 0.65rem 0.85rem; color: {TEXT}; white-space: nowrap; }}
+.staff-table tbody td.r {{ text-align: right; font-variant-numeric: tabular-nums; }}
 
 /* ── Rank pills ── */
 .rank-pill {{
@@ -269,7 +233,7 @@ body, p, span, div, label, td, th {{
     color: {GREY_FG};
     min-width: 2rem;
 }}
-.rank-pill.r1 {{ background: #EEF2FF; color: {PURPLE}; }}
+.rank-pill.r1 {{ background: #1E1E3F; color: {PURPLE}; }}
 .rank-pill.r2 {{ background: {GREEN_BG}; color: {GREEN_FG}; }}
 .rank-pill.r3 {{ background: {WARN_BG}; color: {WARN_FG}; }}
 
@@ -283,42 +247,9 @@ body, p, span, div, label, td, th {{
     white-space: nowrap;
 }}
 
-/* ── Appointments mini grid ── */
-.appt-grid {{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}}
-.appt-cell {{
-    background: #FAFAFA;
-    border: 1px solid {BORDER};
-    border-radius: 10px;
-    padding: 0.75rem;
-    text-align: center;
-}}
-.appt-label {{
-    font-size: 0.68rem;
-    color: {MUTED};
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    margin-bottom: 0.2rem;
-}}
-.appt-val {{
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: {TEXT};
-}}
-.appt-pct {{
-    font-size: 0.68rem;
-    color: {MUTED};
-    margin-top: 0.1rem;
-}}
-
 /* ── Selectbox ── */
 .stSelectbox {{ margin-top: 1rem !important; }}
 .stSelectbox [data-baseweb="select"] {{
-    background: {CARD} !important;
     border: 1px solid {BORDER} !important;
     border-radius: 20px !important;
 }}
@@ -341,26 +272,24 @@ body, p, span, div, label, td, th {{
 [data-testid="stImage"] img {{ max-height: 192px; width: auto; }}
 [data-testid="stImage"] {{ margin: 0 !important; padding: 0 !important; }}
 
-/* ── Occupancy unified card (wraps title + chart + legend) ── */
+/* ── Unified chart cards ── */
 div[data-testid="stVerticalBlock"]:has(.occ-card-marker) {{
     background: {CARD} !important;
     border: 1px solid {BORDER} !important;
     border-radius: 16px !important;
     padding: 1.2rem 1rem 0.9rem !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3) !important;
     margin-bottom: 0.9rem !important;
 }}
-.occ-card-marker {{ display: none; }}
-
-/* ── Trend chart unified card (wraps title + chart) ── */
 div[data-testid="stVerticalBlock"]:has(.trend-card-marker) {{
     background: {CARD} !important;
     border: 1px solid {BORDER} !important;
     border-radius: 16px !important;
     padding: 1.2rem 1rem 0.9rem !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3) !important;
     margin-bottom: 0.9rem !important;
 }}
+.occ-card-marker {{ display: none; }}
 .trend-card-marker {{ display: none; }}
 
 /* ── Responsive ── */
@@ -369,7 +298,6 @@ div[data-testid="stVerticalBlock"]:has(.trend-card-marker) {{
         padding-left: 1rem !important;
         padding-right: 1rem !important;
     }}
-    .appt-grid {{ grid-template-columns: 1fr 1fr; }}
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -422,7 +350,7 @@ def occ_badge(val):
     try:
         v   = float(val)
         col = occ_color(v)
-        if v >= 80:   bg = "#EEF2FF"
+        if v >= 80:   bg = "#1E1E3F"
         elif v >= 65: bg = WARN_BG
         else:         bg = RED_BG
         return f"<span class='occ-pill' style='background:{bg};color:{col};'>{v:.1f}%</span>"
@@ -510,11 +438,11 @@ t1, t2, t3 = st.columns(3)
 with t1:
     occ_col_top = occ_color(overall_occ) if overall_occ is not None else MUTED
     if overall_occ is not None:
-        if overall_occ >= 80:   occ_bg_top = "#EEF2FF"
+        if overall_occ >= 80:   occ_bg_top = "#1E1E3F"
         elif overall_occ >= 65: occ_bg_top = WARN_BG
         else:                   occ_bg_top = RED_BG
     else:
-        occ_bg_top = "#F3F4F6"
+        occ_bg_top = GREY_BG
 
     occ_display = pct(overall_occ) if overall_occ is not None else "No data"
 
@@ -696,7 +624,7 @@ with col_trend:
             line=dict(color=PURPLE, width=2.5),
             marker=dict(color=PURPLE, size=6),
             fill="tozeroy",
-            fillcolor="rgba(91,91,214,0.07)",
+            fillcolor="rgba(123,123,255,0.1)",
         ))
         fig_trend.update_layout(
             paper_bgcolor="rgba(0,0,0,0)",
