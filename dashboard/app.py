@@ -110,7 +110,7 @@ body, p, span, div, label, td, th {{
     background: {CARD};
     border: 1px solid {BORDER};
     border-radius: 16px;
-    padding: 1.4rem 1.5rem;
+    padding: 2rem;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     margin-bottom: 0.9rem;
 }}
@@ -178,7 +178,7 @@ body, p, span, div, label, td, th {{
     background: {CARD};
     border: 1px solid {BORDER};
     border-radius: 16px;
-    padding: 1.3rem 1.5rem 1.2rem;
+    padding: 2rem;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }}
 .kpi-label {{
@@ -591,7 +591,7 @@ if occ_vals:
         ],
     )
 
-    st.plotly_chart(fig_occ, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig_occ, use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
 
 st.markdown("<div style='height:0.75rem'></div>", unsafe_allow_html=True)
 
@@ -688,7 +688,7 @@ with col_trend:
             showlegend=False,
             hovermode="x unified",
         )
-        st.plotly_chart(fig_trend, use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(fig_trend, use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
     else:
         st.markdown(f"""
         <div class="db-card" style="height:100%;display:flex;align-items:center;justify-content:center;">
