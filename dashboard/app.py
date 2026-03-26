@@ -46,12 +46,14 @@ if not history:
     st.info("No data yet. The report runs every Monday at 6:00 AM Darwin time.")
     st.stop()
 
-week_labels = [
-    f"{r.get('period_start', '?')} → {r.get('period_end', '?')}"
-    for r in history
-]
-selected = st.selectbox("Select week", options=week_labels[::-1], index=0)
-latest = history[week_labels.index(selected)]
+reversed_history = list(reversed(history))
+selected_idx = st.selectbox(
+    "Select week",
+    options=range(len(reversed_history)),
+    format_func=lambda i: f"{reversed_history[i].get('period_start', '?')} → {reversed_history[i].get('period_end', '?')}",
+    index=0
+)
+latest = reversed_history[selected_idx]
 
 period_start = latest.get("period_start", "—")
 period_end = latest.get("period_end", "—")
@@ -139,7 +141,7 @@ if staff:
         labels={"total_sales": "Total Sales ($)", "name": ""},
     )
     fig_staff.update_traces(texttemplate="$%{text:,.0f}", textposition="outside")
-    fig_staff.update_layout(coloraxis_showscale=False, plot_bgcolor="rgba(0,0,0,0)", height=500)
+    fig_staff.update_layout(coloraxis_showscale=False, plot_bgcolor="rgba(0,0,0,0)", height=600)
     st.plotly_chart(fig_staff, use_container_width=True)
 
     display_df = staff_df[["name", "total_sales", "services", "products", "tips", "total_appts", "cancelled_appts", "no_show_appts", "services_sold"]].copy()
