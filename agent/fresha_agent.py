@@ -165,8 +165,10 @@ Extract the data and return ONLY a valid JSON object in this exact structure:
   "staff": [{{
     "name": "Staff Name", "services": 0.00, "products": 0.00,
     "total_sales": 0.00, "tips": 0.00, "total_appts": 0,
-    "cancelled_appts": 0, "no_show_appts": 0, "services_sold": 0
+    "cancelled_appts": 0, "no_show_appts": 0, "services_sold": 0,
+    "occupancy_pct": 0.0
   }}]
+
 }}
 Rules: Return ONLY the JSON. All monetary values as plain numbers. Include ALL staff members.
 CSV DATA:
