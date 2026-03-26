@@ -12,25 +12,30 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# ── Theme ─────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 .stApp { background-color: #0C0C0C !important; }
 .main .block-container { padding-top: 1.5rem; padding-bottom: 2rem; }
 section[data-testid="stSidebar"] { display: none; }
 #MainMenu, footer { visibility: hidden; }
+
 h1 { color: #F0B429 !important; font-size: 1.8rem !important; font-weight: 700 !important; }
 h2 { color: #F0B429 !important; font-size: 0.85rem !important; font-weight: 600 !important;
      text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.5rem !important; }
 hr { border-color: #1E1E1E !important; margin: 1.2rem 0 !important; }
+
 .stSelectbox label { color: #555 !important; font-size: 0.75rem !important;
                      text-transform: uppercase; letter-spacing: 0.08em; }
 .stSelectbox [data-baseweb="select"] { background-color: #1A1A1A !important;
                                         border-color: #2A2A2A !important; border-radius: 8px !important; }
 .stSelectbox [data-baseweb="select"] * { color: #E5E5E5 !important; }
+
 [data-testid="stMetric"] { background:#141414; border:1px solid #222; border-radius:12px; padding:1rem !important; }
 [data-testid="stMetricLabel"] p { color:#666 !important; font-size:0.72rem !important;
                                    text-transform:uppercase; letter-spacing:0.1em; }
 [data-testid="stMetricValue"] { color:#E5E5E5 !important; font-size:1.5rem !important; font-weight:700 !important; }
+
 .stDataFrame thead tr th { background-color:#1A1A1A !important; color:#F0B429 !important; border-bottom:1px solid #2A2A2A !important; }
 .stDataFrame tbody tr:nth-child(even) td { background-color:#111 !important; }
 .stDataFrame tbody tr:nth-child(odd) td { background-color:#161616 !important; }
@@ -38,6 +43,7 @@ hr { border-color: #1E1E1E !important; margin: 1.2rem 0 !important; }
 </style>
 """, unsafe_allow_html=True)
 
+# ── Constants ─────────────────────────────────────────────────────────────────
 GOLD = "#F0B429"
 DARK_CARD = "#141414"
 BORDER = "#222222"
@@ -50,6 +56,7 @@ GRID = "#1E1E1E"
 DATA_FILE = Path(__file__).parent.parent / "data" / "performance_summary.json"
 
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300)
 def load_data():
     if not DATA_FILE.exists():
@@ -93,6 +100,16 @@ def n(val):
         return 0
 
 
+def fmt_date(d):
+    try:
+        from datetime import datetime
+        dt = datetime.strptime(d, "%Y-%m-%d")
+        return f"{dt.day} {dt.strftime('%B')} {dt.year}"
+    except Exception:
+        return d or "—"
+
+
+# ── Load ──────────────────────────────────────────────────────────────────────
 history = load_data()
 
 if not history:
@@ -102,6 +119,7 @@ if not history:
 
 reversed_history = list(reversed(history))
 
+# ── Header ────────────────────────────────────────────────────────────────────
 col_t, col_sel = st.columns([2, 2])
 with col_t:
     st.title("💈 Diamond Barbers")
@@ -110,8 +128,8 @@ with col_sel:
         "week",
         options=range(len(reversed_history)),
         format_func=lambda i: (
-            f"{reversed_history[i].get('period_start','?')}  →  "
-            f"{reversed_history[i].get('period_end','?')}"
+            f"{fmt_date(reversed_history[i].get('period_start','?'))}  →  "
+            f"{fmt_date(reversed_history[i].get('period_end','?'))}"
         ),
         index=0,
         label_visibility="collapsed",
@@ -124,12 +142,13 @@ perf = latest.get("sales_performance", {})
 staff_list = latest.get("staff", [])
 
 st.caption(
-    f"Week: **{latest.get('period_start','—')}** to **{latest.get('period_end','—')}**"
-    f"  ·  Fetched: {latest.get('report_date','—')}"
+    f"Week: **{fmt_date(latest.get('period_start','—'))}** to **{fmt_date(latest.get('period_end','—'))}**"
+    f"  ·  Fetched: {fmt_date(latest.get('report_date','—'))}"
 )
 
 st.divider()
 
+# ── Row 1: Three big KPIs ─────────────────────────────────────────────────────
 occ_values = [float(s.get("occupancy_pct", 0) or 0) for s in staff_list if s.get("occupancy_pct")]
 overall_occ = sum(occ_values) / len(occ_values) if occ_values else None
 
@@ -149,6 +168,7 @@ k3.markdown(card("Overall Occupancy", occ_display, occ_color, "large"), unsafe_a
 
 st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
+# ── Row 2: Secondary KPIs ─────────────────────────────────────────────────────
 s1, s2, s3, s4, s5 = st.columns(5)
 s1.markdown(card("Total Sales", c(sales.get("total_sales"))), unsafe_allow_html=True)
 s2.markdown(card("Inc. Tips & Charges", c(sales.get("total_sales_and_other"))), unsafe_allow_html=True)
@@ -158,6 +178,7 @@ s5.markdown(card("Avg Service Value", c(perf.get("avg_service_value"))), unsafe_
 
 st.divider()
 
+# ── Occupancy Chart ───────────────────────────────────────────────────────────
 st.subheader("Staff Occupancy")
 
 if occ_values:
@@ -197,11 +218,12 @@ if occ_values:
         bargap=0.35,
     )
     st.plotly_chart(fig_occ, use_container_width=True)
+
     st.markdown(
         f"<div style='display:flex;gap:2rem;margin-top:-0.8rem;'>"
-        f"<span style='color:{GREEN};font-size:0.78rem;'>● ≥80% On Target</span>"
-        f"<span style='color:{ORANGE};font-size:0.78rem;'>● 65–79% Needs Attention</span>"
-        f"<span style='color:{RED};font-size:0.78rem;'>● &lt;65% Below Target</span>"
+        f"<span style='color:{GREEN};font-size:0.78rem;'>● ≥80% &nbsp;On Target</span>"
+        f"<span style='color:{ORANGE};font-size:0.78rem;'>● 65–79% &nbsp;Needs Attention</span>"
+        f"<span style='color:{RED};font-size:0.78rem;'>● &lt;65% &nbsp;Below Target</span>"
         f"</div>",
         unsafe_allow_html=True
     )
@@ -215,6 +237,7 @@ else:
 
 st.divider()
 
+# ── Sales Breakdown + Appointments ───────────────────────────────────────────
 left, right = st.columns(2)
 
 with left:
@@ -276,6 +299,7 @@ with right:
 
 st.divider()
 
+# ── Staff Table ───────────────────────────────────────────────────────────────
 st.subheader("Staff Performance")
 if staff_list:
     t_df = pd.DataFrame(staff_list)
@@ -288,11 +312,9 @@ if staff_list:
         cols.append("occupancy_pct")
 
     t_df = t_df[cols].copy()
-    new_cols = ["Staff", "Total Sales", "Services", "Products", "Tips",
-                "Appts", "Cancelled", "No-Shows", "Svcs Sold"]
-    if "occupancy_pct" in cols:
-        new_cols.append("Occupancy %")
-    t_df.columns = new_cols
+    t_df.columns = (["Staff", "Total Sales", "Services", "Products", "Tips",
+                      "Appts", "Cancelled", "No-Shows", "Svcs Sold"] +
+                     (["Occupancy %"] if "occupancy_pct" in cols else []))
 
     for col in ["Total Sales", "Services", "Products", "Tips"]:
         t_df[col] = pd.to_numeric(t_df[col], errors="coerce").fillna(0).apply(lambda x: f"${x:,.2f}")
@@ -301,12 +323,13 @@ if staff_list:
 
     st.dataframe(t_df, hide_index=True, use_container_width=True)
 
+# ── Weekly Trend ──────────────────────────────────────────────────────────────
 valid_trend = [r for r in history if "sales_summary" in r]
 if len(valid_trend) > 1:
     st.divider()
-    st.subheader("Weekly Trend")
+    st.subheader("Weekly Trend — Total Sales")
     trend_data = [{
-        "Week": r.get("period_end", r.get("report_date")),
+        "Week": fmt_date(r.get("period_end", r.get("report_date", ""))),
         "Total Sales": float(r.get("sales_summary", {}).get("total_sales", 0) or 0),
     } for r in valid_trend]
     t_df2 = pd.DataFrame(trend_data).sort_values("Week")
