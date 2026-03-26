@@ -577,8 +577,9 @@ if occ_vals:
         title=dict(
             text="Occupancy rate",
             font=dict(color=TEXT, size=14),
-            x=0.01, xanchor="left",
-            y=0.99, yanchor="top",
+            x=0, xanchor="left",
+            y=1.0, yanchor="bottom",
+            pad=dict(l=20, t=15),
         ),
         xaxis=dict(
             range=[0, 100],
@@ -587,7 +588,7 @@ if occ_vals:
             zeroline=False, tickfont=dict(size=10),
         ),
         yaxis=dict(color=TEXT, tickfont=dict(size=11)),
-        margin=dict(l=20, r=20, t=60, b=20),
+        margin=dict(l=120, r=20, t=55, b=20),
         bargap=0.3,
         annotations=[
             dict(xref="paper", yref="paper", x=0.99, y=1.08,
