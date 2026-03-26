@@ -170,7 +170,8 @@ Extract the data and return ONLY a valid JSON object in this exact structure:
   }}]
 
 }}
-Rules: Return ONLY the JSON. All monetary values as plain numbers. Include ALL staff members.
+Rules: Return ONLY the JSON. All monetary values as plain numbers. Include ALL staff members. occupancy_pct is the "% Occupancy" column (booked hours / available hours as a percentage, e.g. 72.5 not 0.725).
+
 CSV DATA:
 {csv_content[:50000]}"""}]
     )
