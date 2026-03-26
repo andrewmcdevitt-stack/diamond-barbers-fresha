@@ -174,7 +174,7 @@ Extract the data and return ONLY a valid JSON object in this exact structure:
 }}
 Rules: Return ONLY the JSON. All monetary values as plain numbers. Include ALL staff members.
 CSV DATA:
-{csv_content[:10000]}"""}]
+{csv_content[:50000]}"""}]
     )
     raw = message.content[0].text
     start = raw.find("{")
