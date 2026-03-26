@@ -312,8 +312,12 @@ body, p, span, div, label, td, th {{
 /* ── Selectbox ── */
 .stSelectbox {{ margin-top: 1rem !important; }}
 .stSelectbox [data-baseweb="select"] {{
+    background: {CARD} !important;
     border: 1px solid {BORDER} !important;
     border-radius: 20px !important;
+}}
+.stSelectbox [data-baseweb="select"] > div {{
+    background: {CARD} !important;
 }}
 .stSelectbox [data-baseweb="select"] * {{ color: {TEXT} !important; }}
 .stSelectbox label {{ color: {MUTED} !important; font-size: 0.72rem !important; }}
@@ -336,6 +340,24 @@ body, p, span, div, label, td, th {{
 
 .occ-card-marker {{ display: none; }}
 .trend-card-marker {{ display: none; }}
+
+/* ── Occupancy chart card ── */
+[data-testid="stVerticalBlock"]:has(.occ-card-marker) {{
+    background: {CARD} !important;
+    border: 1px solid {BORDER} !important;
+    border-radius: 16px !important;
+    padding: 1.4rem 1.5rem !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+}}
+
+/* ── Trend chart card ── */
+[data-testid="stVerticalBlock"]:has(.trend-card-marker) {{
+    background: {CARD} !important;
+    border: 1px solid {BORDER} !important;
+    border-radius: 16px !important;
+    padding: 1.4rem 1.5rem !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+}}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {{
