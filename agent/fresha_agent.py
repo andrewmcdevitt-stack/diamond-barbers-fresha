@@ -302,6 +302,17 @@ CSV DATA:
         result["period_start"] = date_from
     if date_to:
         result["period_end"] = date_to
+
+    # Override sales_summary totals by summing individual staff rows in Python.
+    # Claude consistently reads the cached Total row — this ensures correct values.
+    staff = result.get("staff", [])
+    if staff:
+        result["sales_summary"]["services"]   = round(sum(s.get("services",   0) for s in staff), 2)
+        result["sales_summary"]["products"]   = round(sum(s.get("products",   0) for s in staff), 2)
+        result["sales_summary"]["tips"]       = round(sum(s.get("tips",       0) for s in staff), 2)
+        result["sales_summary"]["total_sales"]= round(sum(s.get("total_sales",0) for s in staff), 2)
+        print(f"Recalculated from staff rows: services={result['sales_summary']['services']}, products={result['sales_summary']['products']}, tips={result['sales_summary']['tips']}, total_sales={result['sales_summary']['total_sales']}")
+
     return result
 
 
