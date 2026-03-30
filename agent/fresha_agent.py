@@ -114,57 +114,33 @@ async def download_csv(email, password):
                 await page.goto("https://partners.fresha.com/reports", wait_until="networkidle")
                 await page.wait_for_timeout(3000)
 
-            # Navigate to Performance Summary (no date params — we'll use the UI picker)
-            report_url = "https://partners.fresha.com/reports/table/performance-summary"
+            # Calculate last week Monday–Sunday in Darwin time (UTC+9:30)
+            from datetime import timedelta, timezone
+            DARWIN_TZ = timezone(timedelta(hours=9, minutes=30))
+            today = datetime.now(DARWIN_TZ)
+            days_since_monday = today.weekday()
+            last_monday = today - timedelta(days=days_since_monday + 7)
+            last_sunday = last_monday + timedelta(days=6)
+            date_from = last_monday.strftime("%Y-%m-%d")
+            date_to = last_sunday.strftime("%Y-%m-%d")
+            print(f"Calculated date range: {date_from} → {date_to}")
+
+            # Navigate to reports landing page first to reset SPA state
+            print("Resetting SPA state via reports landing page...")
+            await page.goto("https://partners.fresha.com/reports", wait_until="networkidle")
+            await page.wait_for_timeout(2000)
+
+            # Now navigate to Performance Summary with explicit dates
+            report_url = f"https://partners.fresha.com/reports/table/performance-summary?dateFrom={date_from}&dateTo={date_to}"
             print(f"Navigating to: {report_url}")
             await page.goto(report_url, wait_until="networkidle")
             await page.wait_for_timeout(3000)
 
-            # Open the date range picker and select "Last week"
-            print("Opening date range picker...")
-            try:
-                # The date range button typically shows the current range text — click it
-                await page.locator('[data-qa="date-range-picker"]').click(timeout=8000)
-            except Exception:
-                # Fallback: look for any button near the top that looks like a date range
-                await page.locator('button:has-text("–"), button:has-text("-"), button:has-text("Mar"), button:has-text("Feb"), button:has-text("Jan")').first.click(timeout=8000)
-            await page.wait_for_timeout(1000)
-
-            print("Selecting 'Last week'...")
-            await page.get_by_text("Last week", exact=True).click(timeout=8000)
-            await page.wait_for_timeout(1000)
-
-            # Confirm/apply if there's a button (some pickers need confirmation)
-            try:
-                await page.get_by_role("button", name="Apply").click(timeout=3000)
-            except Exception:
-                pass  # No apply button needed
-
-            # Wait for report to reload with the new date range
-            await page.wait_for_load_state("networkidle")
-            await page.wait_for_timeout(4000)
-            print(f"Performance Summary URL after selecting Last week: {page.url}")
-
-            # Read the actual dates from the updated URL
-            from urllib.parse import urlparse, parse_qs
-            from datetime import timedelta, timezone
-            parsed = urlparse(page.url)
-            params = parse_qs(parsed.query)
-            date_from = params.get("dateFrom", [None])[0]
-            date_to = params.get("dateTo", [None])[0]
-            print(f"Date range from URL: {date_from} → {date_to}")
-
-            # Fallback: if URL didn't include dates, calculate using Darwin timezone
-            if not date_from or not date_to:
-                print("URL did not contain dates — using Darwin timezone calculation as fallback.")
-                DARWIN_TZ = timezone(timedelta(hours=9, minutes=30))
-                today = datetime.now(DARWIN_TZ)
-                days_since_monday = today.weekday()
-                last_monday = today - timedelta(days=days_since_monday + 7)
-                last_sunday = last_monday + timedelta(days=6)
-                date_from = last_monday.strftime("%Y-%m-%d")
-                date_to = last_sunday.strftime("%Y-%m-%d")
-                print(f"Fallback date range: {date_from} → {date_to}")
+            # Reload to ensure the URL date params take effect (not cached session state)
+            print("Reloading to clear cached state...")
+            await page.reload(wait_until="networkidle")
+            await page.wait_for_timeout(5000)
+            print(f"Final URL: {page.url}")
 
             print("Downloading CSV...")
             async with page.expect_download(timeout=30000) as download_info:
