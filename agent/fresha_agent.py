@@ -120,36 +120,24 @@ async def download_csv(email, password):
             await page.wait_for_timeout(4000)
             print(f"Performance Summary URL: {page.url}")
 
-            # Print all button texts on the page for debugging
-            all_buttons = await page.locator("button").all()
-            button_texts = []
-            for btn in all_buttons:
-                try:
-                    txt = (await btn.inner_text()).strip()
-                    if txt:
-                        button_texts.append(txt)
-                except Exception:
-                    pass
-            print(f"Buttons on page: {button_texts}")
-
-            # Click the date range filter button (label varies — try common options)
-            print("Clicking date range filter...")
-            date_filter_opened = False
-            for label in ["Month to date", "Last week", "Last month", "This week", "Today", "Yesterday", "This month"]:
-                try:
-                    await page.get_by_text(label, exact=True).first.click(timeout=2000)
-                    print(f"Clicked date filter showing: {label}")
-                    date_filter_opened = True
-                    break
-                except Exception:
-                    continue
-            if not date_filter_opened:
-                raise Exception(f"Could not find date range filter. Buttons were: {button_texts}")
+            # Step 1: Click the "Month to date" filter chip to open the date popup
+            print("Opening date range popup...")
+            await page.get_by_text("Month to date", exact=True).first.click(timeout=10000)
             await page.wait_for_timeout(1000)
 
-            # Select "Last week"
+            # Step 2: Select "Last week" from the native <select> inside the popup
             print("Selecting Last week...")
-            await page.get_by_text("Last week", exact=True).click(timeout=10000)
+            await page.locator('select:has(option[value="last_week"])').select_option(value="last_week")
+            await page.wait_for_timeout(1000)
+
+            # Step 3: Click Apply if present
+            print("Clicking Apply...")
+            try:
+                await page.get_by_role("button", name="Apply").click(timeout=5000)
+                print("Clicked Apply.")
+            except Exception:
+                print("No Apply button found — continuing.")
+
             await page.wait_for_load_state("networkidle")
             await page.wait_for_timeout(4000)
             print(f"Final URL: {page.url}")
@@ -179,7 +167,6 @@ async def download_csv(email, password):
             async with page.expect_download(timeout=30000) as download_info:
                 await page.get_by_role("button", name="Options").click(timeout=10000)
                 await page.wait_for_timeout(1500)
-                # Click the CSV menu item specifically (not the "Export" section header)
                 await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
                 print("Clicked CSV menuitem.")
             download = await download_info.value
