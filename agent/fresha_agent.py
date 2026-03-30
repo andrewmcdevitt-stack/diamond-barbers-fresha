@@ -126,9 +126,19 @@ async def download_csv(email, password):
             await page.wait_for_timeout(3000)
             print(f"Performance Summary URL: {page.url}")
 
-            # Step 3: Click the date range button (shows "Month to date" by default)
-            print("Clicking date range picker (Month to date)...")
-            await page.get_by_text("Month to date", exact=True).click(timeout=10000)
+            # Step 3: Click the date range filter button (label varies — try common options)
+            print("Clicking date range filter...")
+            date_filter_opened = False
+            for label in ["Month to date", "Last week", "Last month", "This week", "Today", "Yesterday", "This month"]:
+                try:
+                    await page.get_by_text(label, exact=True).first.click(timeout=3000)
+                    print(f"Clicked date filter showing: {label}")
+                    date_filter_opened = True
+                    break
+                except Exception:
+                    continue
+            if not date_filter_opened:
+                raise Exception("Could not find date range filter button — none of the known labels matched.")
             await page.wait_for_timeout(1000)
 
             # Step 4: Select "Last week"
