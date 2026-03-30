@@ -1,7 +1,7 @@
 import asyncio
 import os
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 
 import anthropic
@@ -15,11 +15,11 @@ DATA_DIR.mkdir(exist_ok=True)
 
 SESSION_FILE = DATA_DIR / "session.json"
 
-DARWIN_TZ = timezone(timedelta(hours=9, minutes=30))
-
 
 async def download_csv(email, password):
     csv_path = None
+    date_from = None
+    date_to = None
     async with async_playwright() as p:
         headless = os.environ.get("CI", "false").lower() == "true"
         browser = await p.chromium.launch(headless=headless)
@@ -103,18 +103,20 @@ async def download_csv(email, password):
                 await page.goto("https://partners.fresha.com/reports", wait_until="networkidle")
                 await page.wait_for_timeout(3000)
 
-            today = datetime.now(DARWIN_TZ)
-            days_since_monday = today.weekday()
-            last_monday = today - timedelta(days=days_since_monday + 7)
-            last_sunday = last_monday + timedelta(days=6)
-            date_from = last_monday.strftime("%Y-%m-%d")
-            date_to = last_sunday.strftime("%Y-%m-%d")
-
-            report_url = f"https://partners.fresha.com/reports/table/performance-summary?dateFrom={date_from}&dateTo={date_to}"
+            # Navigate to Performance Summary using Fresha's own "last week" shortcut
+            from urllib.parse import urlparse, parse_qs
+            report_url = "https://partners.fresha.com/reports/table/performance-summary?shortcut=last_week"
             print(f"Navigating to: {report_url}")
             await page.goto(report_url, wait_until="networkidle")
             await page.wait_for_timeout(3000)
             print(f"Performance Summary URL: {page.url}")
+
+            # Read the dates Fresha resolved for "last week" from the page URL
+            parsed = urlparse(page.url)
+            params = parse_qs(parsed.query)
+            date_from = params.get("dateFrom", [None])[0]
+            date_to   = params.get("dateTo",   [None])[0]
+            print(f"Resolved date range: {date_from} → {date_to}")
 
             print("Downloading CSV...")
             async with page.expect_download(timeout=30000) as download_info:
@@ -137,7 +139,7 @@ async def download_csv(email, password):
             print(f"Screenshot saved to {screenshot_path} for debugging")
         finally:
             await browser.close()
-    return csv_path
+    return csv_path, date_from, date_to
 
 
 def extract_data_from_csv(csv_path, api_key, date_from=None, date_to=None):
@@ -193,15 +195,8 @@ async def run():
     password = os.environ["FRESHA_PASSWORD"]
     api_key = os.environ["ANTHROPIC_API_KEY"]
 
-    today = datetime.now(DARWIN_TZ)
-    days_since_monday = today.weekday()
-    last_monday = today - timedelta(days=days_since_monday + 7)
-    last_sunday = last_monday + timedelta(days=6)
-    date_from = last_monday.strftime("%Y-%m-%d")
-    date_to = last_sunday.strftime("%Y-%m-%d")
-
     print(f"[{datetime.now()}] Starting Fresha data extraction...")
-    csv_path = await download_csv(email, password)
+    csv_path, date_from, date_to = await download_csv(email, password)
 
     if not csv_path or not Path(csv_path).exists():
         print("ERROR: CSV was not downloaded.")
