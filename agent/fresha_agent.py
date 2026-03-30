@@ -110,7 +110,7 @@ async def download_csv(email, password):
             date_from = last_monday.strftime("%Y-%m-%d")
             date_to = last_sunday.strftime("%Y-%m-%d")
 
-            report_url = f"https://partners.fresha.com/reports/table/performance-summary?shortcut=last_week&dateFrom={date_from}&dateTo={date_to}"
+            report_url = f"https://partners.fresha.com/reports/table/performance-summary?dateFrom={date_from}&dateTo={date_to}"
             print(f"Navigating to: {report_url}")
             await page.goto(report_url, wait_until="networkidle")
             await page.wait_for_timeout(3000)
