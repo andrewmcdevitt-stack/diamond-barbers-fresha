@@ -1,7 +1,7 @@
 import asyncio
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import anthropic
@@ -14,6 +14,9 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
 SESSION_FILE = DATA_DIR / "session.json"
+
+DARWIN_TZ = timezone(timedelta(hours=9, minutes=30))
+
 
 async def download_csv(email, password):
     csv_path = None
@@ -100,7 +103,7 @@ async def download_csv(email, password):
                 await page.goto("https://partners.fresha.com/reports", wait_until="networkidle")
                 await page.wait_for_timeout(3000)
 
-            today = datetime.now()
+            today = datetime.now(DARWIN_TZ)
             days_since_monday = today.weekday()
             last_monday = today - timedelta(days=days_since_monday + 7)
             last_sunday = last_monday + timedelta(days=6)
@@ -136,6 +139,7 @@ async def download_csv(email, password):
             await browser.close()
     return csv_path
 
+
 def extract_data_from_csv(csv_path, api_key, date_from=None, date_to=None):
     with open(csv_path, "r", encoding="utf-8-sig") as f:
         csv_content = f.read()
@@ -168,10 +172,8 @@ Extract the data and return ONLY a valid JSON object in this exact structure:
     "cancelled_appts": 0, "no_show_appts": 0, "services_sold": 0,
     "occupancy_pct": 0.0
   }}]
-
 }}
 Rules: Return ONLY the JSON. All monetary values as plain numbers. Include ALL staff members. occupancy_pct is the "% Occupancy" column (booked hours / available hours as a percentage, e.g. 72.5 not 0.725).
-
 CSV DATA:
 {csv_content[:50000]}"""}]
     )
@@ -185,12 +187,13 @@ CSV DATA:
         result["period_end"] = date_to
     return result
 
+
 async def run():
     email = os.environ["FRESHA_EMAIL"]
     password = os.environ["FRESHA_PASSWORD"]
     api_key = os.environ["ANTHROPIC_API_KEY"]
 
-    today = datetime.now()
+    today = datetime.now(DARWIN_TZ)
     days_since_monday = today.weekday()
     last_monday = today - timedelta(days=days_since_monday + 7)
     last_sunday = last_monday + timedelta(days=6)
@@ -233,6 +236,7 @@ async def run():
 
     print(f"[{datetime.now()}] Saved to {output_file}")
     print(json.dumps(data, indent=2))
+
 
 if __name__ == "__main__":
     asyncio.run(run())
