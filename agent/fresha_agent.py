@@ -192,6 +192,10 @@ def extract_data_from_csv(csv_path, api_key, date_from=None, date_to=None):
     with open(csv_path, "r", encoding="utf-8-sig") as f:
         csv_content = f.read()
 
+    print("=== FIRST 2000 CHARS OF CSV ===")
+    print(csv_content[:2000])
+    print("=== END CSV PREVIEW ===")
+
     client = anthropic.Anthropic(api_key=api_key)
     message = client.messages.create(
         model="claude-sonnet-4-6",
