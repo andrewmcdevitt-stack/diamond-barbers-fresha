@@ -114,34 +114,40 @@ async def download_csv(email, password):
                 await page.goto("https://partners.fresha.com/reports", wait_until="networkidle")
                 await page.wait_for_timeout(3000)
 
-            # Step 1: Go to Reports landing page
-            print("Navigating to Reports...")
-            await page.goto("https://partners.fresha.com/reports", wait_until="networkidle")
-            await page.wait_for_timeout(3000)
-
-            # Step 2: Click "Performance Summary" from the reports list
-            print("Clicking Performance Summary...")
-            await page.get_by_text("Performance Summary", exact=True).click(timeout=10000)
-            await page.wait_for_load_state("networkidle")
-            await page.wait_for_timeout(3000)
+            # Navigate directly to Performance Summary report
+            print("Navigating to Performance Summary...")
+            await page.goto("https://partners.fresha.com/reports/table/performance-summary", wait_until="networkidle")
+            await page.wait_for_timeout(4000)
             print(f"Performance Summary URL: {page.url}")
 
-            # Step 3: Click the date range filter button (label varies — try common options)
+            # Print all button texts on the page for debugging
+            all_buttons = await page.locator("button").all()
+            button_texts = []
+            for btn in all_buttons:
+                try:
+                    txt = (await btn.inner_text()).strip()
+                    if txt:
+                        button_texts.append(txt)
+                except Exception:
+                    pass
+            print(f"Buttons on page: {button_texts}")
+
+            # Click the date range filter button (label varies — try common options)
             print("Clicking date range filter...")
             date_filter_opened = False
             for label in ["Month to date", "Last week", "Last month", "This week", "Today", "Yesterday", "This month"]:
                 try:
-                    await page.get_by_text(label, exact=True).first.click(timeout=3000)
+                    await page.get_by_text(label, exact=True).first.click(timeout=2000)
                     print(f"Clicked date filter showing: {label}")
                     date_filter_opened = True
                     break
                 except Exception:
                     continue
             if not date_filter_opened:
-                raise Exception("Could not find date range filter button — none of the known labels matched.")
+                raise Exception(f"Could not find date range filter. Buttons were: {button_texts}")
             await page.wait_for_timeout(1000)
 
-            # Step 4: Select "Last week"
+            # Select "Last week"
             print("Selecting Last week...")
             await page.get_by_text("Last week", exact=True).click(timeout=10000)
             await page.wait_for_load_state("networkidle")
