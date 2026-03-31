@@ -2,15 +2,14 @@ name: Weekly Fresha Report
 
 on:
   schedule:
+    # 20:30 UTC Sunday = 6:00 AM Monday Darwin time (UTC+9:30)
     - cron: "30 20 * * 0"
-  workflow_dispatch:
+  workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
   extract-report:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout repository
@@ -29,25 +28,19 @@ jobs:
       - name: Install Playwright browser
         run: playwright install chromium --with-deps
 
-      - name: Run Fresha agent
+      - name: Run Darwin Fresha agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FRESHA_EMAIL: ${{ secrets.FRESHA_EMAIL }}
           FRESHA_PASSWORD: ${{ secrets.FRESHA_PASSWORD }}
-        run: python -u agent/fresha_agent.py
+        run: python agent/fresha_agent.py
 
-      - name: Refresh session secret
+      - name: Run Cairns Fresha agent
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          python -c "
-          import json, base64
-          with open('data/session.json') as f:
-              data = json.load(f)
-          cookies = [c for c in data.get('cookies', []) if 'fresha' in c['domain'] and c.get('httpOnly')]
-          filtered = {'cookies': cookies, 'origins': []}
-          print(base64.b64encode(json.dumps(filtered).encode()).decode())
-          " | gh secret set FRESHA_SESSION --repo ${{ github.repository }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CAIRNS_FRESHA_EMAIL: ${{ secrets.CAIRNS_FRESHA_EMAIL }}
+          CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
+        run: python agent/fresha_agent_cairns.py
 
       - name: Commit and push updated data
         run: |
