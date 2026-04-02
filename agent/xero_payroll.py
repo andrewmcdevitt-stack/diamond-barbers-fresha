@@ -1,512 +1,879 @@
-"""
-xero_payroll.py
----------------
-Fetches the most recent posted payroll from all Xero organisations and:
-  1. Saves summary to data/xero_payroll.json  (for the dashboard)
-  2. Generates a PDF report
-  3. Emails the PDF to admin@diamondbarbers.com.au
-
-Run with:  python agent/xero_payroll.py
-Requires:  data/xero_token.json  (created by python agent/xero_auth.py)
-"""
-
-import asyncio
-import base64
-import json
-import os
-import re
-import smtplib
-import urllib.parse
-import urllib.request
-from datetime import datetime, timedelta, timezone
-from email import encoders as email_encoders
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from pathlib import Path
-
-from dotenv import load_dotenv
-from playwright.async_api import async_playwright
-
-load_dotenv()
-
-DATA_DIR      = Path(__file__).parent.parent / "data"
-TOKEN_FILE    = DATA_DIR / "xero_token.json"
-OUTPUT_JSON   = DATA_DIR / "xero_payroll.json"
-
-CLIENT_ID     = os.environ["XERO_CLIENT_ID"]
-CLIENT_SECRET = os.environ["XERO_CLIENT_SECRET"]
-EMAIL_HOST    = os.environ.get("EMAIL_HOST", "mail.diamondbarbers.com.au")
-EMAIL_FROM    = "claude@diamondbarbers.com.au"
-EMAIL_TO      = "admin@diamondbarbers.com.au"
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
-
-# Short display names for each Xero org
-ORG_SHORT_NAMES = {
-    "Diamond Barbers Pty Ltd":        "Darwin",
-    "D.B. Parap Pty Ltd":             "Parap",   # merged into Darwin below
-    "DB WULGURU PTY LTD":             "Wulguru",
-    "DIAMOND BARBERS CAIRNS PTY LTD": "Cairns",
-}
-
-# Final display order (Townsville is a virtual location created in post-processing)
-ORG_ORDER = ["Darwin", "Townsville", "Cairns"]
-
-# Xero orgs to merge into a target display location
-LOCATION_MERGES = [
-    ("Parap", "Darwin"),   # D.B. Parap rolls into Darwin
-]
-
-# Employees pulled from their Xero org into the virtual Townsville location
-TOWNSVILLE_EMPLOYEES = [
-    "Alfon Amora",
-    "Bailey Wosomo",
-    "Brazil Lamsen",
-    "Dion Mataele",
-    "Jack Bastock",
-    "Nelson Diwa",
-]
-
-
-# ── Token management ──────────────────────────────────────────────────────────
-
-def load_token():
-    if not TOKEN_FILE.exists():
-        raise FileNotFoundError(
-            f"Token file not found: {TOKEN_FILE}\n"
-            "Run:  python agent/xero_auth.py"
-        )
-    return json.loads(TOKEN_FILE.read_text())
-
-
-def refresh_token(token_data):
-    """Exchange refresh token for a new access token and save it."""
-    credentials = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
-    data = urllib.parse.urlencode({
-        "grant_type":    "refresh_token",
-        "refresh_token": token_data["refresh_token"],
-    }).encode()
-    req = urllib.request.Request(
-        "https://identity.xero.com/connect/token",
-        data=data,
-        headers={
-            "Authorization": f"Basic {credentials}",
-            "Content-Type":  "application/x-www-form-urlencoded",
-        },
-    )
-    with urllib.request.urlopen(req) as resp:
-        new_token = json.loads(resp.read())
-
-    new_token["tenants"] = token_data.get("tenants", [])
-    TOKEN_FILE.write_text(json.dumps(new_token, indent=2))
-    print("  Token refreshed and saved.")
-    return new_token
-
-
-def get_valid_token():
-    token = load_token()
-    token = refresh_token(token)
-    return token
-
-
-# ── Xero API helper ───────────────────────────────────────────────────────────
-
-def xero_get(path, tenant_id, access_token):
-    req = urllib.request.Request(
-        f"https://api.xero.com{path}",
-        headers={
-            "Authorization":  f"Bearer {access_token}",
-            "Xero-Tenant-Id": tenant_id,
-            "Accept":         "application/json",
-        },
-    )
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
-
-
-# ── Date helpers ──────────────────────────────────────────────────────────────
-
-def parse_xero_date(date_str):
-    """Parse Xero /Date(ms)/ format or ISO date string → date object."""
-    if not date_str:
-        return None
-    m = re.match(r"/Date\((\d+)", str(date_str))
-    if m:
-        ms = int(m.group(1))
-        return datetime.fromtimestamp(ms / 1000, tz=timezone.utc).date()
-    try:
-        return datetime.fromisoformat(str(date_str)[:10]).date()
-    except Exception:
-        return None
-
-
-def fmt_period(start_date, end_date):
-    """Format '8 Jan – 14 Jan 2024' from two date objects."""
-    if not start_date or not end_date:
-        return ""
-    return f"{start_date.day} {start_date.strftime('%b')} – {end_date.day} {end_date.strftime('%b %Y')}"
-
-
-# ── Payroll fetching ──────────────────────────────────────────────────────────
-
-def fetch_org_payroll(tenant_id, tenant_name, access_token):
-    """Fetch the most recent posted payroll run for one organisation."""
-    short_name = ORG_SHORT_NAMES.get(tenant_name, tenant_name)
-    print(f"  Fetching payroll for: {tenant_name} ({short_name})")
-
-    try:
-        data = xero_get("/payroll.xro/1.0/PayRuns", tenant_id, access_token)
-    except Exception as e:
-        print(f"    ERROR fetching PayRuns: {e}")
-        return None
-
-    pay_runs = data.get("PayRuns", [])
-    if not pay_runs:
-        print(f"    No pay runs found.")
-        return None
-
-    posted = [r for r in pay_runs if r.get("PayRunStatus") == "POSTED"] or pay_runs
-
-    def run_sort_key(r):
-        d = parse_xero_date(r.get("PaymentDate") or r.get("PayRunPeriodEndDate", ""))
-        from datetime import date
-        return d or date.min
-
-    posted.sort(key=run_sort_key, reverse=True)
-    latest     = posted[0]
-    pay_run_id = latest.get("PayRunID")
-
-    try:
-        detail = xero_get(f"/payroll.xro/1.0/PayRuns/{pay_run_id}", tenant_id, access_token)
-        run    = detail.get("PayRuns", [{}])[0]
-    except Exception as e:
-        print(f"    ERROR fetching PayRun detail: {e}")
-        run = latest
-
-    payslip_stubs = run.get("Payslips", [])
-    start_date    = parse_xero_date(run.get("PayRunPeriodStartDate", ""))
-    end_date      = parse_xero_date(run.get("PayRunPeriodEndDate", ""))
-    payment_date  = parse_xero_date(run.get("PaymentDate", ""))
-
-    print(f"    Period: {start_date} – {end_date}  |  Payslips: {len(payslip_stubs)}")
-
-    # Per-employee: read Wages, Tax, Super, NetPay directly from payslip stubs
-    # These fields are always present in the PayRun detail response.
-    employees = []
-    for stub in payslip_stubs:
-        first     = stub.get("FirstName", "")
-        last      = stub.get("LastName", "")
-        name      = f"{first} {last}".strip() or "Unknown"
-        emp_wages = float(stub.get("Wages", 0) or 0)   # gross before super
-        emp_super = float(stub.get("Super", 0) or 0)   # actual super from Xero
-        emp_tax   = float(stub.get("Tax", 0) or 0)
-        emp_net   = float(stub.get("NetPay", 0) or 0)
-        emp_total = round(emp_wages + emp_super, 2)     # total employer cost
-
-        employees.append({
-            "name":  name,
-            "gross": emp_total,
-            "net":   round(emp_net, 2),
-            "tax":   round(emp_tax, 2),
-            "super": round(emp_super, 2),
-        })
-
-    # Location totals summed directly from stubs (accurate)
-    run_wages = round(sum(float(s.get("Wages", 0) or 0) for s in payslip_stubs), 2)
-    run_super = round(sum(float(s.get("Super", 0) or 0) for s in payslip_stubs), 2)
-    run_tax   = round(sum(float(s.get("Tax", 0) or 0) for s in payslip_stubs), 2)
-    run_net   = round(sum(float(s.get("NetPay", 0) or 0) for s in payslip_stubs), 2)
-    run_total = round(run_wages + run_super, 2)
-
-    employees.sort(key=lambda e: e["name"])
-
-    print(f"    Total cost (net+tax+super): ${run_total:,.2f}  |  Employees: {len(employees)}")
-
-    return {
-        "org":              tenant_name,
-        "short_name":       short_name,
-        "pay_period_start": str(start_date)   if start_date   else "",
-        "pay_period_end":   str(end_date)     if end_date     else "",
-        "payment_date":     str(payment_date) if payment_date else "",
-        "gross_wages":      run_total,
-        "tax":              round(run_tax, 2),
-        "net_pay":          round(run_net, 2),
-        "super":            run_super,
-        "employee_count":   len(employees),
-        "employees":        employees,
-    }
-
-
-# ── Location post-processing ──────────────────────────────────────────────────
-
-def merge_locations(locations):
-    """Merge secondary Xero orgs into a primary display location."""
-    loc_map = {loc["short_name"]: loc for loc in locations}
-
-    for src_name, dst_name in LOCATION_MERGES:
-        src = loc_map.get(src_name)
-        dst = loc_map.get(dst_name)
-        if not src or not dst:
-            continue
-
-        dst["employees"].extend(src["employees"])
-        dst["employees"].sort(key=lambda e: e["name"])
-        dst["employee_count"] += src["employee_count"]
-        dst["gross_wages"]    = round(dst["gross_wages"] + src["gross_wages"], 2)
-        dst["tax"]            = round(dst["tax"]         + src["tax"], 2)
-        dst["net_pay"]        = round(dst["net_pay"]     + src["net_pay"], 2)
-        dst["super"]          = round(dst["super"]       + src["super"], 2)
-
-        locations = [l for l in locations if l["short_name"] != src_name]
-        print(f"  Merged {src_name} into {dst_name}")
-
-    return locations
-
-
-def create_townsville(locations):
-    """
-    Build a virtual Townsville location by pulling named employees
-    from whichever Xero org they currently belong to.
-    """
-    ref = locations[0] if locations else {}
-    townsville = {
-        "org":              "Virtual",
-        "short_name":       "Townsville",
-        "pay_period_start": ref.get("pay_period_start", ""),
-        "pay_period_end":   ref.get("pay_period_end", ""),
-        "payment_date":     ref.get("payment_date", ""),
-        "gross_wages":      0.0,
-        "tax":              0.0,
-        "net_pay":          0.0,
-        "super":            0.0,
-        "employee_count":   0,
-        "employees":        [],
-    }
-
-    for emp_name in TOWNSVILLE_EMPLOYEES:
-        for loc in locations:
-            emp = next((e for e in loc["employees"] if e["name"] == emp_name), None)
-            if emp:
-                loc["employees"].remove(emp)
-                loc["employee_count"]  -= 1
-                loc["gross_wages"]      = round(loc["gross_wages"] - emp["gross"], 2)
-                loc["tax"]              = round(loc["tax"]         - emp.get("tax", 0), 2)
-                loc["net_pay"]          = round(loc["net_pay"]     - emp.get("net", 0), 2)
-                loc["super"]            = round(loc["super"]       - emp.get("super", 0), 2)
-
-                townsville["employees"].append(emp)
-                townsville["employee_count"]  += 1
-                townsville["gross_wages"]      = round(townsville["gross_wages"] + emp["gross"], 2)
-                townsville["tax"]              = round(townsville["tax"]         + emp.get("tax", 0), 2)
-                townsville["net_pay"]          = round(townsville["net_pay"]     + emp.get("net", 0), 2)
-                townsville["super"]            = round(townsville["super"]       + emp.get("super", 0), 2)
-
-                print(f"  Moved {emp_name}: {loc['short_name']} -> Townsville")
-                break
-        else:
-            print(f"  Warning: {emp_name} not found in any location")
-
-    townsville["employees"].sort(key=lambda e: e["name"])
-    locations.append(townsville)
-    return locations
-
-
-# ── HTML report builder ───────────────────────────────────────────────────────
-
-def build_report_html(locations, generated_at, period_str):
-    total_gross = sum(l["gross_wages"]    for l in locations)
-    total_tax   = sum(l["tax"]            for l in locations)
-    total_net   = sum(l["net_pay"]        for l in locations)
-    total_super = sum(l["super"]          for l in locations)
-    total_emp   = sum(l["employee_count"] for l in locations)
-
-    rows = ""
-    for loc in locations:
-        rows += f"""
-        <tr>
-            <td>{loc['short_name']}</td>
-            <td class="num">{loc['employee_count']}</td>
-            <td class="num">${loc['gross_wages']:,.2f}</td>
-            <td class="num">${loc['tax']:,.2f}</td>
-            <td class="num">${loc['net_pay']:,.2f}</td>
-            <td class="num">${loc['super']:,.2f}</td>
-        </tr>"""
-
-    return f"""<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<style>
-  body {{ font-family: Arial, sans-serif; font-size: 11px; padding: 20px; color: #1a1a1a; }}
-  h1   {{ font-size: 16px; margin: 0 0 4px; }}
-  .sub {{ font-size: 12px; color: #555; margin-bottom: 18px; }}
-  table {{ width: 100%; border-collapse: collapse; }}
-  th   {{ background: #1a1a1a; color: #fff; padding: 6px 10px; text-align: left;
-           font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }}
-  th.num, td.num {{ text-align: right; }}
-  td   {{ padding: 5px 10px; border-bottom: 1px solid #e0e0e0; }}
-  tr:nth-child(even) td {{ background: #f9f9f9; }}
-  .total td {{ font-weight: bold; background: #f0f0f0; border-top: 2px solid #333; }}
-  .foot {{ margin-top: 14px; font-size: 9px; color: #888; text-align: right; }}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diamond Barbers — Performance Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* All styles scoped to #db-root so they don't leak into GHL's page */
+
+        #db-root *, #db-root *::before, #db-root *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        #db-root {
+            background: #000000;
+            color: #FFFFFF;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            width: 100%;
+            padding: 2rem 2.5rem;
+        }
+
+        /* ── Header ── */
+        #db-root .db-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+        #db-root .db-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #FFFFFF;
+        }
+        #db-root .db-subtitle {
+            font-size: 0.82rem;
+            color: #888888;
+            margin-top: 0.25rem;
+        }
+
+        /* ── Week selector ── */
+        #db-root .week-select {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 20px;
+            color: #FFFFFF;
+            padding: 0.5rem 2.25rem 0.5rem 1rem;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888888' d='M5 7L0 2h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.85rem center;
+        }
+        #db-root .week-select option { background: #1A1A1A; }
+
+        /* ── Card ── */
+        #db-root .db-card {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 1rem;
+        }
+        #db-root .card-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #888888;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 0.6rem;
+        }
+        #db-root .card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+        #db-root .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        #db-root .card-period {
+            font-size: 0.75rem;
+            color: #888888;
+        }
+
+        /* ── KPI row ── */
+        #db-root .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: stretch;
+        }
+        #db-root .kpi-row .db-card { margin-bottom: 0; }
+        #db-root .kpi-big {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 0.4rem;
+        }
+        #db-root .kpi-sub {
+            font-size: 0.75rem;
+            color: #888888;
+        }
+
+        /* ── Pill badge ── */
+        #db-root .pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 20px;
+            padding: 0.2rem 0.65rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* ── Middle row ── */
+        #db-root .middle-row {
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        #db-root .middle-row .db-card { margin-bottom: 0; }
+
+        /* ── Breakdown rows ── */
+        #db-root .big-num {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+            color: #FFFFFF;
+        }
+        #db-root .bd-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #2A2A2A;
+            font-size: 0.85rem;
+        }
+        #db-root .bd-row:last-child { border-bottom: none; }
+        #db-root .bd-label { color: #888888; }
+        #db-root .bd-value { font-weight: 600; color: #FFFFFF; }
+
+        /* ── Bottom row ── */
+        #db-root .bottom-row {
+            margin-bottom: 1rem;
+        }
+        #db-root .bottom-row .db-card { margin-bottom: 0; }
+
+        /* ── Staff table ── */
+        #db-root .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        #db-root .staff-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        #db-root .staff-table thead tr { border-bottom: 1px solid #2A2A2A; }
+        #db-root .staff-table thead th {
+            color: #888888;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.5rem 0.85rem;
+            text-align: left;
+            white-space: nowrap;
+        }
+        #db-root .staff-table thead th.r { text-align: right; }
+        #db-root .staff-table tbody tr { border-bottom: 1px solid #2A2A2A; }
+        #db-root .staff-table tbody tr:last-child { border-bottom: none; }
+        #db-root .staff-table tbody td { padding: 0.65rem 0.85rem; white-space: nowrap; color: #FFFFFF; }
+        #db-root .staff-table tbody td.r { text-align: right; font-variant-numeric: tabular-nums; }
+
+        /* ── Rank pill ── */
+        #db-root .rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #2A2A2A;
+            border-radius: 6px;
+            padding: 0.12rem 0.45rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #888888;
+            min-width: 2rem;
+        }
+        #db-root .rank.r1 { background: #2E2300; color: #C9A84C; }
+        #db-root .rank.r2 { background: #0D2E1A; color: #34D399; }
+        #db-root .rank.r3 { background: #2E1F00; color: #FBBF24; }
+
+        /* ── Location row ── */
+        #db-root .location-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        #db-root .location-row .db-card { margin-bottom: 0; }
+        #db-root .loc-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 0.5rem;
+        }
+        #db-root .loc-svc {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #C9A84C;
+            margin-bottom: 0.3rem;
+        }
+        #db-root .loc-sub {
+            font-size: 0.72rem;
+            color: #888888;
+            margin-bottom: 0.6rem;
+        }
+
+        /* ── Loading / error ── */
+        #db-root .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: #888888;
+            font-size: 0.9rem;
+        }
+
+        /* ── Footer ── */
+        #db-root .footer {
+            text-align: center;
+            color: #333333;
+            font-size: 0.68rem;
+            padding: 1.5rem 0 0.5rem;
+        }
+
+        /* ── Tabs ── */
+        #db-root .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.75rem;
+        }
+        #db-root .tab-btn {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 20px;
+            color: #888888;
+            padding: 0.45rem 1.4rem;
+            font-size: 0.88rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        #db-root .tab-btn.active {
+            background: #2E2300;
+            border-color: #C9A84C;
+            color: #C9A84C;
+        }
+        #db-root .tab-btn:hover:not(.active) {
+            border-color: #444444;
+            color: #CCCCCC;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            #db-root { padding: 1rem; }
+            #db-root .kpi-row { grid-template-columns: 1fr; }
+            #db-root .middle-row, #db-root .bottom-row { grid-template-columns: 1fr; }
+            #db-root .db-header { flex-direction: column; gap: 0.75rem; }
+            #db-root .week-select { width: 100%; }
+            #db-root .card-header { flex-direction: column; gap: 0.25rem; }
+            #db-root .kpi-big { font-size: 1.6rem; }
+            #db-root .big-num { font-size: 1.8rem; }
+            #db-root .location-row { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
-  <h1>Diamond Barbers — Weekly Payroll Summary</h1>
-  <div class="sub">Pay period: {period_str}</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Location</th>
-        <th class="num">Employees</th>
-        <th class="num">Gross Wages</th>
-        <th class="num">PAYG Tax</th>
-        <th class="num">Net Pay</th>
-        <th class="num">Super (11.5%)</th>
-      </tr>
-    </thead>
-    <tbody>
-      {rows}
-      <tr class="total">
-        <td>TOTAL</td>
-        <td class="num">{total_emp}</td>
-        <td class="num">${total_gross:,.2f}</td>
-        <td class="num">${total_tax:,.2f}</td>
-        <td class="num">${total_net:,.2f}</td>
-        <td class="num">${total_super:,.2f}</td>
-      </tr>
-    </tbody>
-  </table>
-  <div class="foot">Generated {generated_at} · Diamond Barbers Payroll · Super rate 11.5% (FY2025-26)</div>
+
+<div id="db-root">
+    <div class="tab-bar" id="tab-bar">
+        <button class="tab-btn active" data-tab="darwin" onclick="onTabChange('darwin')">Darwin</button>
+        <button class="tab-btn" data-tab="cairns" onclick="onTabChange('cairns')">Cairns</button>
+        <button class="tab-btn" data-tab="payroll" onclick="onTabChange('payroll')">Payroll</button>
+    </div>
+    <div id="app">
+        <div class="loading">Loading dashboard…</div>
+    </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const DATA_URL         = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-dashboard/contents/data/performance_summary.json';
+const CAIRNS_DATA_URL  = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-dashboard/contents/data/cairns_performance_summary.json';
+const PAYROLL_DATA_URL = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-dashboard/contents/data/xero_payroll.json';
+
+const C = {
+    gold:     '#C9A84C',
+    amber:    '#FBBF24',
+    red:      '#FF3333',
+    green:    '#34D399',
+    blue:     '#3B82F6',
+    muted:    '#888888',
+    card:     '#1A1A1A',
+    border:   '#2A2A2A',
+    text:     '#FFFFFF',
+    grid:     '#2A2A2A',
+    goldBg:   '#2E2300',
+    amberBg:  '#2E1F00',
+    redBg:    '#3E0A0A',
+    greenBg:  '#0D2E1A',
+    blueBg:   '#0D1E3E',
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let records = [];
+let current = 0;
+let cairnsRecords = [];
+let cairnsCurrent = 0;
+let payrollData = null;
+let activeTab = 'darwin';
+
+// ── Formatters ────────────────────────────────────────────────────────────────
+const fc  = v => `A$ ${(parseFloat(v)||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+const fp  = v => `${(parseFloat(v)||0).toFixed(1)}%`;
+const fi  = v => parseInt(v) || 0;
+const fd  = s => { try { const d=new Date(s+'T00:00:00'); return d.toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'}); } catch{return s||'—';} };
+
+function occColor(v) {
+    v = parseFloat(v)||0;
+    return v >= 80 ? C.blue : v >= 60 ? C.green : C.red;
+}
+function occBgColor(v) {
+    v = parseFloat(v)||0;
+    return v >= 80 ? C.blueBg : v >= 60 ? C.greenBg : C.redBg;
+}
+function occLabel(v) {
+    v = parseFloat(v)||0;
+    return v >= 80 ? 'On target ≥ 80%' : v >= 60 ? 'Needs attention 60–79%' : 'Below target < 60%';
+}
+
+// ── Main render ───────────────────────────────────────────────────────────────
+function render(rec) {
+    const sales     = rec.sales_summary     || {};
+    const appts     = rec.appointments      || {};
+    const perf      = rec.sales_performance || {};
+    const staff     = rec.staff             || [];
+    const locations = rec.locations         || [];
+
+    const netSvc    = parseFloat(sales.services)               || 0;
+    const netProd   = parseFloat(sales.products)               || 0;
+    const tips      = parseFloat(sales.tips)                   || 0;
+    const total     = parseFloat(sales.total_sales)            || 0;
+    const incTips   = parseFloat(sales.total_sales_and_other)  || 0;
+    const cancFee   = parseFloat(sales.late_cancellation_fees) || 0;
+    const noShowFee = parseFloat(sales.no_show_fees)           || 0;
+    const svcAddon  = parseFloat(sales.service_addons)         || 0;
+    const avgSvc    = parseFloat(perf.avg_service_value)       || 0;
+    const svcSold   = fi(perf.services_sold);
+    const prodSold  = fi(perf.products_sold);
+
+    const occVals    = staff.filter(s=>s.occupancy_pct).map(s=>parseFloat(s.occupancy_pct));
+    const overallOcc = occVals.length ? occVals.reduce((a,b)=>a+b,0)/occVals.length : null;
+    const hasOcc     = overallOcc !== null;
+
+    const sortedStaff = [...staff].sort((a,b)=>(parseFloat(b.total_sales)||0)-(parseFloat(a.total_sales)||0));
+    const hasOccCol   = staff.some(s => s.occupancy_pct !== undefined && s.occupancy_pct !== null);
+
+    const period = `${fd(rec.period_start)} → ${fd(rec.period_end)}`;
+
+    const recs = activeTab === 'darwin' ? records : cairnsRecords;
+    const cur  = activeTab === 'darwin' ? current : cairnsCurrent;
+    const weekOptions = recs.map((r,i) =>
+        `<option value="${i}" ${i===cur?'selected':''}>${fd(r.period_start)} → ${fd(r.period_end)}</option>`
+    ).join('');
+
+    const locationCards = locations.map(loc => {
+        const hasOcc = loc.occupancy_pct != null && loc.occupancy_pct !== 0;
+        const col = hasOcc ? occColor(loc.occupancy_pct)   : C.muted;
+        const bg  = hasOcc ? occBgColor(loc.occupancy_pct) : C.border;
+        return `
+        <div class="db-card">
+            <div class="card-label">Location</div>
+            <div class="loc-name">${loc.name || '—'}</div>
+            <div class="loc-svc">${fc(loc.services)}</div>
+            <div class="loc-sub">Services &nbsp;·&nbsp; Total: ${fc(loc.total_sales)}</div>
+            ${hasOcc
+                ? `<span class="pill" style="background:${bg};color:${col};">${fp(loc.occupancy_pct)} occupancy</span>`
+                : `<span class="pill" style="background:${C.border};color:${C.muted};">No occupancy data</span>`
+            }
+        </div>`;
+    }).join('');
+
+    const staffRows = sortedStaff.map((s, i) => {
+        const rank = i + 1;
+        const cls  = rank <= 3 ? `r${rank}` : '';
+        const col  = s.occupancy_pct != null ? occColor(s.occupancy_pct)   : C.muted;
+        const bg   = s.occupancy_pct != null ? occBgColor(s.occupancy_pct) : C.border;
+        const occCell = hasOccCol
+            ? (s.occupancy_pct != null
+                ? `<td class="r"><span class="pill" style="background:${bg};color:${col};">${fp(s.occupancy_pct)}</span></td>`
+                : `<td class="r">—</td>`)
+            : '';
+        return `
+        <tr>
+            <td><span class="rank ${cls}">#${rank}</span></td>
+            <td style="font-weight:600;">${s.name||'—'}</td>
+            <td class="r" style="color:${C.gold};font-weight:700;">${fc(s.total_sales)}</td>
+            <td class="r">${fc(s.services)}</td>
+            <td class="r">${fc(s.products)}</td>
+            <td class="r">${fc(s.tips)}</td>
+            <td class="r">${fi(s.total_appts)}</td>
+            <td class="r" style="color:${C.red};">${fi(s.cancelled_appts)}</td>
+            ${occCell}
+        </tr>`;
+    }).join('');
+
+    document.getElementById('app').innerHTML = `
+
+        <div class="db-header">
+            <div>
+                <div class="db-title">Performance Dashboard</div>
+                <div class="db-subtitle">Diamond Barbers · ${activeTab === 'darwin' ? 'Darwin' : 'Cairns'} weekly performance report</div>
+            </div>
+            <select class="week-select" onchange="onWeekChange(this.value)">${weekOptions}</select>
+        </div>
+
+        <div class="kpi-row">
+            <div class="db-card">
+                <div class="card-label">Net Service Sales</div>
+                <div class="kpi-big">${fc(netSvc)}</div>
+                <div class="kpi-sub">${svcSold} services sold &nbsp;·&nbsp; avg ${fc(avgSvc)}</div>
+            </div>
+            <div class="db-card">
+                <div class="card-label">Net Product Sales</div>
+                <div class="kpi-big">${fc(netProd)}</div>
+                <div class="kpi-sub">${prodSold} products sold</div>
+            </div>
+            <div class="db-card">
+                <div class="card-label">Overall Occupancy</div>
+                <div class="kpi-big" style="color:${hasOcc?occColor(overallOcc):C.muted};">
+                    ${hasOcc ? fp(overallOcc) : 'No data'}
+                </div>
+                ${hasOcc ? `<span class="pill" style="background:${occBgColor(overallOcc)};color:${occColor(overallOcc)};">${occLabel(overallOcc)}</span>` : ''}
+            </div>
+        </div>
+
+        <div class="db-card">
+            <div class="card-title" style="margin-bottom:1rem;">Occupancy Rate</div>
+            <div id="occChart"></div>
+        </div>
+
+
+        <div class="bottom-row">
+            <div class="db-card">
+                <div class="card-header">
+                    <div class="card-title">Staff Performance</div>
+                    <div class="card-period">${period} · ranked by sales</div>
+                </div>
+                <div class="table-wrap">
+                    <table class="staff-table">
+                        <thead><tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th class="r">Total</th>
+                            <th class="r">Services</th>
+                            <th class="r">Products</th>
+                            <th class="r">Tips</th>
+                            <th class="r">Appts</th>
+                            <th class="r">Cancelled</th>
+                            ${hasOccCol ? '<th class="r">Occupancy</th>' : ''}
+                        </tr></thead>
+                        <tbody>${staffRows}</tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        ${locations.length ? `
+        <div class="db-card" style="margin-bottom:1rem;">
+            <div class="card-header">
+                <div class="card-title">Location Performance</div>
+                <div class="card-period">${period}</div>
+            </div>
+            <div class="location-row">${locationCards}</div>
+        </div>` : ''}
+
+        <div class="footer">Diamond Barbers &nbsp;·&nbsp; Auto-refreshes every 5 min &nbsp;·&nbsp; Updated every Monday 6:00 AM Darwin time</div>
+    `;
+
+    renderOccChart(staff);
+}
+
+// ── Occupancy chart ───────────────────────────────────────────────────────────
+function renderOccChart(staff) {
+    const valid = staff
+        .filter(s => s.occupancy_pct != null && parseFloat(s.occupancy_pct) > 0)
+        .sort((a,b) => parseFloat(a.occupancy_pct) - parseFloat(b.occupancy_pct));
+
+    if (!valid.length) {
+        document.getElementById('occChart').innerHTML =
+            `<div style="height:100px;display:flex;align-items:center;justify-content:center;color:${C.muted};">No occupancy data available.</div>`;
+        return;
+    }
+
+    const total  = valid.length;
+    const labels = valid.map((s,i) => `#${total-i} ${s.name.split(' ')[0]}`);
+    const values = valid.map(s => parseFloat(s.occupancy_pct));
+    const colors = values.map(v => occColor(v));
+
+    const ML = 130;
+    const annotations = labels.map((label, i) => ({
+        x: 0, y: label,
+        xref: 'paper', yref: 'y',
+        xanchor: 'left', yanchor: 'middle',
+        text: label,
+        showarrow: false,
+        font: { color: C.text, size: 11, family: 'Inter, sans-serif' },
+        xshift: -(ML - 5),
+    }));
+
+    Plotly.newPlot('occChart', [{
+        type: 'bar', orientation: 'h',
+        x: values, y: labels,
+        marker: { color: colors, line: { width: 0 } },
+        text: values.map(v => `${v.toFixed(0)}%`),
+        textposition: 'inside',
+        textfont: { color: '#000000', size: 11, family: 'Inter, sans-serif' },
+        cliponaxis: false,
+    }], {
+        paper_bgcolor: C.card, plot_bgcolor: C.card,
+        font: { color: C.text, size: 11, family: 'Inter, sans-serif' },
+        height: Math.max(260, total * 24 + 40),
+        margin: { l: ML, r: 20, t: 10, b: 30 },
+        bargap: 0.15,
+        xaxis: { range:[0,100], showgrid:true, gridcolor:C.grid, ticksuffix:'%', color:C.muted, zeroline:false, tickfont:{size:10} },
+        yaxis: { color:C.text, showticklabels: false },
+        annotations: annotations,
+        shapes: [
+            { type:'line', x0:80, x1:80, y0:0, y1:1, yref:'paper', layer:'below', line:{ color:C.blue,  width:1.5, dash:'dot' } },
+            { type:'line', x0:60, x1:60, y0:0, y1:1, yref:'paper', layer:'below', line:{ color:C.green, width:1.5, dash:'dot' } },
+            ...Array.from({length: total - 1}, (_,i) => ({
+                type:'line', x0:-1, x1:1, xref:'paper',
+                y0: i + 0.5, y1: i + 0.5, yref:'y',
+                layer:'below', line:{ color:C.border, width:1 },
+            })),
+        ],
+    }, { displayModeBar: false, staticPlot: true });
+}
+
+// ── Trend chart ───────────────────────────────────────────────────────────────
+function renderTrendChart() {
+    if (records.length < 2) {
+        document.getElementById('trendChart').innerHTML =
+            `<div style="height:200px;display:flex;align-items:center;justify-content:center;color:${C.muted};font-size:0.85rem;">More data will appear after multiple weeks.</div>`;
+        return;
+    }
+
+    const sorted = [...records].sort((a,b) => (a.period_end||'').localeCompare(b.period_end||''));
+    const weeks  = sorted.map(r => r.period_end || '');
+    const sales  = sorted.map(r => parseFloat((r.sales_summary||{}).total_sales) || 0);
+
+    Plotly.newPlot('trendChart', [{
+        type: 'scatter', mode: 'lines+markers',
+        x: weeks, y: sales,
+        line:      { color: C.gold, width: 2.5 },
+        marker:    { color: C.gold, size: 6 },
+        fill:      'tozeroy',
+        fillcolor: 'rgba(201,168,76,0.08)',
+    }], {
+        paper_bgcolor: C.card, plot_bgcolor: C.card,
+        font: { color: C.text, size: 10, family: 'Inter, sans-serif' },
+        height: 260,
+        margin: { l: 10, r: 10, t: 10, b: 30 },
+        xaxis: { showgrid:true, gridcolor:C.grid, color:C.muted, zeroline:false, tickfont:{size:10} },
+        yaxis: { showgrid:true, gridcolor:C.grid, color:C.muted, zeroline:false, tickprefix:'A$ ', tickfont:{size:10} },
+        showlegend: false,
+    }, { displayModeBar: false, staticPlot: true });
+}
+
+// ── Payroll render ─────────────────────────────────────────────────────────────
+
+// Maps Xero full name (lowercase) -> Fresha name (lowercase) for known mismatches
+const FRESHA_NAME_OVERRIDES = {
+    'airol basallo':       'erol basallo',
+    'andrew  mcdevitt':    'andrew mcdevitt',
+    'anthony  crispo':     'anthony crispo',
+    'jairo espinosa mejia':'jairo espinosa',
+    'krish manocha':       'krish',
+    'nico diamantis':      'nico diamantis',
+};
+
+function buildStaffServiceMap(payPeriodStart) {
+    // Build name -> services (ex-GST) lookup from Fresha data.
+    // Fresha reports inc-GST so we divide by 1.1.
+    // Try to match the payroll week; fall back to most recent.
+    const map = {};
+    const add = (recs) => {
+        if (!recs || !recs.length) return;
+        const match = recs.find(r => r.period_start === payPeriodStart) || recs[0];
+        for (const s of (match.staff || [])) {
+            const key = s.name.trim().toLowerCase().replace(/\s+/g, ' ');
+            map[key] = parseFloat(s.services || 0) / 1.1;
+        }
+    };
+    add(records);
+    add(cairnsRecords);
+    return map;
+}
+
+function matchService(empName, staffMap) {
+    const norm = n => n.trim().toLowerCase().replace(/\s+/g, ' ');
+    const key  = norm(empName);
+
+    // Check manual overrides first
+    const overrideKey = FRESHA_NAME_OVERRIDES[key];
+    if (overrideKey !== undefined && staffMap[overrideKey] !== undefined) return staffMap[overrideKey];
+
+    // Exact match
+    if (staffMap[key] !== undefined) return staffMap[key];
+
+    const parts = key.split(' ').filter(p => p.length > 1);
+    for (const [k, v] of Object.entries(staffMap)) {
+        const kp = k.split(' ').filter(p => p.length > 1);
+        // First name + last name match (handles extra middle names)
+        if (parts[0] === kp[0] && parts[parts.length - 1] === kp[kp.length - 1]) return v;
+        // Fresha has first name only
+        if (parts[0] === kp[0] && kp.length === 1) return v;
+        // Fresha name is a substring of Xero name (e.g. "Jairo Espinosa" in "Jairo Espinosa Mejia")
+        if (key.startsWith(k)) return v;
+    }
+    return null;
+}
+
+function renderPayroll(data) {
+    const locs   = data.locations || [];
+    const totals = data.totals    || {};
+
+    const fmt  = v => `$${(v||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    const fmtD = v => {
+        const abs = Math.abs(v || 0);
+        const str = `$${abs.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        return v < 0 ? `-${str}` : str;
+    };
+
+    const staffMap   = buildStaffServiceMap(locs[0]?.pay_period_start || '');
+    const hasFresha  = Object.keys(staffMap).length > 0;
+
+    // Totals across all employees where we have Fresha data
+    let totalSvcs = 0;
+    locs.forEach(loc => (loc.employees || []).forEach(e => {
+        const s = matchService(e.name, staffMap);
+        if (s !== null) totalSvcs += s;
+    }));
+    const totalDiff = totalSvcs - (totals.gross_wages || 0);
+
+    // Build location sections
+    const locationSections = locs.map(loc => {
+        const emps = loc.employees || [];
+        let locSvcs = 0;
+        emps.forEach(e => { const s = matchService(e.name, staffMap); if (s !== null) locSvcs += s; });
+        const locDiff = locSvcs - loc.gross_wages;
+        const diffCol = locDiff >= 0 ? C.green : C.red;
+
+        const empRows = emps.map(e => {
+            const svcs = matchService(e.name, staffMap);
+            const diff = svcs !== null ? svcs - e.gross : null;
+            const dc   = diff !== null ? (diff >= 0 ? C.green : C.red) : C.muted;
+            return `
+            <tr>
+                <td style="padding-left:1.5rem;color:${C.muted};">${e.name}</td>
+                <td class="r">${svcs !== null ? fmt(svcs) : '<span style="color:'+C.muted+'">—</span>'}</td>
+                <td class="r">${fmt(e.gross)}</td>
+                <td class="r" style="color:${dc};">${diff !== null ? fmtD(diff) : '<span style="color:'+C.muted+'">—</span>'}</td>
+            </tr>`;
+        }).join('');
+
+        const svcCell = hasFresha
+            ? `<td class="r" style="font-weight:700;color:${C.blue};padding-top:0.85rem;">${fmt(locSvcs)}</td>`
+            : `<td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>`;
+        const diffCell = hasFresha
+            ? `<td class="r" style="font-weight:700;color:${diffCol};padding-top:0.85rem;">${fmtD(locDiff)}</td>`
+            : `<td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>`;
+
+        return `
+            <tr>
+                <td style="font-weight:700;color:${C.text};font-size:0.82rem;padding-top:0.85rem;">
+                    ${loc.short_name}
+                    <span style="font-weight:400;color:${C.muted};font-size:0.72rem;margin-left:0.5rem;">${loc.employee_count} employees</span>
+                </td>
+                ${svcCell}
+                <td class="r" style="font-weight:700;color:${C.gold};padding-top:0.85rem;">${fmt(loc.gross_wages)}</td>
+                ${diffCell}
+            </tr>
+            ${empRows}
+            <tr><td colspan="4" style="padding:0;border-bottom:2px solid ${C.border};"></td></tr>`;
+    }).join('');
+
+    const diffKpiCol = totalDiff >= 0 ? C.green : C.red;
+
+    document.getElementById('app').innerHTML = `
+        <div class="db-header">
+            <div>
+                <div class="db-title">Payroll Dashboard</div>
+                <div class="db-subtitle">Diamond Barbers · all locations · ${data.pay_period || ''}</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:0.72rem;color:${C.muted};">Updated</div>
+                <div style="font-size:0.82rem;color:${C.muted};">${data.generated_at || ''}</div>
+            </div>
+        </div>
+
+        <div class="kpi-row">
+            <div class="db-card">
+                <div class="card-label">Total Services (ex-GST)</div>
+                <div class="kpi-big" style="color:${C.blue};">${hasFresha ? fmt(totalSvcs) : '—'}</div>
+                <div class="kpi-sub">${hasFresha ? 'From Fresha · GST removed' : 'Fresha data loading…'}</div>
+            </div>
+            <div class="db-card">
+                <div class="card-label">Total Gross Wages</div>
+                <div class="kpi-big" style="color:${C.gold};">${fmt(totals.gross_wages)}</div>
+                <div class="kpi-sub">${totals.employee_count||0} employees · wages + super</div>
+            </div>
+            <div class="db-card">
+                <div class="card-label">Difference</div>
+                <div class="kpi-big" style="color:${hasFresha ? diffKpiCol : C.muted};">${hasFresha ? fmtD(totalDiff) : '—'}</div>
+                <div class="kpi-sub">Services minus wages</div>
+            </div>
+        </div>
+
+        <div class="db-card">
+            <div class="card-header">
+                <div class="card-title">Services vs Wages by Employee</div>
+                <div class="card-period">${data.pay_period || ''}</div>
+            </div>
+            <div class="table-wrap">
+                <table class="staff-table">
+                    <thead><tr>
+                        <th>Location / Employee</th>
+                        <th class="r">Services (ex-GST)</th>
+                        <th class="r">Gross Wages</th>
+                        <th class="r">Difference</th>
+                    </tr></thead>
+                    <tbody>
+                        ${locationSections}
+                        <tr>
+                            <td style="font-weight:700;color:${C.muted};font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em;padding-top:0.85rem;">Grand Total</td>
+                            <td class="r" style="font-weight:700;color:${C.blue};padding-top:0.85rem;">${hasFresha ? fmt(totalSvcs) : '—'}</td>
+                            <td class="r" style="font-weight:700;color:${C.gold};padding-top:0.85rem;">${fmt(totals.gross_wages)}</td>
+                            <td class="r" style="font-weight:700;color:${hasFresha ? diffKpiCol : C.muted};padding-top:0.85rem;">${hasFresha ? fmtD(totalDiff) : '—'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">Diamond Barbers &nbsp;·&nbsp; Payroll from Xero · Services from Fresha &nbsp;·&nbsp; Updated every Monday 6:00 AM Darwin time</div>
+    `;
+}
+
+// ── Events ────────────────────────────────────────────────────────────────────
+function onWeekChange(val) {
+    if (activeTab === 'darwin') {
+        current = parseInt(val);
+        render(records[current]);
+    } else {
+        cairnsCurrent = parseInt(val);
+        render(cairnsRecords[cairnsCurrent]);
+    }
+}
+
+function onTabChange(tab) {
+    activeTab = tab;
+    document.querySelectorAll('#tab-bar .tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    if (tab === 'darwin' && records.length) {
+        render(records[current]);
+    } else if (tab === 'darwin') {
+        document.getElementById('app').innerHTML =
+            `<div class="loading">No Darwin data available yet.</div>`;
+    } else if (tab === 'cairns' && cairnsRecords.length) {
+        render(cairnsRecords[cairnsCurrent]);
+    } else if (tab === 'cairns') {
+        document.getElementById('app').innerHTML =
+            `<div class="loading">No Cairns data available yet — will appear once the Cairns report has run.</div>`;
+    } else if (tab === 'payroll' && payrollData) {
+        renderPayroll(payrollData);
+    } else if (tab === 'payroll') {
+        document.getElementById('app').innerHTML =
+            `<div class="loading">No payroll data available yet — will appear once the Xero payroll report has run.</div>`;
+    }
+}
+
+// ── Load data ─────────────────────────────────────────────────────────────────
+async function loadData() {
+    try {
+        const res = await fetch(DATA_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        const meta = await res.json();
+        const decoded = atob(meta.content.replace(/\n/g, ''));
+        const raw = JSON.parse(decoded);
+        const all = (Array.isArray(raw) ? raw : [raw]).filter(r => r.sales_summary);
+
+        if (!all.length) {
+            if (activeTab === 'darwin') document.getElementById('app').innerHTML =
+                `<div class="loading">No data available yet. The report runs every Monday at 6:00 AM Darwin time.</div>`;
+        } else {
+            records = all.reverse();
+            current = 0;
+            if (activeTab === 'darwin') render(records[0]);
+        }
+
+        setTimeout(loadData, 5 * 60 * 1000);
+
+    } catch (err) {
+        if (activeTab === 'darwin') document.getElementById('app').innerHTML =
+            `<div class="loading">Error loading data — please try again shortly.</div>`;
+        console.error(err);
+    }
+}
+
+async function loadCairnsData() {
+    try {
+        const res = await fetch(CAIRNS_DATA_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        if (!res.ok) return;
+        const meta = await res.json();
+        const decoded = atob(meta.content.replace(/\n/g, ''));
+        const raw = JSON.parse(decoded);
+        const all = (Array.isArray(raw) ? raw : [raw]).filter(r => r.sales_summary);
+
+        if (all.length) {
+            cairnsRecords = all.reverse();
+            cairnsCurrent = 0;
+            if (activeTab === 'cairns') render(cairnsRecords[0]);
+        }
+
+        setTimeout(loadCairnsData, 5 * 60 * 1000);
+    } catch (err) {
+        // Cairns data not yet available — silently ignore
+    }
+}
+
+async function loadPayrollData() {
+    try {
+        const res = await fetch(PAYROLL_DATA_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        if (!res.ok) return;
+        const meta    = await res.json();
+        const decoded = atob(meta.content.replace(/\n/g, ''));
+        const data    = JSON.parse(decoded);
+
+        if (data && data.locations && data.locations.length) {
+            payrollData = data;
+            if (activeTab === 'payroll') renderPayroll(payrollData);
+        }
+
+        setTimeout(loadPayrollData, 5 * 60 * 1000);
+    } catch (err) {
+        // Payroll data not yet available — silently ignore
+    }
+}
+
+loadData();
+loadCairnsData();
+loadPayrollData();
+</script>
 </body>
-</html>"""
-
-
-# ── PDF generation ────────────────────────────────────────────────────────────
-
-async def generate_pdf(html_content, output_path):
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page    = await browser.new_page()
-        await page.set_content(html_content, wait_until="networkidle")
-        await page.pdf(
-            path=str(output_path),
-            format="A4",
-            print_background=True,
-            margin={"top": "15mm", "bottom": "15mm", "left": "15mm", "right": "15mm"},
-        )
-        await browser.close()
-    print(f"  PDF saved: {output_path.name}")
-
-
-# ── Email ─────────────────────────────────────────────────────────────────────
-
-def send_email(pdf_path, subject):
-    msg = MIMEMultipart("mixed")
-    msg["Subject"] = subject
-    msg["From"]    = EMAIL_FROM
-    msg["To"]      = EMAIL_TO
-
-    msg.attach(MIMEText(
-        f"Please find attached the weekly payroll summary.\n\nDiamond Barbers",
-        "plain"
-    ))
-
-    with open(pdf_path, "rb") as f:
-        part = MIMEBase("application", "octet-stream")
-        part.set_payload(f.read())
-    email_encoders.encode_base64(part)
-    part.add_header("Content-Disposition", f'attachment; filename="{pdf_path.name}"')
-    msg.attach(part)
-
-    with smtplib.SMTP(EMAIL_HOST, 587) as smtp:
-        smtp.ehlo()
-        smtp.starttls()
-        smtp.login(EMAIL_FROM, EMAIL_PASSWORD)
-        smtp.sendmail(EMAIL_FROM, EMAIL_TO, msg.as_string())
-    print(f"  Email sent to {EMAIL_TO}")
-
-
-# ── Main ──────────────────────────────────────────────────────────────────────
-
-async def main():
-    print("Loading Xero token...")
-    token        = get_valid_token()
-    access_token = token["access_token"]
-    tenants      = token.get("tenants", [])
-
-    if not tenants:
-        print("ERROR: No tenants in token file. Run:  python agent/xero_auth.py")
-        return
-
-    print(f"Found {len(tenants)} organisations.\n")
-
-    # Fetch payroll for all orgs
-    locations = []
-    for tenant in tenants:
-        result = fetch_org_payroll(tenant["id"], tenant["name"], access_token)
-        if result:
-            locations.append(result)
-
-    if not locations:
-        print("No payroll data returned from any organisation.")
-        return
-
-    # Post-processing: merge Parap into Darwin, create virtual Townsville
-    locations = merge_locations(locations)
-    locations = create_townsville(locations)
-
-    # Sort into display order
-    def sort_key(loc):
-        try:
-            return ORG_ORDER.index(loc["short_name"])
-        except ValueError:
-            return 99
-
-    locations.sort(key=sort_key)
-
-    # Build period string from first location
-    period_str = ""
-    try:
-        start = datetime.fromisoformat(locations[0]["pay_period_start"])
-        end   = datetime.fromisoformat(locations[0]["pay_period_end"])
-        period_str = fmt_period(start.date(), end.date())
-    except Exception:
-        period_str = locations[0].get("pay_period_end", "")
-
-    darwin_tz    = timezone(timedelta(hours=9, minutes=30))
-    generated_at = datetime.now(darwin_tz).strftime("%d %b %Y %H:%M")
-
-    totals = {
-        "gross_wages":    round(sum(l["gross_wages"]    for l in locations), 2),
-        "tax":            round(sum(l["tax"]            for l in locations), 2),
-        "net_pay":        round(sum(l["net_pay"]        for l in locations), 2),
-        "super":          round(sum(l["super"]          for l in locations), 2),
-        "employee_count": sum(l["employee_count"]       for l in locations),
-    }
-
-    # 1 — Save JSON for dashboard
-    DATA_DIR.mkdir(exist_ok=True)
-    output = {
-        "generated_at": generated_at,
-        "pay_period":   period_str,
-        "locations":    locations,
-        "totals":       totals,
-    }
-    OUTPUT_JSON.write_text(json.dumps(output, indent=2))
-    print(f"\nSaved {OUTPUT_JSON.name}")
-
-    # 2 — Generate PDF
-    html     = build_report_html(locations, generated_at, period_str)
-    end_slug = locations[0]["pay_period_end"].replace("-", "") if locations else "report"
-    pdf_path = DATA_DIR / f"payroll_{end_slug}.pdf"
-    await generate_pdf(html, pdf_path)
-
-    # 3 — Email
-    subject = f"Weekly Payroll Summary — {period_str}"
-    send_email(pdf_path, subject)
-
-    print("\nDone!")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+</html>
