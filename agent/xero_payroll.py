@@ -30,27 +30,42 @@ from playwright.async_api import async_playwright
 
 load_dotenv()
 
-DATA_DIR     = Path(__file__).parent.parent / "data"
-TOKEN_FILE   = DATA_DIR / "xero_token.json"
-OUTPUT_JSON  = DATA_DIR / "xero_payroll.json"
+DATA_DIR      = Path(__file__).parent.parent / "data"
+TOKEN_FILE    = DATA_DIR / "xero_token.json"
+OUTPUT_JSON   = DATA_DIR / "xero_payroll.json"
 
-CLIENT_ID    = os.environ["XERO_CLIENT_ID"]
+CLIENT_ID     = os.environ["XERO_CLIENT_ID"]
 CLIENT_SECRET = os.environ["XERO_CLIENT_SECRET"]
-EMAIL_HOST   = os.environ.get("EMAIL_HOST", "mail.diamondbarbers.com.au")
-EMAIL_FROM   = "claude@diamondbarbers.com.au"
-EMAIL_TO     = "admin@diamondbarbers.com.au"
+EMAIL_HOST    = os.environ.get("EMAIL_HOST", "mail.diamondbarbers.com.au")
+EMAIL_FROM    = "claude@diamondbarbers.com.au"
+EMAIL_TO      = "admin@diamondbarbers.com.au"
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
 
 # Short display names for each Xero org
 ORG_SHORT_NAMES = {
-    "Diamond Barbers Pty Ltd":        "Darwin CBD",
-    "D.B. Parap Pty Ltd":             "Parap",
+    "Diamond Barbers Pty Ltd":        "Darwin",
+    "D.B. Parap Pty Ltd":             "Parap",   # merged into Darwin below
     "DB WULGURU PTY LTD":             "Wulguru",
     "DIAMOND BARBERS CAIRNS PTY LTD": "Cairns",
 }
 
-# Display order for the report
-ORG_ORDER = ["Darwin CBD", "Parap", "Wulguru", "Cairns"]
+# Final display order (Townsville is a virtual location created in post-processing)
+ORG_ORDER = ["Darwin", "Townsville", "Cairns"]
+
+# Xero orgs to merge into a target display location
+LOCATION_MERGES = [
+    ("Parap", "Darwin"),   # D.B. Parap rolls into Darwin
+]
+
+# Employees pulled from their Xero org into the virtual Townsville location
+TOWNSVILLE_EMPLOYEES = [
+    "Alfon Amora",
+    "Bailey Wosomo",
+    "Brazil Lamsen",
+    "Dion Mataele",
+    "Jack Bastock",
+    "Nelson Diwa",
+]
 
 
 # ── Token management ──────────────────────────────────────────────────────────
@@ -82,7 +97,6 @@ def refresh_token(token_data):
     with urllib.request.urlopen(req) as resp:
         new_token = json.loads(resp.read())
 
-    # Preserve the tenant list
     new_token["tenants"] = token_data.get("tenants", [])
     TOKEN_FILE.write_text(json.dumps(new_token, indent=2))
     print("  Token refreshed and saved.")
@@ -91,7 +105,7 @@ def refresh_token(token_data):
 
 def get_valid_token():
     token = load_token()
-    token = refresh_token(token)   # Always refresh — access tokens expire after 30 min
+    token = refresh_token(token)
     return token
 
 
@@ -133,6 +147,38 @@ def fmt_period(start_date, end_date):
     return f"{start_date.day} {start_date.strftime('%b')} – {end_date.day} {end_date.strftime('%b %Y')}"
 
 
+# ── Payslip detail fetch (accurate per-employee data) ─────────────────────────
+
+def fetch_payslip_details(pay_run_id, tenant_id, access_token):
+    """
+    Try to get accurate per-employee figures from the Xero Payslips endpoint.
+    Returns a dict keyed by PayslipID, or empty dict if unavailable.
+    Each value: {"gross": float, "tax": float, "net": float, "super": float}
+    """
+    try:
+        data = xero_get(
+            f"/payroll.xro/1.0/Payslips?payRunID={pay_run_id}",
+            tenant_id, access_token,
+        )
+        payslips = data.get("Payslips", [])
+        if not payslips:
+            raise ValueError("Empty payslip list")
+        result = {}
+        for ps in payslips:
+            pid   = ps.get("PayslipID")
+            gross = float(ps.get("GrossPay", 0) or 0)
+            tax   = float(ps.get("Tax", 0) or 0)
+            net   = float(ps.get("NetPay", 0) or 0)
+            sup   = float(ps.get("SuperannuationContribution", 0) or 0)
+            if pid and gross > 0:
+                result[pid] = {"gross": gross, "tax": tax, "net": net, "super": sup}
+        print(f"    Payslip API: got accurate data for {len(result)} employees.")
+        return result
+    except Exception as e:
+        print(f"    Payslip API unavailable ({e}) — using pay-run-level estimates.")
+        return {}
+
+
 # ── Payroll fetching ──────────────────────────────────────────────────────────
 
 def fetch_org_payroll(tenant_id, tenant_name, access_token):
@@ -151,7 +197,6 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
         print(f"    No pay runs found.")
         return None
 
-    # Prefer POSTED runs; fall back to any
     posted = [r for r in pay_runs if r.get("PayRunStatus") == "POSTED"] or pay_runs
 
     def run_sort_key(r):
@@ -163,7 +208,6 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
     latest     = posted[0]
     pay_run_id = latest.get("PayRunID")
 
-    # Fetch PayRun detail to get dates and payslip stubs (names, net, tax)
     try:
         detail = xero_get(f"/payroll.xro/1.0/PayRuns/{pay_run_id}", tenant_id, access_token)
         run    = detail.get("PayRuns", [{}])[0]
@@ -178,33 +222,53 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
 
     print(f"    Period: {start_date} – {end_date}  |  Payslips: {len(payslip_stubs)}")
 
-    # PayRun-level aggregates (the most reliable source)
+    # PayRun-level totals (authoritative for the location summary)
     run_net   = float(run.get("NetPay", 0) or 0)
     run_tax   = float(run.get("Tax", 0) or 0)
-    run_gross = run_net + run_tax                      # gross before super
-    run_super = round(run_gross * 0.12, 2)             # 12% SG rate
-    run_total = round(run_gross + run_super, 2)        # total employer cost (net+tax+super)
+    run_gross = run_net + run_tax
+    run_super = round(run_gross * 0.115, 2)    # 11.5% SG rate (FY2025-26)
+    run_total = round(run_gross + run_super, 2)
 
-    # Per-employee: estimate gross using the location's tax ratio, then add super
+    # Try accurate per-employee data first
+    payslip_details = fetch_payslip_details(pay_run_id, tenant_id, access_token)
+
+    # Fallback tax ratio for estimation
     tax_ratio = (run_tax / run_net) if run_net > 0 else 0
+
     employees = []
     for stub in payslip_stubs:
-        first    = stub.get("FirstName", "")
-        last     = stub.get("LastName", "")
-        name     = f"{first} {last}".strip() or "Unknown"
-        emp_net  = float(stub.get("NetPay", 0) or 0)
-        emp_gross = emp_net * (1 + tax_ratio)          # estimated gross before super
-        emp_total = round(emp_gross * 1.12, 2)         # total cost incl. 12% super
-        employees.append({"name": name, "gross": emp_total})
+        first = stub.get("FirstName", "")
+        last  = stub.get("LastName", "")
+        name  = f"{first} {last}".strip() or "Unknown"
+        pid   = stub.get("PayslipID")
+
+        ps = payslip_details.get(pid)
+        if ps and ps["gross"] > 0:
+            # Accurate: gross from payslip + actual super
+            emp_gross = ps["gross"]
+            emp_super = ps["super"] if ps["super"] > 0 else round(emp_gross * 0.115, 2)
+            emp_tax   = ps["tax"]
+            emp_net   = ps["net"]
+            emp_total = round(emp_gross + emp_super, 2)
+        else:
+            # Estimate: apply location tax ratio to stub net pay
+            emp_net   = float(stub.get("NetPay", 0) or 0)
+            emp_gross = emp_net * (1 + tax_ratio)
+            emp_super = round(emp_gross * 0.115, 2)
+            emp_tax   = round(emp_gross - emp_net, 2)
+            emp_total = round(emp_gross + emp_super, 2)
+
+        employees.append({
+            "name":  name,
+            "gross": emp_total,
+            "net":   round(emp_net, 2),
+            "tax":   round(emp_tax, 2),
+            "super": round(emp_super, 2),
+        })
 
     employees.sort(key=lambda e: e["name"])
 
-    gross_total = run_total   # all-in: net + tax + super
-    super_total = run_super
-    net_total   = round(run_net, 2)
-    tax_total   = round(run_tax, 2)
-
-    print(f"    Total cost (net+tax+super): ${gross_total:,.2f}  |  Employees: {len(employees)}")
+    print(f"    Total cost (net+tax+super): ${run_total:,.2f}  |  Employees: {len(employees)}")
 
     return {
         "org":              tenant_name,
@@ -212,13 +276,87 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
         "pay_period_start": str(start_date)   if start_date   else "",
         "pay_period_end":   str(end_date)     if end_date     else "",
         "payment_date":     str(payment_date) if payment_date else "",
-        "gross_wages":      gross_total,
-        "tax":              tax_total,
-        "net_pay":          net_total,
-        "super":            super_total,
+        "gross_wages":      run_total,
+        "tax":              round(run_tax, 2),
+        "net_pay":          round(run_net, 2),
+        "super":            run_super,
         "employee_count":   len(employees),
         "employees":        employees,
     }
+
+
+# ── Location post-processing ──────────────────────────────────────────────────
+
+def merge_locations(locations):
+    """Merge secondary Xero orgs into a primary display location."""
+    loc_map = {loc["short_name"]: loc for loc in locations}
+
+    for src_name, dst_name in LOCATION_MERGES:
+        src = loc_map.get(src_name)
+        dst = loc_map.get(dst_name)
+        if not src or not dst:
+            continue
+
+        dst["employees"].extend(src["employees"])
+        dst["employees"].sort(key=lambda e: e["name"])
+        dst["employee_count"] += src["employee_count"]
+        dst["gross_wages"]    = round(dst["gross_wages"] + src["gross_wages"], 2)
+        dst["tax"]            = round(dst["tax"]         + src["tax"], 2)
+        dst["net_pay"]        = round(dst["net_pay"]     + src["net_pay"], 2)
+        dst["super"]          = round(dst["super"]       + src["super"], 2)
+
+        locations = [l for l in locations if l["short_name"] != src_name]
+        print(f"  Merged {src_name} into {dst_name}")
+
+    return locations
+
+
+def create_townsville(locations):
+    """
+    Build a virtual Townsville location by pulling named employees
+    from whichever Xero org they currently belong to.
+    """
+    ref = locations[0] if locations else {}
+    townsville = {
+        "org":              "Virtual",
+        "short_name":       "Townsville",
+        "pay_period_start": ref.get("pay_period_start", ""),
+        "pay_period_end":   ref.get("pay_period_end", ""),
+        "payment_date":     ref.get("payment_date", ""),
+        "gross_wages":      0.0,
+        "tax":              0.0,
+        "net_pay":          0.0,
+        "super":            0.0,
+        "employee_count":   0,
+        "employees":        [],
+    }
+
+    for emp_name in TOWNSVILLE_EMPLOYEES:
+        for loc in locations:
+            emp = next((e for e in loc["employees"] if e["name"] == emp_name), None)
+            if emp:
+                loc["employees"].remove(emp)
+                loc["employee_count"]  -= 1
+                loc["gross_wages"]      = round(loc["gross_wages"] - emp["gross"], 2)
+                loc["tax"]              = round(loc["tax"]         - emp.get("tax", 0), 2)
+                loc["net_pay"]          = round(loc["net_pay"]     - emp.get("net", 0), 2)
+                loc["super"]            = round(loc["super"]       - emp.get("super", 0), 2)
+
+                townsville["employees"].append(emp)
+                townsville["employee_count"]  += 1
+                townsville["gross_wages"]      = round(townsville["gross_wages"] + emp["gross"], 2)
+                townsville["tax"]              = round(townsville["tax"]         + emp.get("tax", 0), 2)
+                townsville["net_pay"]          = round(townsville["net_pay"]     + emp.get("net", 0), 2)
+                townsville["super"]            = round(townsville["super"]       + emp.get("super", 0), 2)
+
+                print(f"  Moved {emp_name}: {loc['short_name']} → Townsville")
+                break
+        else:
+            print(f"  Warning: {emp_name} not found in any location")
+
+    townsville["employees"].sort(key=lambda e: e["name"])
+    locations.append(townsville)
+    return locations
 
 
 # ── HTML report builder ───────────────────────────────────────────────────────
@@ -271,7 +409,7 @@ def build_report_html(locations, generated_at, period_str):
         <th class="num">Gross Wages</th>
         <th class="num">PAYG Tax</th>
         <th class="num">Net Pay</th>
-        <th class="num">Super</th>
+        <th class="num">Super (11.5%)</th>
       </tr>
     </thead>
     <tbody>
@@ -286,7 +424,7 @@ def build_report_html(locations, generated_at, period_str):
       </tr>
     </tbody>
   </table>
-  <div class="foot">Generated {generated_at} · Diamond Barbers Payroll</div>
+  <div class="foot">Generated {generated_at} · Diamond Barbers Payroll · Super rate 11.5% (FY2025-26)</div>
 </body>
 </html>"""
 
@@ -360,6 +498,10 @@ async def main():
     if not locations:
         print("No payroll data returned from any organisation.")
         return
+
+    # Post-processing: merge Parap into Darwin, create virtual Townsville
+    locations = merge_locations(locations)
+    locations = create_townsville(locations)
 
     # Sort into display order
     def sort_key(loc):
