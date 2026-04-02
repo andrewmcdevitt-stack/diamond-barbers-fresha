@@ -147,38 +147,6 @@ def fmt_period(start_date, end_date):
     return f"{start_date.day} {start_date.strftime('%b')} – {end_date.day} {end_date.strftime('%b %Y')}"
 
 
-# ── Payslip detail fetch (accurate per-employee data) ─────────────────────────
-
-def fetch_payslip_details(pay_run_id, tenant_id, access_token):
-    """
-    Try to get accurate per-employee figures from the Xero Payslips endpoint.
-    Returns a dict keyed by PayslipID, or empty dict if unavailable.
-    Each value: {"gross": float, "tax": float, "net": float, "super": float}
-    """
-    try:
-        data = xero_get(
-            f"/payroll.xro/1.0/Payslips?payRunID={pay_run_id}",
-            tenant_id, access_token,
-        )
-        payslips = data.get("Payslips", [])
-        if not payslips:
-            raise ValueError("Empty payslip list")
-        result = {}
-        for ps in payslips:
-            pid   = ps.get("PayslipID")
-            gross = float(ps.get("GrossPay", 0) or 0)
-            tax   = float(ps.get("Tax", 0) or 0)
-            net   = float(ps.get("NetPay", 0) or 0)
-            sup   = float(ps.get("SuperannuationContribution", 0) or 0)
-            if pid and gross > 0:
-                result[pid] = {"gross": gross, "tax": tax, "net": net, "super": sup}
-        print(f"    Payslip API: got accurate data for {len(result)} employees.")
-        return result
-    except Exception as e:
-        print(f"    Payslip API unavailable ({e}) — using pay-run-level estimates.")
-        return {}
-
-
 # ── Payroll fetching ──────────────────────────────────────────────────────────
 
 def fetch_org_payroll(tenant_id, tenant_name, access_token):
@@ -222,41 +190,18 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
 
     print(f"    Period: {start_date} – {end_date}  |  Payslips: {len(payslip_stubs)}")
 
-    # PayRun-level totals (authoritative for the location summary)
-    run_net   = float(run.get("NetPay", 0) or 0)
-    run_tax   = float(run.get("Tax", 0) or 0)
-    run_gross = run_net + run_tax
-    run_super = round(run_gross * 0.115, 2)    # 11.5% SG rate (FY2025-26)
-    run_total = round(run_gross + run_super, 2)
-
-    # Try accurate per-employee data first
-    payslip_details = fetch_payslip_details(pay_run_id, tenant_id, access_token)
-
-    # Fallback tax ratio for estimation
-    tax_ratio = (run_tax / run_net) if run_net > 0 else 0
-
+    # Per-employee: read Wages, Tax, Super, NetPay directly from payslip stubs
+    # These fields are always present in the PayRun detail response.
     employees = []
     for stub in payslip_stubs:
-        first = stub.get("FirstName", "")
-        last  = stub.get("LastName", "")
-        name  = f"{first} {last}".strip() or "Unknown"
-        pid   = stub.get("PayslipID")
-
-        ps = payslip_details.get(pid)
-        if ps and ps["gross"] > 0:
-            # Accurate: gross from payslip + actual super
-            emp_gross = ps["gross"]
-            emp_super = ps["super"] if ps["super"] > 0 else round(emp_gross * 0.115, 2)
-            emp_tax   = ps["tax"]
-            emp_net   = ps["net"]
-            emp_total = round(emp_gross + emp_super, 2)
-        else:
-            # Estimate: apply location tax ratio to stub net pay
-            emp_net   = float(stub.get("NetPay", 0) or 0)
-            emp_gross = emp_net * (1 + tax_ratio)
-            emp_super = round(emp_gross * 0.115, 2)
-            emp_tax   = round(emp_gross - emp_net, 2)
-            emp_total = round(emp_gross + emp_super, 2)
+        first     = stub.get("FirstName", "")
+        last      = stub.get("LastName", "")
+        name      = f"{first} {last}".strip() or "Unknown"
+        emp_wages = float(stub.get("Wages", 0) or 0)   # gross before super
+        emp_super = float(stub.get("Super", 0) or 0)   # actual super from Xero
+        emp_tax   = float(stub.get("Tax", 0) or 0)
+        emp_net   = float(stub.get("NetPay", 0) or 0)
+        emp_total = round(emp_wages + emp_super, 2)     # total employer cost
 
         employees.append({
             "name":  name,
@@ -265,6 +210,13 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
             "tax":   round(emp_tax, 2),
             "super": round(emp_super, 2),
         })
+
+    # Location totals summed directly from stubs (accurate)
+    run_wages = round(sum(float(s.get("Wages", 0) or 0) for s in payslip_stubs), 2)
+    run_super = round(sum(float(s.get("Super", 0) or 0) for s in payslip_stubs), 2)
+    run_tax   = round(sum(float(s.get("Tax", 0) or 0) for s in payslip_stubs), 2)
+    run_net   = round(sum(float(s.get("NetPay", 0) or 0) for s in payslip_stubs), 2)
+    run_total = round(run_wages + run_super, 2)
 
     employees.sort(key=lambda e: e["name"])
 
@@ -349,7 +301,7 @@ def create_townsville(locations):
                 townsville["net_pay"]          = round(townsville["net_pay"]     + emp.get("net", 0), 2)
                 townsville["super"]            = round(townsville["super"]       + emp.get("super", 0), 2)
 
-                print(f"  Moved {emp_name}: {loc['short_name']} → Townsville")
+                print(f"  Moved {emp_name}: {loc['short_name']} -> Townsville")
                 break
         else:
             print(f"  Warning: {emp_name} not found in any location")
