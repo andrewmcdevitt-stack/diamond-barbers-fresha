@@ -1,88 +1,82 @@
 {
   "summary": {
     "Alex Khaq": {
-      "weekday_hrs": 29.0,
-      "saturday_hrs": 9.0,
+      "weekday_hrs": 31.0,
+      "saturday_hrs": 5.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 43.0
+      "total_hrs": 41.0
     },
     "Alfon Amora": {
-      "weekday_hrs": 32.08,
-      "saturday_hrs": 9.0,
+      "weekday_hrs": 23.0,
+      "saturday_hrs": 5.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 46.08
+      "total_hrs": 33.0
     },
     "Andrea Palma": {
-      "weekday_hrs": 27.0,
-      "saturday_hrs": 8.0,
+      "weekday_hrs": 23.0,
+      "saturday_hrs": 5.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 40.0
+      "total_hrs": 33.0
     },
     "Ashleigh Campbell": {
-      "weekday_hrs": 13.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 22.0
-    },
-    "Bailey Wosomo": {
-      "weekday_hrs": 20.0,
+      "weekday_hrs": 18.0,
       "saturday_hrs": 0.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 20.0
+      "total_hrs": 18.0
     },
     "Brazil Lamsen": {
-      "weekday_hrs": 39.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 53.0
-    },
-    "Dion Mataele": {
-      "weekday_hrs": 8.0,
-      "saturday_hrs": 0.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 13.0
-    },
-    "Dipen Magar": {
-      "weekday_hrs": 7.83,
-      "saturday_hrs": 0.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 7.83
-    },
-    "Ethan Byrne": {
-      "weekday_hrs": 34.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 43.0
-    },
-    "Jack William Bastock": {
-      "weekday_hrs": 23.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 32.0
-    },
-    "Jerry Guevarra": {
-      "weekday_hrs": 30.5,
-      "saturday_hrs": 7.0,
-      "sunday_hrs": 9.0,
-      "total_hrs": 46.5
-    },
-    "Luca Perrone": {
-      "weekday_hrs": 27.0,
-      "saturday_hrs": 7.0,
+      "weekday_hrs": 29.0,
+      "saturday_hrs": 5.0,
       "sunday_hrs": 5.0,
       "total_hrs": 39.0
     },
-    "Michael Dobbs": {
-      "weekday_hrs": 28.75,
-      "saturday_hrs": 9.0,
+    "Dion Mataele": {
+      "weekday_hrs": 24.0,
+      "saturday_hrs": 5.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 34.0
+    },
+    "Dipen Magar": {
+      "weekday_hrs": 11.5,
+      "saturday_hrs": 0.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 37.75
+      "total_hrs": 11.5
+    },
+    "Ethan Byrne": {
+      "weekday_hrs": 27.0,
+      "saturday_hrs": 5.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 32.0
+    },
+    "Jack William Bastock": {
+      "weekday_hrs": 25.0,
+      "saturday_hrs": 5.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 30.0
+    },
+    "Jerry Guevarra": {
+      "weekday_hrs": 25.0,
+      "saturday_hrs": 5.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 35.0
+    },
+    "Luca Perrone": {
+      "weekday_hrs": 22.0,
+      "saturday_hrs": 5.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 32.0
+    },
+    "Michael Dobbs": {
+      "weekday_hrs": 19.5,
+      "saturday_hrs": 0.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 19.5
     },
     "Nelson Diwa": {
-      "weekday_hrs": 31.5,
-      "saturday_hrs": 9.0,
+      "weekday_hrs": 23.0,
+      "saturday_hrs": 5.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 45.5
+      "total_hrs": 33.0
     }
   },
   "by_location": {
@@ -127,10 +121,10 @@
           "total_hrs": 0.0
         },
         "3340508": {
-          "weekday_hrs": 39.0,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 29.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 53.0
+          "total_hrs": 39.0
         },
         "3340507": {
           "weekday_hrs": 9.0,
@@ -181,34 +175,34 @@
       ],
       "hours": {
         "4993074": {
-          "weekday_hrs": 23.0,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 25.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 32.0
+          "total_hrs": 30.0
         },
         "4861988": {
-          "weekday_hrs": 20.0,
+          "weekday_hrs": 0.0,
           "saturday_hrs": 0.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 20.0
+          "total_hrs": 0.0
         },
         "4623420": {
-          "weekday_hrs": 8.0,
-          "saturday_hrs": 0.0,
+          "weekday_hrs": 24.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 13.0
+          "total_hrs": 34.0
         },
         "3340507": {
-          "weekday_hrs": 23.08,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 14.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 37.08
+          "total_hrs": 24.0
         },
         "3340504": {
-          "weekday_hrs": 31.5,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 23.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 45.5
+          "total_hrs": 33.0
         },
         "3313059": {
           "weekday_hrs": 0.0,
@@ -243,34 +237,34 @@
       ],
       "hours": {
         "5034930": {
-          "weekday_hrs": 27.0,
-          "saturday_hrs": 7.0,
+          "weekday_hrs": 22.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 39.0
+          "total_hrs": 32.0
         },
         "3340510": {
           "weekday_hrs": 19.0,
-          "saturday_hrs": 4.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 28.0
+          "total_hrs": 29.0
         },
         "4580173": {
-          "weekday_hrs": 28.75,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 19.5,
+          "saturday_hrs": 0.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 37.75
+          "total_hrs": 19.5
         },
         "3340502": {
-          "weekday_hrs": 34.0,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 27.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 43.0
+          "total_hrs": 32.0
         },
         "3340509": {
-          "weekday_hrs": 0.0,
+          "weekday_hrs": 9.0,
           "saturday_hrs": 0.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 5.0
+          "total_hrs": 14.0
         }
       }
     },
@@ -291,22 +285,22 @@
       ],
       "hours": {
         "3502930": {
-          "weekday_hrs": 13.0,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 18.0,
+          "saturday_hrs": 0.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 22.0
+          "total_hrs": 18.0
         },
         "3495942": {
-          "weekday_hrs": 29.0,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 31.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 43.0
+          "total_hrs": 41.0
         },
         "3340509": {
-          "weekday_hrs": 26.5,
-          "saturday_hrs": 7.0,
+          "weekday_hrs": 16.0,
+          "saturday_hrs": 5.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 33.5
+          "total_hrs": 21.0
         }
       }
     },
@@ -327,22 +321,22 @@
       ],
       "hours": {
         "3340510": {
-          "weekday_hrs": 8.0,
-          "saturday_hrs": 4.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 12.0
-        },
-        "3460774": {
-          "weekday_hrs": 7.83,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 7.83
-        },
-        "3340509": {
           "weekday_hrs": 4.0,
           "saturday_hrs": 0.0,
-          "sunday_hrs": 4.0,
-          "total_hrs": 8.0
+          "sunday_hrs": 0.0,
+          "total_hrs": 4.0
+        },
+        "3460774": {
+          "weekday_hrs": 11.5,
+          "saturday_hrs": 0.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 11.5
+        },
+        "3340509": {
+          "weekday_hrs": 0.0,
+          "saturday_hrs": 0.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 0.0
         }
       }
     }
