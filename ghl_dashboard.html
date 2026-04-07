@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diamond Barbers — Performance Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* All styles scoped to #db-root so they don't leak into GHL's page */
+
+        #db-root *, #db-root *::before, #db-root *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        #db-root {
+            background: #000000;
+            color: #FFFFFF;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            width: 100%;
+            padding: 2rem 2.5rem;
+        }
+
+        /* ── Header ── */
+        #db-root .db-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+        #db-root .db-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #FFFFFF;
+        }
+        #db-root .db-subtitle {
+            font-size: 0.82rem;
+            color: #888888;
+            margin-top: 0.25rem;
+        }
+
+        /* ── Week selector ── */
+        #db-root .week-select {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 20px;
+            color: #FFFFFF;
+            padding: 0.5rem 2.25rem 0.5rem 1rem;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888888' d='M5 7L0 2h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.85rem center;
+        }
+        #db-root .week-select option { background: #1A1A1A; }
+
+        /* ── Card ── */
+        #db-root .db-card {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 1rem;
+        }
+        #db-root .card-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #888888;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 0.6rem;
+        }
+        #db-root .card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+        #db-root .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        #db-root .card-period {
+            font-size: 0.75rem;
+            color: #888888;
+        }
+
+        /* ── KPI row ── */
+        #db-root .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: stretch;
+        }
+        #db-root .kpi-row .db-card { margin-bottom: 0; }
+        #db-root .kpi-big {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 0.4rem;
+        }
+        #db-root .kpi-sub {
+            font-size: 0.75rem;
+            color: #888888;
+        }
+
+        /* ── Pill badge ── */
+        #db-root .pill {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 20px;
+            padding: 0.2rem 0.65rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* ── Middle row ── */
+        #db-root .middle-row {
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        #db-root .middle-row .db-card { margin-bottom: 0; }
+
+        /* ── Breakdown rows ── */
+        #db-root .big-num {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+            color: #FFFFFF;
+        }
+        #db-root .bd-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #2A2A2A;
+            font-size: 0.85rem;
+        }
+        #db-root .bd-row:last-child { border-bottom: none; }
+        #db-root .bd-label { color: #888888; }
+        #db-root .bd-value { font-weight: 600; color: #FFFFFF; }
+
+        /* ── Bottom row ── */
+        #db-root .bottom-row {
+            margin-bottom: 1rem;
+        }
+        #db-root .bottom-row .db-card { margin-bottom: 0; }
+
+        /* ── Staff table ── */
+        #db-root .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        #db-root .staff-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        #db-root .staff-table thead tr { border-bottom: 1px solid #2A2A2A; }
+        #db-root .staff-table thead th {
+            color: #888888;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.5rem 0.85rem;
+            text-align: left;
+            white-space: nowrap;
+        }
+        #db-root .staff-table thead th.r { text-align: right; }
+        #db-root .staff-table tbody tr { border-bottom: 1px solid #2A2A2A; }
+        #db-root .staff-table tbody tr:last-child { border-bottom: none; }
+        #db-root .staff-table tbody td { padding: 0.65rem 0.85rem; white-space: nowrap; color: #FFFFFF; }
+        #db-root .staff-table tbody td.r { text-align: right; font-variant-numeric: tabular-nums; }
+
+        /* ── Rank pill ── */
+        #db-root .rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #2A2A2A;
+            border-radius: 6px;
+            padding: 0.12rem 0.45rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #888888;
+            min-width: 2rem;
+        }
+        #db-root .rank.r1 { background: #2E2300; color: #C9A84C; }
+        #db-root .rank.r2 { background: #0D2E1A; color: #34D399; }
+        #db-root .rank.r3 { background: #2E1F00; color: #FBBF24; }
+
+        /* ── Location row ── */
+        #db-root .location-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        #db-root .location-row .db-card { margin-bottom: 0; }
+        #db-root .loc-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: 0.5rem;
+        }
+        #db-root .loc-svc {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #C9A84C;
+            margin-bottom: 0.3rem;
+        }
+        #db-root .loc-sub {
+            font-size: 0.72rem;
+            color: #888888;
+            margin-bottom: 0.6rem;
+        }
+
+        /* ── Loading / error ── */
+        #db-root .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: #888888;
+            font-size: 0.9rem;
+        }
+
+        /* ── Footer ── */
+        #db-root .footer {
+            text-align: center;
+            color: #333333;
+            font-size: 0.68rem;
+            padding: 1.5rem 0 0.5rem;
+        }
+
+        /* ── Tabs ── */
+        #db-root .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.75rem;
+        }
+        #db-root .tab-btn {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 20px;
+            color: #888888;
+            padding: 0.45rem 1.4rem;
+            font-size: 0.88rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        #db-root .tab-btn.active {
+            background: #2E2300;
+            border-color: #C9A84C;
+            color: #C9A84C;
+        }
+        #db-root .tab-btn:hover:not(.active) {
+            border-color: #444444;
+            color: #CCCCCC;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            #db-root { padding: 1rem; }
+            #db-root .kpi-row { grid-template-columns: 1fr; }
+            #db-root .middle-row, #db-root .bottom-row { grid-template-columns: 1fr; }
+            #db-root .db-header { flex-direction: column; gap: 0.75rem; }
+            #db-root .week-select { width: 100%; }
+            #db-root .card-header { flex-direction: column; gap: 0.25rem; }
+            #db-root .kpi-big { font-size: 1.6rem; }
+            #db-root .big-num { font-size: 1.8rem; }
+            #db-root .location-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="pw-gate" style="position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:16px;padding:2.5rem;width:100%;max-width:360px;text-align:center;font-family:Inter,sans-serif;">
+        <div style="font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:0.4rem;">Diamond Barbers</div>
+        <div style="font-size:0.8rem;color:#888;margin-bottom:1.75rem;">Enter your password to continue</div>
+        <input id="pw-input" type="password" placeholder="Password"
+            style="width:100%;background:#000;border:1px solid #2A2A2A;border-radius:8px;color:#fff;padding:0.75rem 1rem;font-size:0.95rem;outline:none;margin-bottom:0.75rem;"
+            onkeydown="if(event.key==='Enter')checkPw()">
+        <div id="pw-error" style="color:#FF3333;font-size:0.78rem;min-height:1.2em;margin-bottom:0.5rem;"></div>
+        <button onclick="checkPw()"
+            style="width:100%;background:#C9A84C;border:none;border-radius:8px;color:#000;font-weight:700;font-size:0.95rem;padding:0.75rem;cursor:pointer;">
+            Enter
+        </button>
+    </div>
+</div>
+<script>
+(function(){
+    const HASH = 'df936179ae0d6c2b868991a3fd69dda6bb8b1a73d0cd79eef65d5427f818d06f';
+    async function sha256(msg){
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+        return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    if(sessionStorage.getItem('db_auth')==='1'){
+        document.getElementById('pw-gate').style.display='none';
+    }
+    window.checkPw = async function(){
+        const val = document.getElementById('pw-input').value;
+        const h = await sha256(val);
+        if(h===HASH){
+            sessionStorage.setItem('db_auth','1');
+            document.getElementById('pw-gate').style.display='none';
+        } else {
+            document.getElementById('pw-error').textContent='Incorrect password. Try again.';
+            document.getElementById('pw-input').value='';
+        }
+    };
+})();
+</script>
+
+<div id="db-root">
+    <div class="tab-bar" id="tab-bar">
+        <button class="tab-btn active" data-tab="darwin" onclick="onTabChange('darwin')">Darwin</button>
+        <button class="tab-btn" data-tab="cairns" onclick="onTabChange('cairns')">Cairns</button>
+        <button class="tab-btn" data-tab="payroll" onclick="onTabChange('payroll')">Payroll</button>
+    </div>
+    <div id="app">
+        <div class="loading">Loading dashboard…</div>
+    </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const DATA_URL         = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-dashboard/contents/data/performance_summary.json';
+const CAIRNS_DATA_URL  = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-dashboard/contents/data/cairns_performance_summary.json';
+const PAYROLL_DATA_URL = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-dashboard/contents/data/xero_payroll.json';
+
+const C = {
+    gold:     '#C9A84C',
+    amber:    '#FBBF24',
+    red:      '#FF3333',
+    green:    '#34D399',
+    blue:     '#3B82F6',
+    muted:    '#888888',
+    card:     '#1A1A1A',
+    border:   '#2A2A2A',
+    text:     '#FFFFFF',
+    grid:     '#2A2A2A',
+    goldBg:   '#2E2300',
+    amberBg:  '#2E1F00',
+    redBg:    '#3E0A0A',
+    greenBg:  '#0D2E1A',
+    blueBg:   '#0D1E3E',
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let records = [];
+let current = 0;
+let cairnsRecords = [];
+let cairnsCurrent = 0;
+let payrollData = null;
+let activeTab = 'darwin';
+
+// ── Formatters ────────────────────────────────────────────────────────────────
+const fc  = v => `A$ ${(parseFloat(v)||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+const fp  = v => `${(parseFloat(v)||0).toFixed(1)}%`;
+const fi  = v => parseInt(v) || 0;
+const fd  = s => { try { const d=new Date(s+'T00:00:00'); return d.toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'}); } catch{return s||'—';} };
+
+function occColor(v) {
+    v = parseFloat(v)||0;
+    return v >= 80 ? C.blue : v >= 60 ? C.green : C.red;
+}
+function occBgColor(v) {
+    v = parseFloat(v)||0;
+    return v >= 80 ? C.blueBg : v >= 60 ? C.greenBg : C.redBg;
+}
+function occLabel(v) {
+    v = parseFloat(v)||0;
+    return v >= 80 ? 'On target ≥ 80%' : v >= 60 ? 'Needs attention 60–79%' : 'Below target < 60%';
+}
+
+// ── Main render ───────────────────────────────────────────────────────────────
+function render(rec) {
+    const sales     = rec.sales_summary     || {};
+    const appts     = rec.appointments      || {};
+    const perf      = rec.sales_performance || {};
+    const staff     = rec.staff             || [];
+    const locations = rec.locations         || [];
+
+    const netSvc    = parseFloat(sales.services)               || 0;
+    const netProd   = parseFloat(sales.products)               || 0;
+    const tips      = parseFloat(sales.tips)                   || 0;
+    const total     = parseFloat(sales.total_sales)            || 0;
+    const incTips   = parseFloat(sales.total_sales_and_other)  || 0;
+    const cancFee   = parseFloat(sales.late_cancellation_fees) || 0;
+    const noShowFee = parseFloat(sales.no_show_fees)           || 0;
+    const svcAddon  = parseFloat(sales.service_addons)         || 0;
+    const avgSvc    = parseFloat(perf.avg_service_value)       || 0;
+    const svcSold   = fi(perf.services_sold);
+    const prodSold  = fi(perf.products_sold);
+
+    const occVals    = staff.filter(s=>s.occupancy_pct).map(s=>parseFloat(s.occupancy_pct));
+    const overallOcc = occVals.length ? occVals.reduce((a,b)=>a+b,0)/occVals.length : null;
+    const hasOcc     = overallOcc !== null;
+
+    const sortedStaff = [...staff].sort((a,b)=>(parseFloat(b.total_sales)||0)-(parseFloat(a.total_sales)||0));
+    const hasOccCol   = staff.some(s => s.occupancy_pct !== undefined && s.occupancy_pct !== null);
+
+    const period = `${fd(rec.period_start)} → ${fd(rec.period_end)}`;
+
+    const recs = activeTab === 'darwin' ? records : cairnsRecords;
+    const cur  = activeTab === 'darwin' ? current : cairnsCurrent;
+    const weekOptions = recs.map((r,i) =>
+        `<option value="${i}" ${i===cur?'selected':''}>${fd(r.period_start)} → ${fd(r.period_end)}</option>`
+    ).join('');
+
+    const locationCards = locations.map(loc => {
+        const hasOcc = loc.occupancy_pct != null && loc.occupancy_pct !== 0;
+        const col = hasOcc ? occColor(loc.occupancy_pct)   : C.muted;
+        const bg  = hasOcc ? occBgColor(loc.occupancy_pct) : C.border;
+        return `
+        <div class="db-card">
+            <div class="card-label">Location</div>
+            <div class="loc-name">${loc.name || '—'}</div>
+            <div class="loc-svc">${fc(loc.services)}</div>
+            <div class="loc-sub">Services &nbsp;·&nbsp; Total: ${fc(loc.total_sales)}</div>
+            ${hasOcc
+                ? `<span class="pill" style="background:${bg};color:${col};">${fp(loc.occupancy_pct)} occupancy</span>`
+                : `<span class="pill" style="background:${C.border};color:${C.muted};">No occupancy data</span>`
+            }
+        </div>`;
+    }).join('');
+
+    const staffRows = sortedStaff.map((s, i) => {
+        const rank = i + 1;
+        const cls  = rank <= 3 ? `r${rank}` : '';
+        const col  = s.occupancy_pct != null ? occColor(s.occupancy_pct)   : C.muted;
+        const bg   = s.occupancy_pct != null ? occBgColor(s.occupancy_pct) : C.border;
+        const occCell = hasOccCol
+            ? (s.occupancy_pct != null
+                ? `<td class="r"><span class="pill" style="background:${bg};color:${col};">${fp(s.occupancy_pct)}</span></td>`
+                : `<td class="r">—</td>`)
+            : '';
+        return `
+        <tr>
+            <td><span class="rank ${cls}">#${rank}</span></td>
+            <td style="font-weight:600;">${s.name||'—'}</td>
+            <td class="r" style="color:${C.gold};font-weight:700;">${fc(s.total_sales)}</td>
+            <td class="r">${fc(s.services)}</td>
+            <td class="r">${fc(s.products)}</td>
+            <td class="r">${fc(s.tips)}</td>
+            <td class="r">${fi(s.total_appts)}</td>
+            <td class="r" style="color:${C.red};">${fi(s.cancelled_appts)}</td>
+            ${occCell}
+        </tr>`;
+    }).join('');
+
+    document.getElementById('app').innerHTML = `
+
+        <div class="db-header">
+            <div>
+                <div class="db-title">Performance Dashboard</div>
+                <div class="db-subtitle">Diamond Barbers · ${activeTab === 'darwin' ? 'Darwin' : 'Cairns'} weekly performance report</div>
+            </div>
+            <select class="week-select" onchange="onWeekChange(this.value)">${weekOptions}</select>
+        </div>
+
+        <div class="kpi-row">
+            <div class="db-card">
+                <div class="card-label">Net Service Sales</div>
+                <div class="kpi-big">${fc(netSvc)}</div>
+                <div class="kpi-sub">${svcSold} services sold &nbsp;·&nbsp; avg ${fc(avgSvc)}</div>
+            </div>
+            <div class="db-card">
+                <div class="card-label">Net Product Sales</div>
+                <div class="kpi-big">${fc(netProd)}</div>
+                <div class="kpi-sub">${prodSold} products sold</div>
+            </div>
+            <div class="db-card">
+                <div class="card-label">Overall Occupancy</div>
+                <div class="kpi-big" style="color:${hasOcc?occColor(overallOcc):C.muted};">
+                    ${hasOcc ? fp(overallOcc) : 'No data'}
+                </div>
+                ${hasOcc ? `<span class="pill" style="background:${occBgColor(overallOcc)};color:${occColor(overallOcc)};">${occLabel(overallOcc)}</span>` : ''}
+            </div>
+        </div>
+
+        <div class="db-card">
+            <div class="card-title" style="margin-bottom:1rem;">Occupancy Rate</div>
+            <div id="occChart"></div>
+        </div>
+
+
+        <div class="bottom-row">
+            <div class="db-card">
+                <div class="card-header">
+                    <div class="card-title">Staff Performance</div>
+                    <div class="card-period">${period} · ranked by sales</div>
+                </div>
+                <div class="table-wrap">
+                    <table class="staff-table">
+                        <thead><tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th class="r">Total</th>
+                            <th class="r">Services</th>
+                            <th class="r">Products</th>
+                            <th class="r">Tips</th>
+                            <th class="r">Appts</th>
+                            <th class="r">Cancelled</th>
+                            ${hasOccCol ? '<th class="r">Occupancy</th>' : ''}
+                        </tr></thead>
+                        <tbody>${staffRows}</tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        ${locations.length ? `
+        <div class="db-card" style="margin-bottom:1rem;">
+            <div class="card-header">
+                <div class="card-title">Location Performance</div>
+                <div class="card-period">${period}</div>
+            </div>
+            <div class="location-row">${locationCards}</div>
+        </div>` : ''}
+
+        <div class="footer">Diamond Barbers &nbsp;·&nbsp; Auto-refreshes every 5 min &nbsp;·&nbsp; Updated every Monday 6:00 AM Darwin time</div>
+    `;
+
+    renderOccChart(staff);
+}
+
+// ── Occupancy chart ───────────────────────────────────────────────────────────
+function renderOccChart(staff) {
+    const valid = staff
+        .filter(s => s.occupancy_pct != null && parseFloat(s.occupancy_pct) > 0)
+        .sort((a,b) => parseFloat(a.occupancy_pct) - parseFloat(b.occupancy_pct));
+
+    if (!valid.length) {
+        document.getElementById('occChart').innerHTML =
+            `<div style="height:100px;display:flex;align-items:center;justify-content:center;color:${C.muted};">No occupancy data available.</div>`;
+        return;
+    }
+
+    const total  = valid.length;
+    const labels = valid.map((s,i) => `#${total-i} ${s.name.split(' ')[0]}`);
+    const values = valid.map(s => parseFloat(s.occupancy_pct));
+    const colors = values.map(v => occColor(v));
+
+    const ML = 130;
+    const annotations = labels.map((label, i) => ({
+        x: 0, y: label,
+        xref: 'paper', yref: 'y',
+        xanchor: 'left', yanchor: 'middle',
+        text: label,
+        showarrow: false,
+        font: { color: C.text, size: 11, family: 'Inter, sans-serif' },
+        xshift: -(ML - 5),
+    }));
+
+    Plotly.newPlot('occChart', [{
+        type: 'bar', orientation: 'h',
+        x: values, y: labels,
+        marker: { color: colors, line: { width: 0 } },
+        text: values.map(v => `${v.toFixed(0)}%`),
+        textposition: 'inside',
+        textfont: { color: '#000000', size: 11, family: 'Inter, sans-serif' },
+        cliponaxis: false,
+    }], {
+        paper_bgcolor: C.card, plot_bgcolor: C.card,
+        font: { color: C.text, size: 11, family: 'Inter, sans-serif' },
+        height: Math.max(260, total * 24 + 40),
+        margin: { l: ML, r: 20, t: 10, b: 30 },
+        bargap: 0.15,
+        xaxis: { range:[0,100], showgrid:true, gridcolor:C.grid, ticksuffix:'%', color:C.muted, zeroline:false, tickfont:{size:10} },
+        yaxis: { color:C.text, showticklabels: false },
+        annotations: annotations,
+        shapes: [
+            { type:'line', x0:80, x1:80, y0:0, y1:1, yref:'paper', layer:'below', line:{ color:C.blue,  width:1.5, dash:'dot' } },
+            { type:'line', x0:60, x1:60, y0:0, y1:1, yref:'paper', layer:'below', line:{ color:C.green, width:1.5, dash:'dot' } },
+            ...Array.from({length: total - 1}, (_,i) => ({
+                type:'line', x0:-1, x1:1, xref:'paper',
+                y0: i + 0.5, y1: i + 0.5, yref:'y',
+                layer:'below', line:{ color:C.border, width:1 },
+            })),
+        ],
+    }, { displayModeBar: false, staticPlot: true });
+}
+
+// ── Trend chart ───────────────────────────────────────────────────────────────
+function renderTrendChart() {
+    if (records.length < 2) {
+        document.getElementById('trendChart').innerHTML =
+            `<div style="height:200px;display:flex;align-items:center;justify-content:center;color:${C.muted};font-size:0.85rem;">More data will appear after multiple weeks.</div>`;
+        return;
+    }
+
+    const sorted = [...records].sort((a,b) => (a.period_end||'').localeCompare(b.period_end||''));
+    const weeks  = sorted.map(r => r.period_end || '');
+    const sales  = sorted.map(r => parseFloat((r.sales_summary||{}).total_sales) || 0);
+
+    Plotly.newPlot('trendChart', [{
+        type: 'scatter', mode: 'lines+markers',
+        x: weeks, y: sales,
+        line:      { color: C.gold, width: 2.5 },
+        marker:    { color: C.gold, size: 6 },
+        fill:      'tozeroy',
+        fillcolor: 'rgba(201,168,76,0.08)',
+    }], {
+        paper_bgcolor: C.card, plot_bgcolor: C.card,
+        font: { color: C.text, size: 10, family: 'Inter, sans-serif' },
+        height: 260,
+        margin: { l: 10, r: 10, t: 10, b: 30 },
+        xaxis: { showgrid:true, gridcolor:C.grid, color:C.muted, zeroline:false, tickfont:{size:10} },
+        yaxis: { showgrid:true, gridcolor:C.grid, color:C.muted, zeroline:false, tickprefix:'A$ ', tickfont:{size:10} },
+        showlegend: false,
+    }, { displayModeBar: false, staticPlot: true });
+}
+
+// ── Payroll render ─────────────────────────────────────────────────────────────
+
+// Maps Xero full name (lowercase) -> Fresha name (lowercase) for known mismatches
+const FRESHA_NAME_OVERRIDES = {
+    'airol basallo':        'erol basallo',
+    'anthony  crispo':      'anthony crispo',
+    'jairo espinosa mejia': 'jairo espinosa',
+    'krish manocha':        'krish',
+    'nikolaos diamantis':   'nico diamantis',
+    'vincenzo vanzanella':  'vince vincenzo',
+    'dion mataele':         "di'on mataele",
+    'ashleigh campbell':    'ashleigh campbell alexis',
+    'ethan byrne':          'ethan 🇮🇪',
+};
+
+function buildStaffServiceMap(payPeriodStart) {
+    // Build name -> services (ex-GST) lookup from Fresha data.
+    // Fresha reports inc-GST so we divide by 1.1.
+    // Try to match the payroll week; fall back to most recent.
+    const map = {};
+    const add = (recs) => {
+        if (!recs || !recs.length) return;
+        const match = recs.find(r => r.period_start === payPeriodStart) || recs[0];
+        for (const s of (match.staff || [])) {
+            const key = normName(s.name);
+            map[key] = parseFloat(s.services || 0) / 1.1;
+        }
+    };
+    add(records);
+    add(cairnsRecords);
+    return map;
+}
+
+// Normalise a name for matching: lowercase, collapse spaces, unify apostrophes
+function normName(n) {
+    return n.trim()
+        .toLowerCase()
+        .replace(/[\u2018\u2019\u201A\u201B\u2032]/g, "'") // curly apostrophes → straight
+        .replace(/\s+/g, ' ');
+}
+
+function matchService(empName, staffMap) {
+    const norm = normName;
+    const key  = norm(empName);
+
+    // Check manual overrides first
+    const overrideKey = FRESHA_NAME_OVERRIDES[key];
+    if (overrideKey !== undefined && staffMap[overrideKey] !== undefined) return staffMap[overrideKey];
+
+    // Exact match
+    if (staffMap[key] !== undefined) return staffMap[key];
+
+    const parts = key.split(' ').filter(p => p.length > 1);
+    for (const [k, v] of Object.entries(staffMap)) {
+        const kp = k.split(' ').filter(p => p.length > 1);
+        // First name + last name match (handles extra middle names)
+        if (parts[0] === kp[0] && parts[parts.length - 1] === kp[kp.length - 1]) return v;
+        // Fresha has first name only
+        if (parts[0] === kp[0] && kp.length === 1) return v;
+        // Fresha name is a substring of Xero name (e.g. "Jairo Espinosa" in "Jairo Espinosa Mejia")
+        if (key.startsWith(k)) return v;
+    }
+    return null;
+}
+
+function renderPayroll(data) {
+    const locs   = data.locations || [];
+    const totals = data.totals    || {};
+
+    const fmt  = v => `$${(v||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    const fmtD = v => {
+        const abs = Math.abs(v || 0);
+        const str = `$${abs.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        return v < 0 ? `-${str}` : str;
+    };
+    const effColor = r => r >= 1.5 ? C.green : r >= 1.0 ? C.amber : C.red;
+    const fmtEff  = r => r !== null ? `${r.toFixed(2)}x` : null;
+
+    const staffMap   = buildStaffServiceMap(locs[0]?.pay_period_start || '');
+    const hasFresha  = Object.keys(staffMap).length > 0;
+
+    // Totals across all employees where we have Fresha data
+    let totalSvcs = 0;
+    locs.forEach(loc => (loc.employees || []).forEach(e => {
+        const s = matchService(e.name, staffMap);
+        if (s !== null) totalSvcs += s;
+    }));
+    const totalDiff = totalSvcs - (totals.gross_wages || 0);
+
+    // Build location sections
+    const locationSections = locs.map(loc => {
+        const emps = loc.employees || [];
+        let locSvcs = 0;
+        emps.forEach(e => { const s = matchService(e.name, staffMap); if (s !== null) locSvcs += s; });
+        const locDiff = locSvcs - loc.gross_wages;
+        const diffCol = locDiff >= 0 ? C.green : C.red;
+
+        const empsWithEff = emps.map(e => {
+            const svcs = matchService(e.name, staffMap);
+            const diff = svcs !== null ? svcs - e.gross : null;
+            const eff  = (svcs !== null && e.gross > 0) ? svcs / e.gross : null;
+            return { ...e, svcs, diff, eff };
+        });
+        empsWithEff.sort((a, b) => {
+            if (a.eff === null && b.eff === null) return 0;
+            if (a.eff === null) return 1;
+            if (b.eff === null) return -1;
+            return b.eff - a.eff;
+        });
+        const empRows = empsWithEff.map(e => {
+            const dc  = e.diff !== null ? (e.diff >= 0 ? C.green : C.red) : C.muted;
+            const ec  = e.eff  !== null ? effColor(e.eff) : C.muted;
+            return `
+            <tr>
+                <td style="padding-left:1.5rem;color:${C.muted};">${e.name}</td>
+                <td class="r" style="color:${ec};font-weight:600;">${e.eff !== null ? fmtEff(e.eff) : '<span style="color:'+C.muted+'">—</span>'}</td>
+                <td class="r">${e.svcs !== null ? fmt(e.svcs) : '<span style="color:'+C.muted+'">—</span>'}</td>
+                <td class="r">${fmt(e.gross)}</td>
+                <td class="r" style="color:${dc};">${e.diff !== null ? fmtD(e.diff) : '<span style="color:'+C.muted+'">—</span>'}</td>
+            </tr>`;
+        }).join('');
+
+        const svcCell = hasFresha
+            ? `<td class="r" style="font-weight:700;color:${C.blue};padding-top:0.85rem;">${fmt(locSvcs)}</td>`
+            : `<td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>`;
+        const diffCell = hasFresha
+            ? `<td class="r" style="font-weight:700;color:${diffCol};padding-top:0.85rem;">${fmtD(locDiff)}</td>`
+            : `<td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>`;
+
+        return `
+            <tr>
+                <td style="font-weight:700;color:${C.text};font-size:0.82rem;padding-top:0.85rem;">
+                    ${loc.short_name}
+                    <span style="font-weight:400;color:${C.muted};font-size:0.72rem;margin-left:0.5rem;">${loc.employee_count} employees</span>
+                </td>
+                <td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>
+                ${svcCell}
+                <td class="r" style="font-weight:700;color:${C.gold};padding-top:0.85rem;">${fmt(loc.gross_wages)}</td>
+                ${diffCell}
+            </tr>
+            ${empRows}
+            <tr><td colspan="5" style="padding:0;border-bottom:2px solid ${C.border};"></td></tr>`;
+    }).join('');
+
+    const diffKpiCol = totalDiff >= 0 ? C.green : C.red;
+
+    document.getElementById('app').innerHTML = `
+        <div class="db-header">
+            <div>
+                <div class="db-title">Payroll Dashboard</div>
+                <div class="db-subtitle">Diamond Barbers · all locations · ${data.pay_period || ''}</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:0.72rem;color:${C.muted};">Updated</div>
+                <div style="font-size:0.82rem;color:${C.muted};">${data.generated_at || ''}</div>
+            </div>
+        </div>
+
+        <div class="kpi-row">
+            <div class="db-card">
+                <div class="card-label">Total Services (ex-GST)</div>
+                <div class="kpi-big" style="color:${C.blue};">${hasFresha ? fmt(totalSvcs) : '—'}</div>
+                <div class="kpi-sub">${hasFresha ? 'From Fresha · GST removed' : 'Fresha data loading…'}</div>
+            </div>
+            <div class="db-card">
+                <div class="card-label">Total Gross Wages</div>
+                <div class="kpi-big" style="color:${C.gold};">${fmt(totals.gross_wages)}</div>
+                <div class="kpi-sub">${totals.employee_count||0} employees · wages + super</div>
+            </div>
+            <div class="db-card">
+                <div class="card-label">Difference</div>
+                <div class="kpi-big" style="color:${hasFresha ? diffKpiCol : C.muted};">${hasFresha ? fmtD(totalDiff) : '—'}</div>
+                <div class="kpi-sub">Services minus wages</div>
+            </div>
+        </div>
+
+        <div class="db-card">
+            <div class="card-header">
+                <div class="card-title">Services vs Wages by Employee</div>
+                <div class="card-period">${data.pay_period || ''}</div>
+            </div>
+            <div class="table-wrap">
+                <table class="staff-table">
+                    <thead><tr>
+                        <th>Location / Employee</th>
+                        <th class="r">Efficiency</th>
+                        <th class="r">Services (ex-GST)</th>
+                        <th class="r">Gross Wages</th>
+                        <th class="r">Difference</th>
+                    </tr></thead>
+                    <tbody>
+                        ${locationSections}
+                        <tr>
+                            <td style="font-weight:700;color:${C.muted};font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em;padding-top:0.85rem;">Grand Total</td>
+                            <td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>
+                            <td class="r" style="font-weight:700;color:${C.blue};padding-top:0.85rem;">${hasFresha ? fmt(totalSvcs) : '—'}</td>
+                            <td class="r" style="font-weight:700;color:${C.gold};padding-top:0.85rem;">${fmt(totals.gross_wages)}</td>
+                            <td class="r" style="font-weight:700;color:${hasFresha ? diffKpiCol : C.muted};padding-top:0.85rem;">${hasFresha ? fmtD(totalDiff) : '—'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">Diamond Barbers &nbsp;·&nbsp; Payroll from Xero · Services from Fresha &nbsp;·&nbsp; Updated every Monday 6:00 AM Darwin time</div>
+    `;
+}
+
+// ── Events ────────────────────────────────────────────────────────────────────
+function onWeekChange(val) {
+    if (activeTab === 'darwin') {
+        current = parseInt(val);
+        render(records[current]);
+    } else {
+        cairnsCurrent = parseInt(val);
+        render(cairnsRecords[cairnsCurrent]);
+    }
+}
+
+function onTabChange(tab) {
+    activeTab = tab;
+    document.querySelectorAll('#tab-bar .tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    if (tab === 'darwin' && records.length) {
+        render(records[current]);
+    } else if (tab === 'darwin') {
+        document.getElementById('app').innerHTML =
+            `<div class="loading">No Darwin data available yet.</div>`;
+    } else if (tab === 'cairns' && cairnsRecords.length) {
+        render(cairnsRecords[cairnsCurrent]);
+    } else if (tab === 'cairns') {
+        document.getElementById('app').innerHTML =
+            `<div class="loading">No Cairns data available yet — will appear once the Cairns report has run.</div>`;
+    } else if (tab === 'payroll' && payrollData) {
+        renderPayroll(payrollData);
+    } else if (tab === 'payroll') {
+        document.getElementById('app').innerHTML =
+            `<div class="loading">No payroll data available yet — will appear once the Xero payroll report has run.</div>`;
+    }
+}
+
+// ── Load data ─────────────────────────────────────────────────────────────────
+async function loadData() {
+    try {
+        const res = await fetch(DATA_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        const meta = await res.json();
+        const decoded = atob(meta.content.replace(/\n/g, ''));
+        const raw = JSON.parse(decoded);
+        const all = (Array.isArray(raw) ? raw : [raw]).filter(r => r.sales_summary);
+
+        if (!all.length) {
+            if (activeTab === 'darwin') document.getElementById('app').innerHTML =
+                `<div class="loading">No data available yet. The report runs every Monday at 6:00 AM Darwin time.</div>`;
+        } else {
+            records = all.reverse();
+            current = 0;
+            if (activeTab === 'darwin') render(records[0]);
+            if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+        }
+
+        setTimeout(loadData, 5 * 60 * 1000);
+
+    } catch (err) {
+        if (activeTab === 'darwin') document.getElementById('app').innerHTML =
+            `<div class="loading">Error loading data — please try again shortly.</div>`;
+        console.error(err);
+    }
+}
+
+async function loadCairnsData() {
+    try {
+        const res = await fetch(CAIRNS_DATA_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        if (!res.ok) return;
+        const meta = await res.json();
+        const decoded = atob(meta.content.replace(/\n/g, ''));
+        const raw = JSON.parse(decoded);
+        const all = (Array.isArray(raw) ? raw : [raw]).filter(r => r.sales_summary);
+
+        if (all.length) {
+            cairnsRecords = all.reverse();
+            cairnsCurrent = 0;
+            if (activeTab === 'cairns') render(cairnsRecords[0]);
+            if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+        }
+
+        setTimeout(loadCairnsData, 5 * 60 * 1000);
+    } catch (err) {
+        // Cairns data not yet available — silently ignore
+    }
+}
+
+async function loadPayrollData() {
+    try {
+        const res = await fetch(PAYROLL_DATA_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        if (!res.ok) return;
+        const meta    = await res.json();
+        const decoded = atob(meta.content.replace(/\n/g, ''));
+        const data    = JSON.parse(decoded);
+
+        if (data && data.locations && data.locations.length) {
+            payrollData = data;
+            if (activeTab === 'payroll') renderPayroll(payrollData);
+        }
+
+        setTimeout(loadPayrollData, 5 * 60 * 1000);
+    } catch (err) {
+        // Payroll data not yet available — silently ignore
+    }
+}
+
+loadData();
+loadCairnsData();
+loadPayrollData();
+</script>
+</body>
+</html>

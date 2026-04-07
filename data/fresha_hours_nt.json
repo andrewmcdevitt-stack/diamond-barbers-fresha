@@ -1,130 +1,130 @@
 {
   "summary": {
     "Abuel Basallo": {
-      "weekday_hrs": 29.0,
-      "saturday_hrs": 5.0,
+      "weekday_hrs": 23.0,
+      "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 39.0
+      "total_hrs": 37.0
     },
     "Airol Basallo": {
+      "weekday_hrs": 33.0,
+      "saturday_hrs": 8.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 46.0
+    },
+    "Anthony Crispo": {
+      "weekday_hrs": 33.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 47.0
+    },
+    "Avinash Borade": {
       "weekday_hrs": 30.0,
-      "saturday_hrs": 5.0,
+      "saturday_hrs": 8.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 43.0
+    },
+    "David Garcia": {
+      "weekday_hrs": 34.5,
+      "saturday_hrs": 7.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 41.5
+    },
+    "Jack Matthew": {
+      "weekday_hrs": 27.5,
+      "saturday_hrs": 0.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 32.5
+    },
+    "Jairo Espinosa": {
+      "weekday_hrs": 26.0,
+      "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
       "total_hrs": 40.0
     },
-    "Anthony Crispo": {
-      "weekday_hrs": 18.0,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 28.0
-    },
-    "Avinash Borade": {
-      "weekday_hrs": 28.0,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 38.0
-    },
-    "David Garcia": {
-      "weekday_hrs": 39.0,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 44.0
-    },
-    "Jack Matthew": {
-      "weekday_hrs": 17.0,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 27.0
-    },
-    "Jairo Espinosa": {
-      "weekday_hrs": 37.67,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 47.67
-    },
     "Jamaine McGee": {
-      "weekday_hrs": 21.0,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 31.0
+      "weekday_hrs": 27.0,
+      "saturday_hrs": 7.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 34.0
     },
     "John Zagorianos": {
       "weekday_hrs": 32.0,
-      "saturday_hrs": 5.0,
+      "saturday_hrs": 6.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 37.0
+      "total_hrs": 38.0
     },
     "JoJo Aligam": {
-      "weekday_hrs": 29.0,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 39.0
+      "weekday_hrs": 35.0,
+      "saturday_hrs": 8.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 43.0
     },
     "Krish Manocha": {
-      "weekday_hrs": 23.0,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 28.0
-    },
-    "Laura Marshall": {
-      "weekday_hrs": 3.0,
-      "saturday_hrs": 0.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 3.0
-    },
-    "Liem Nguyen": {
-      "weekday_hrs": 26.5,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 36.5
-    },
-    "Luca Marzocchi": {
-      "weekday_hrs": 20.0,
-      "saturday_hrs": 4.67,
-      "sunday_hrs": 5.0,
-      "total_hrs": 29.67
-    },
-    "Marianne Escobar": {
-      "weekday_hrs": 18.0,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 23.0
-    },
-    "Nikolaos Diamantis": {
-      "weekday_hrs": 7.0,
-      "saturday_hrs": 5.0,
-      "sunday_hrs": 3.0,
-      "total_hrs": 15.0
-    },
-    "Robert Jugan": {
-      "weekday_hrs": 32.0,
-      "saturday_hrs": 5.0,
+      "weekday_hrs": 28.0,
+      "saturday_hrs": 9.0,
       "sunday_hrs": 0.0,
       "total_hrs": 37.0
     },
-    "Sean Maguire": {
-      "weekday_hrs": 23.0,
-      "saturday_hrs": 5.0,
+    "Laura Marshall": {
+      "weekday_hrs": 29.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 38.0
+    },
+    "Liem Nguyen": {
+      "weekday_hrs": 28.0,
+      "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 33.0
+      "total_hrs": 42.0
+    },
+    "Luca Marzocchi": {
+      "weekday_hrs": 23.0,
+      "saturday_hrs": 8.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 36.0
+    },
+    "Marianne Escobar": {
+      "weekday_hrs": 26.0,
+      "saturday_hrs": 6.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 32.0
+    },
+    "Nico Diamantis": {
+      "weekday_hrs": 12.0,
+      "saturday_hrs": 6.83,
+      "sunday_hrs": 5.0,
+      "total_hrs": 23.83
+    },
+    "Robert Jugan": {
+      "weekday_hrs": 33.5,
+      "saturday_hrs": 8.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 41.5
+    },
+    "Sean Maguire": {
+      "weekday_hrs": 31.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 45.0
     },
     "Tam Nguyen": {
-      "weekday_hrs": 31.0,
-      "saturday_hrs": 5.0,
+      "weekday_hrs": 28.0,
+      "saturday_hrs": 7.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 41.0
+      "total_hrs": 40.0
     },
-    "Vincenzo Vanzanella": {
-      "weekday_hrs": 18.5,
-      "saturday_hrs": 0.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 18.5
+    "Vince Vincenzo": {
+      "weekday_hrs": 28.0,
+      "saturday_hrs": 9.5,
+      "sunday_hrs": 5.0,
+      "total_hrs": 42.5
     },
     "Wilfred Vidal": {
-      "weekday_hrs": 24.0,
-      "saturday_hrs": 5.0,
+      "weekday_hrs": 33.0,
+      "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 34.0
+      "total_hrs": 47.0
     }
   },
   "by_location": {
@@ -132,7 +132,7 @@
       "employees": [
         {
           "id": "3328952",
-          "name": "Nikolaos Diamantis"
+          "name": "Nico Diamantis"
         },
         {
           "id": "3328945",
@@ -147,20 +147,20 @@
         "3328952": {
           "weekday_hrs": 0.0,
           "saturday_hrs": 0.0,
-          "sunday_hrs": 3.0,
-          "total_hrs": 3.0
+          "sunday_hrs": 0.0,
+          "total_hrs": 0.0
         },
         "3328945": {
-          "weekday_hrs": 8.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 16.0,
+          "saturday_hrs": 6.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 13.0
+          "total_hrs": 22.0
         },
         "3328939": {
           "weekday_hrs": 32.0,
-          "saturday_hrs": 5.0,
+          "saturday_hrs": 6.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 37.0
+          "total_hrs": 38.0
         }
       }
     },
@@ -168,7 +168,7 @@
       "employees": [
         {
           "id": "3328952",
-          "name": "Nikolaos Diamantis"
+          "name": "Nico Diamantis"
         },
         {
           "id": "3328935",
@@ -185,28 +185,28 @@
       ],
       "hours": {
         "3328952": {
-          "weekday_hrs": 7.0,
-          "saturday_hrs": 5.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 12.0
+          "weekday_hrs": 12.0,
+          "saturday_hrs": 6.83,
+          "sunday_hrs": 5.0,
+          "total_hrs": 23.83
         },
         "3328935": {
-          "weekday_hrs": 28.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 30.0,
+          "saturday_hrs": 8.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 38.0
+          "total_hrs": 43.0
         },
         "3328941": {
-          "weekday_hrs": 20.0,
-          "saturday_hrs": 4.67,
+          "weekday_hrs": 23.0,
+          "saturday_hrs": 8.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 29.67
+          "total_hrs": 36.0
         },
         "3328931": {
-          "weekday_hrs": 32.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 33.5,
+          "saturday_hrs": 8.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 37.0
+          "total_hrs": 41.5
         }
       }
     },
@@ -214,7 +214,7 @@
       "employees": [
         {
           "id": "3328952",
-          "name": "Nikolaos Diamantis"
+          "name": "Nico Diamantis"
         },
         {
           "id": "3328945",
@@ -243,16 +243,16 @@
           "total_hrs": 10.0
         },
         "3441552": {
-          "weekday_hrs": 24.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 33.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 34.0
+          "total_hrs": 47.0
         },
         "5076778": {
-          "weekday_hrs": 21.0,
-          "saturday_hrs": 5.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 31.0
+          "weekday_hrs": 27.0,
+          "saturday_hrs": 7.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 34.0
         }
       }
     },
@@ -260,7 +260,7 @@
       "employees": [
         {
           "id": "3328952",
-          "name": "Nikolaos Diamantis"
+          "name": "Nico Diamantis"
         },
         {
           "id": "3328938",
@@ -291,10 +291,10 @@
           "total_hrs": 0.0
         },
         "3328938": {
-          "weekday_hrs": 30.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 33.0,
+          "saturday_hrs": 8.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 40.0
+          "total_hrs": 46.0
         },
         "3328939": {
           "weekday_hrs": 0.0,
@@ -303,16 +303,16 @@
           "total_hrs": 0.0
         },
         "3328946": {
-          "weekday_hrs": 29.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 23.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 39.0
+          "total_hrs": 37.0
         },
         "5076665": {
-          "weekday_hrs": 29.0,
-          "saturday_hrs": 5.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 39.0
+          "weekday_hrs": 35.0,
+          "saturday_hrs": 8.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 43.0
         },
         "5076778": {
           "weekday_hrs": 0.0,
@@ -329,6 +329,10 @@
           "name": "Jairo Espinosa"
         },
         {
+          "id": "3328939",
+          "name": "John Zagorianos"
+        },
+        {
           "id": "4900249",
           "name": "Tam Nguyen"
         },
@@ -337,30 +341,36 @@
           "name": "David Garcia"
         },
         {
-          "id": "4954863",
-          "name": "Ahmet Koyusu"
+          "id": "4998932",
+          "name": "JOSH Mailloux"
         }
       ],
       "hours": {
         "3328944": {
-          "weekday_hrs": 37.67,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 26.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 47.67
+          "total_hrs": 40.0
+        },
+        "3328939": {
+          "weekday_hrs": 0.0,
+          "saturday_hrs": 0.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 0.0
         },
         "4900249": {
-          "weekday_hrs": 31.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 28.0,
+          "saturday_hrs": 7.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 41.0
+          "total_hrs": 40.0
         },
         "3328930": {
-          "weekday_hrs": 39.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 34.5,
+          "saturday_hrs": 7.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 44.0
+          "total_hrs": 41.5
         },
-        "4954863": {
+        "4998932": {
           "weekday_hrs": 0.0,
           "saturday_hrs": 0.0,
           "sunday_hrs": 0.0,
@@ -372,7 +382,7 @@
       "employees": [
         {
           "id": "3328952",
-          "name": "Nikolaos Diamantis"
+          "name": "Nico Diamantis"
         },
         {
           "id": "3328940",
@@ -399,16 +409,16 @@
           "total_hrs": 0.0
         },
         "3328940": {
-          "weekday_hrs": 18.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 33.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 28.0
+          "total_hrs": 47.0
         },
         "4810192": {
-          "weekday_hrs": 26.5,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 28.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 36.5
+          "total_hrs": 42.0
         },
         "4830684": {
           "weekday_hrs": 0.0,
@@ -417,10 +427,10 @@
           "total_hrs": 0.0
         },
         "3495852": {
-          "weekday_hrs": 3.0,
-          "saturday_hrs": 0.0,
+          "weekday_hrs": 29.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 3.0
+          "total_hrs": 38.0
         }
       }
     },
@@ -428,11 +438,11 @@
       "employees": [
         {
           "id": "3328952",
-          "name": "Nikolaos Diamantis"
+          "name": "Nico Diamantis"
         },
         {
           "id": "3328937",
-          "name": "Vincenzo Vanzanella"
+          "name": "Vince Vincenzo"
         },
         {
           "id": "3328942",
@@ -455,28 +465,28 @@
           "total_hrs": 0.0
         },
         "3328937": {
-          "weekday_hrs": 18.5,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 18.5
+          "weekday_hrs": 28.0,
+          "saturday_hrs": 9.5,
+          "sunday_hrs": 5.0,
+          "total_hrs": 42.5
         },
         "3328942": {
-          "weekday_hrs": 17.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 27.5,
+          "saturday_hrs": 0.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 27.0
+          "total_hrs": 32.5
         },
         "4830684": {
-          "weekday_hrs": 23.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 31.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 33.0
+          "total_hrs": 45.0
         },
         "4906176": {
-          "weekday_hrs": 23.0,
-          "saturday_hrs": 5.0,
+          "weekday_hrs": 28.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 28.0
+          "total_hrs": 37.0
         }
       }
     },

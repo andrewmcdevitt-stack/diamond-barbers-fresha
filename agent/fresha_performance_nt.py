@@ -412,7 +412,7 @@ async def run():
 
     data["report_date"] = datetime.now().strftime("%Y-%m-%d")
 
-    output_file = DATA_DIR / "performance_summary.json"
+    output_file = DATA_DIR / "fresha_performance_nt.json"
     if output_file.exists():
         with open(output_file, "r") as f:
             history = json.load(f)

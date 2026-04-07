@@ -155,7 +155,7 @@ def build_report_html(date_from, date_to, rows, location_commissions):
 
     return f"""<html><head><meta charset="utf-8"></head>
 <body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:16px">
-<h2 style="color:#1a1a2e;margin-bottom:2px;font-size:15px">Diamond Barbers Cairns &mdash; Weekly Hours Report</h2>
+<h2 style="color:#1a1a2e;margin-bottom:2px;font-size:15px">Diamond Barbers QLD (Cairns &amp; Townsville) &mdash; Weekly Hours Report</h2>
 <p style="color:#888;margin-top:0;margin-bottom:12px;font-size:11px">{date_from} &ndash; {date_to}</p>
 
 <table style="border-collapse:collapse;width:100%;font-size:10px;margin-bottom:16px">
@@ -196,7 +196,7 @@ def send_report_email(date_from, date_to, html, pdf_path):
     password   = os.environ.get("EMAIL_PASSWORD", "")
 
     msg = MIMEMultipart("mixed")
-    msg["Subject"] = f"Cairns Weekly Hours Report \u2014 {date_from} to {date_to}"
+    msg["Subject"] = f"QLD (Cairns & Townsville) Weekly Hours Report \u2014 {date_from} to {date_to}"
     msg["From"]    = email_from
     msg["To"]      = email_to
     msg.attach(MIMEText(html, "html"))
@@ -205,7 +205,7 @@ def send_report_email(date_from, date_to, html, pdf_path):
         part = MIMEBase("application", "octet-stream")
         part.set_payload(f.read())
     email_encoders.encode_base64(part)
-    part.add_header("Content-Disposition", f'attachment; filename="cairns_weekly_report_{date_from}.pdf"')
+    part.add_header("Content-Disposition", f'attachment; filename="qld_hours_{date_from}.pdf"')
     msg.attach(part)
 
     with smtplib.SMTP(os.environ.get("EMAIL_HOST", "mail.diamondbarbers.com.au"), 587) as smtp:
@@ -317,7 +317,7 @@ async def run():
             }
 
         # ── Load tips/sales from GitHub ───────────────────────────────────────
-        GITHUB_URL = "https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-dashboard/contents/data/cairns_performance_summary.json"
+        GITHUB_URL = "https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-dashboard/contents/data/fresha_performance_qld.json"
         staff_lookup = {}
         try:
             import base64, urllib.request
@@ -410,7 +410,7 @@ async def run():
 
         # ── Generate PDF ──────────────────────────────────────────────────────
         html_content = build_report_html(date_from, date_to, report_rows, location_commissions)
-        pdf_path = DATA_DIR / f"cairns_weekly_report_{date_from}.pdf"
+        pdf_path = DATA_DIR / f"qld_hours_{date_from}.pdf"
         pdf_page = await context.new_page()
         await pdf_page.set_content(html_content, wait_until="load")
         pdf_bytes = await pdf_page.pdf(
@@ -428,7 +428,7 @@ async def run():
             print(f"WARNING: Could not send email: {e}")
 
         # Save results
-        out = DATA_DIR / "working_hours_cairns.json"
+        out = DATA_DIR / "fresha_hours_qld.json"
         out.write_text(json.dumps({"summary": combined, "by_location": all_results}, indent=2))
         print(f"\nFull results saved to {out}")
 

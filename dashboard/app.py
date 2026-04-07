@@ -323,7 +323,7 @@ body, p, span, div, label, td, th {{
 .stSelectbox [data-baseweb="select"] * {{ color: {TEXT} !important; }}
 .stSelectbox label {{ color: {MUTED} !important; font-size: 0.72rem !important; }}
 
-/* ── Charts ── */
+/* ── Charts (trend chart only) ── */
 [data-testid="stPlotlyChart"] {{
     border: 1px solid {BORDER} !important;
     border-radius: 16px !important;
@@ -334,6 +334,25 @@ body, p, span, div, label, td, th {{
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
+}}
+
+/* ── Occupancy chart card (innermost container only) ── */
+[data-testid="stVerticalBlock"]:has(.occ-chart-card):not(:has([data-testid="stVerticalBlock"]:has(.occ-chart-card))) {{
+    background: {CARD} !important;
+    border: 1px solid {BORDER} !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    margin-bottom: 0.9rem !important;
+}}
+[data-testid="stVerticalBlock"]:has(.occ-chart-card):not(:has([data-testid="stVerticalBlock"]:has(.occ-chart-card))) [data-testid="stMarkdownContainer"] {{
+    padding: 0 !important;
+    margin: 0 !important;
+}}
+[data-testid="stVerticalBlock"]:has(.occ-chart-card):not(:has([data-testid="stVerticalBlock"]:has(.occ-chart-card))) [data-testid="stPlotlyChart"] {{
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    margin-bottom: 0 !important;
 }}
 
 /* ── Column gaps ── */
@@ -544,59 +563,56 @@ st.markdown("<div style='height:0.75rem'></div>", unsafe_allow_html=True)
 # OCCUPANCY BAR CHART
 # ══════════════════════════════════════════════════════════════════════════════
 if occ_vals:
-    occ_df = pd.DataFrame(staff_list)
-    occ_df["occupancy_pct"] = pd.to_numeric(occ_df["occupancy_pct"], errors="coerce").fillna(0)
-    occ_df = (occ_df[occ_df["occupancy_pct"] > 0]
-              .sort_values("occupancy_pct", ascending=True)
-              .reset_index(drop=True))
-    total_o         = len(occ_df)
-    occ_df["rank"]  = [total_o - i for i in range(total_o)]
-    occ_df["label"] = occ_df.apply(
-        lambda r: f"#{int(r['rank'])} {r['name'].split()[0]}", axis=1
-    )
-    bar_colors = [occ_color(v) for v in occ_df["occupancy_pct"]]
+    with st.container():
+        # Title lives as normal HTML inside the card — no more Plotly title tricks
+        st.markdown(f"""
+        <div class="occ-chart-card" style="padding:1.5rem 1.5rem 0.5rem 1.5rem;
+             font-size:0.95rem; font-weight:700; color:{TEXT};">
+            Occupancy rate
+        </div>
+        """, unsafe_allow_html=True)
 
-    fig_occ = go.Figure(go.Bar(
-        x=occ_df["occupancy_pct"],
-        y=occ_df["label"],
-        orientation="h",
-        marker_color=bar_colors,
-        marker_line_width=0,
-        text=[f"{v:.0f}%" for v in occ_df["occupancy_pct"]],
-        textposition="inside",
-        textfont=dict(color="#FFFFFF", size=11),
-        cliponaxis=False,
-    ))
-    fig_occ.add_vline(x=80, line_dash="dot", line_color=PURPLE,  line_width=1.5)
-    fig_occ.add_vline(x=65, line_dash="dot", line_color=WARN_FG, line_width=1.5)
-    fig_occ.update_layout(
-        paper_bgcolor=CARD,
-        plot_bgcolor=CARD,
-        font=dict(color=TEXT, size=11, family="sans-serif"),
-        height=max(280, len(occ_df) * 36 + 80),
-        title=dict(
-            text="Occupancy rate",
-            font=dict(color=TEXT, size=14),
-            x=0.01, xanchor="left",
-            y=0.93, yanchor="top",
-        ),
-        xaxis=dict(
-            range=[0, 100],
-            showgrid=True, gridcolor=GRID,
-            ticksuffix="%", color=MUTED,
-            zeroline=False, tickfont=dict(size=10),
-        ),
-        yaxis=dict(color=TEXT, tickfont=dict(size=11)),
-        margin=dict(l=120, r=20, t=70, b=20),
-        bargap=0.3,
-        annotations=[
-            dict(xref="paper", yref="paper", x=0.99, y=0.97,
-                 text=period_label, showarrow=False,
-                 font=dict(size=11, color=MUTED), xanchor="right"),
-        ],
-    )
+        occ_df = pd.DataFrame(staff_list)
+        occ_df["occupancy_pct"] = pd.to_numeric(occ_df["occupancy_pct"], errors="coerce").fillna(0)
+        occ_df = (occ_df[occ_df["occupancy_pct"] > 0]
+                  .sort_values("occupancy_pct", ascending=True)
+                  .reset_index(drop=True))
+        total_o         = len(occ_df)
+        occ_df["rank"]  = [total_o - i for i in range(total_o)]
+        occ_df["label"] = occ_df.apply(
+            lambda r: f"#{int(r['rank'])} {r['name'].split()[0]}", axis=1
+        )
+        bar_colors = [occ_color(v) for v in occ_df["occupancy_pct"]]
 
-    st.plotly_chart(fig_occ, use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
+        fig_occ = go.Figure(go.Bar(
+            x=occ_df["occupancy_pct"],
+            y=occ_df["label"],
+            orientation="h",
+            marker_color=bar_colors,
+            marker_line_width=0,
+            text=[f"{v:.0f}%" for v in occ_df["occupancy_pct"]],
+            textposition="inside",
+            textfont=dict(color="#FFFFFF", size=11),
+            cliponaxis=False,
+        ))
+        fig_occ.add_vline(x=80, line_dash="dot", line_color=PURPLE,  line_width=1.5)
+        fig_occ.add_vline(x=65, line_dash="dot", line_color=WARN_FG, line_width=1.5)
+        fig_occ.update_layout(
+            paper_bgcolor=CARD,
+            plot_bgcolor=CARD,
+            font=dict(color=TEXT, size=11, family="sans-serif"),
+            height=max(280, len(occ_df) * 36 + 80),
+            xaxis=dict(
+                range=[0, 100],
+                showgrid=True, gridcolor=GRID,
+                ticksuffix="%", color=MUTED,
+                zeroline=False, tickfont=dict(size=10),
+            ),
+            yaxis=dict(color=TEXT, tickfont=dict(size=11)),
+            margin=dict(l=120, r=20, t=15, b=20),
+            bargap=0.3,
+        )
+        st.plotly_chart(fig_occ, use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
 
 st.markdown("<div style='height:0.75rem'></div>", unsafe_allow_html=True)
 

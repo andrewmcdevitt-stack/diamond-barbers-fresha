@@ -1,0 +1,285 @@
+[
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "CSV download failed",
+    "report_date": "2026-03-25"
+  },
+  {
+    "error": "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CZPaHRqf7Gi5KHPKFAz8b'}",
+    "report_date": "2026-03-25"
+  },
+  {
+    "period_start": "2025-01-01",
+    "period_end": "2025-01-07",
+    "sales_summary": {
+      "services": 41598.39,
+      "service_addons": 50.0,
+      "products": 996.2,
+      "memberships": 0.0,
+      "late_cancellation_fees": 22.5,
+      "no_show_fees": 47.5,
+      "total_sales": 42507.09,
+      "service_charges": 750.32,
+      "tips": 929.57,
+      "total_sales_and_other": 43257.41
+    },
+    "appointments": {
+      "total": 938,
+      "online": 572,
+      "offline": 366,
+      "cancelled": 32,
+      "no_shows": 12,
+      "pct_online": 60.98,
+      "pct_cancelled": 3.41,
+      "pct_no_show": 1.28
+    },
+    "sales_performance": {
+      "services_sold": 1066,
+      "avg_service_value": 39.03,
+      "products_sold": 35,
+      "avg_product_value": 28.46
+    },
+    "upsell": {
+      "total": 376.0,
+      "pct": 0.88
+    },
+    "staff": [
+      {
+        "name": "Abuel Basallo",
+        "services": 2850.0,
+        "products": 111.95,
+        "total_sales": 3009.45,
+        "tips": 110.55,
+        "total_appts": 65,
+        "cancelled_appts": 3,
+        "no_show_appts": 2,
+        "services_sold": 75
+      },
+      {
+        "name": "Anthony Crispo",
+        "services": 3367.0,
+        "products": 68.0,
+        "total_sales": 3445.0,
+        "tips": 131.4,
+        "total_appts": 76,
+        "cancelled_appts": 3,
+        "no_show_appts": 0,
+        "services_sold": 95
+      },
+      {
+        "name": "Avinash Borade",
+        "services": 3364.0,
+        "products": 95.5,
+        "total_sales": 3459.5,
+        "tips": 5.0,
+        "total_appts": 74,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 85
+      },
+      {
+        "name": "David Garcia",
+        "services": 2553.5,
+        "products": 0.0,
+        "total_sales": 2553.5,
+        "tips": 83.35,
+        "total_appts": 60,
+        "cancelled_appts": 2,
+        "no_show_appts": 2,
+        "services_sold": 62
+      },
+      {
+        "name": "Erol Basallo",
+        "services": 3003.75,
+        "products": 0.0,
+        "total_sales": 3016.25,
+        "tips": 119.2,
+        "total_appts": 70,
+        "cancelled_appts": 4,
+        "no_show_appts": 1,
+        "services_sold": 85
+      },
+      {
+        "name": "Jack Matthew",
+        "services": 2633.5,
+        "products": 34.0,
+        "total_sales": 2697.5,
+        "tips": 54.95,
+        "total_appts": 65,
+        "cancelled_appts": 5,
+        "no_show_appts": 2,
+        "services_sold": 69
+      },
+      {
+        "name": "Jairo Espinosa",
+        "services": 3141.25,
+        "products": 66.0,
+        "total_sales": 3227.25,
+        "tips": 1.9,
+        "total_appts": 72,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 78
+      },
+      {
+        "name": "Jamaine McGee",
+        "services": 1210.14,
+        "products": 0.0,
+        "total_sales": 1210.14,
+        "tips": 47.5,
+        "total_appts": 30,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 33
+      },
+      {
+        "name": "JoJo Aligam",
+        "services": 2725.0,
+        "products": 130.0,
+        "total_sales": 2855.0,
+        "tips": 125.6,
+        "total_appts": 64,
+        "cancelled_appts": 0,
+        "no_show_appts": 1,
+        "services_sold": 76
+      },
+      {
+        "name": "John Zagorianos",
+        "services": 1330.0,
+        "products": 146.0,
+        "total_sales": 1476.0,
+        "tips": 64.95,
+        "total_appts": 29,
+        "cancelled_appts": 1,
+        "no_show_appts": 1,
+        "services_sold": 31
+      },
+      {
+        "name": "Krish",
+        "services": 1798.75,
+        "products": 0.0,
+        "total_sales": 1798.75,
+        "tips": 26.58,
+        "total_appts": 46,
+        "cancelled_appts": 2,
+        "no_show_appts": 1,
+        "services_sold": 50
+      },
+      {
+        "name": "Laura Marshall",
+        "services": 1724.96,
+        "products": 0.0,
+        "total_sales": 1724.96,
+        "tips": 12.35,
+        "total_appts": 39,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 51
+      },
+      {
+        "name": "Liem Nguyen",
+        "services": 2719.4,
+        "products": 163.95,
+        "total_sales": 2883.35,
+        "tips": 85.43,
+        "total_appts": 55,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 72
+      },
+      {
+        "name": "Luca Marzocchi",
+        "services": 2945.7,
+        "products": 0.0,
+        "total_sales": 2945.7,
+        "tips": 11.97,
+        "total_appts": 64,
+        "cancelled_appts": 3,
+        "no_show_appts": 1,
+        "services_sold": 80
+      },
+      {
+        "name": "Marianne Escobar",
+        "services": 1489.15,
+        "products": 94.8,
+        "total_sales": 1583.95,
+        "tips": 36.3,
+        "total_appts": 36,
+        "cancelled_appts": 2,
+        "no_show_appts": 1,
+        "services_sold": 43
+      },
+      {
+        "name": "Nico Diamantis",
+        "services": 1040.0,
+        "products": 18.0,
+        "total_sales": 1058.0,
+        "tips": 12.5,
+        "total_appts": 26,
+        "cancelled_appts": 1,
+        "no_show_appts": 0,
+        "services_sold": 27
+      },
+      {
+        "name": "Robert Jugan",
+        "services": 2902.25,
+        "products": 68.0,
+        "total_sales": 2980.25,
+        "tips": 0.0,
+        "total_appts": 64,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 79
+      }
+    ],
+    "report_type": "performance_summary",
+    "report_date": "2026-03-25"
+  }
+]

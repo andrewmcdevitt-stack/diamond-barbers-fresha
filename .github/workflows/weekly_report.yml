@@ -30,40 +30,40 @@ jobs:
       - name: Install Playwright browser
         run: playwright install chromium --with-deps
 
-      - name: Run Darwin Fresha agent
+      - name: Scrape NT (Darwin) Fresha performance data
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FRESHA_EMAIL: ${{ secrets.FRESHA_EMAIL }}
           FRESHA_PASSWORD: ${{ secrets.FRESHA_PASSWORD }}
-        run: python agent/fresha_agent.py
+        run: python agent/fresha_performance_nt.py
 
-      - name: Run Cairns Fresha agent
+      - name: Scrape QLD (Cairns & Townsville) Fresha performance data
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CAIRNS_FRESHA_EMAIL: ${{ secrets.CAIRNS_FRESHA_EMAIL }}
           CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
-        run: python agent/fresha_agent_cairns.py
+        run: python agent/fresha_performance_qld.py
 
-      - name: Send Darwin weekly hours email
+      - name: Send NT (Darwin) weekly hours report
         env:
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: python agent/test_working_hours.py
+        run: python agent/fresha_hours_nt.py
 
-      - name: Send Cairns weekly hours email
+      - name: Send QLD (Cairns & Townsville) weekly hours report
         env:
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           CAIRNS_PROVIDER_ID: ${{ secrets.CAIRNS_PROVIDER_ID }}
-        run: python agent/working_hours_cairns.py
+        run: python agent/fresha_hours_qld.py
 
-      - name: Send Xero payroll report
+      - name: Send Xero payroll report (all regions)
         env:
           XERO_CLIENT_ID: ${{ secrets.XERO_CLIENT_ID }}
           XERO_CLIENT_SECRET: ${{ secrets.XERO_CLIENT_SECRET }}
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: python agent/xero_payroll.py
+        run: python agent/xero_payroll_report.py
 
       - name: Commit and push updated data
         run: |
