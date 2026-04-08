@@ -158,34 +158,38 @@ def ghl_find_record(employee_name, week_start):
         headers=GHL_HEADERS,
         json={
             "locationId": GHL_LOCATION_ID,
+            "page":        1,
+            "pageLimit":   20,
             "filters": [
-                {"field": "custom_objects.payroll.employee_name", "operator": "eq", "value": employee_name},
-                {"field": "custom_objects.payroll.week_start",    "operator": "eq", "value": week_start},
+                {"field": "properties.employee_name", "operator": "eq", "value": employee_name},
             ],
         },
     )
-    if r.status_code == 200:
-        records = r.json().get("records", [])
-        return records[0]["id"] if records else None
-    return None
+    if r.status_code not in (200, 201):
+        return None
+    records = [
+        rec for rec in r.json().get("records", [])
+        if rec.get("properties", {}).get("week_start") == week_start
+    ]
+    return records[0]["id"] if records else None
 
 
 def ghl_upsert_record(employee_name, week_start, week_end, xero_org, hours):
     """Create or update a GHL Weekly Payroll record."""
     properties = {
-        "custom_objects.payroll.employee_name":    employee_name,
-        "custom_objects.payroll.week_start":       week_start,
-        "custom_objects.payroll.week_end":         week_end,
-        "custom_objects.payroll.xero_org":         xero_org,
-        "custom_objects.payroll.monday_hours":     hours.get("monday", 0),
-        "custom_objects.payroll.tuesday_hours":    hours.get("tuesday", 0),
-        "custom_objects.payroll.wednesday_hours":  hours.get("wednesday", 0),
-        "custom_objects.payroll.thursday_hours":   hours.get("thursday", 0),
-        "custom_objects.payroll.friday_hours":     hours.get("friday", 0),
-        "custom_objects.payroll.saturday_hours":   hours.get("saturday", 0),
-        "custom_objects.payroll.sunday_hours":     hours.get("sunday", 0),
-        "custom_objects.payroll.public_holiday_hours": hours.get("public_holiday", 0),
-        "custom_objects.payroll.total_hours":      hours.get("total_hours", 0),
+        "employee_name":       employee_name,
+        "week_start":          week_start,
+        "week_end":            week_end,
+        "xero_org":            xero_org,
+        "monday_hours":        hours.get("monday", 0),
+        "tuesday_hours":       hours.get("tuesday", 0),
+        "wednesday_hours":     hours.get("wednesday", 0),
+        "thursday_hours":      hours.get("thursday", 0),
+        "friday_hours":        hours.get("friday", 0),
+        "saturday_hours":      hours.get("saturday", 0),
+        "sunday_hours":        hours.get("sunday", 0),
+        "public_holiday_hours": hours.get("public_holiday", 0),
+        "total_hours":         hours.get("total_hours", 0),
     }
 
     existing_id = ghl_find_record(employee_name, week_start)
@@ -194,7 +198,8 @@ def ghl_upsert_record(employee_name, week_start, week_end, xero_org, hours):
         r = requests.put(
             f"{GHL_BASE}/objects/custom_objects.payroll/records/{existing_id}",
             headers=GHL_HEADERS,
-            json={"locationId": GHL_LOCATION_ID, "properties": properties},
+            params={"locationId": GHL_LOCATION_ID},
+            json={"properties": properties},
         )
         action = "updated"
     else:
@@ -243,7 +248,7 @@ async def fetch_account(account, context, date_from, date_to):
             xero_org = "Diamond Barbers Darwin" if "1371504" in pid else "Diamond Barbers Cairns"
             print(f"  WARNING: No org mapping for '{loc_name}' — defaulting to {xero_org}")
 
-        print(f"\n  -- {loc_name} → {xero_org} --")
+        print(f"\n  -- {loc_name} -> {xero_org} --")
 
         emp_resp  = await context.request.get(
             f"https://partners-api.fresha.com/v2/employees?location-id={loc_id}&with-deleted=false&__pid={pid}"
@@ -318,7 +323,7 @@ async def run():
             last_sun  = last_mon + timedelta(days=6)
             date_from = last_mon.strftime("%Y-%m-%d")
             date_to   = last_sun.strftime("%Y-%m-%d")
-            print(f"\nDate range ({account['label']}): {date_from} → {date_to}")
+            print(f"\nDate range ({account['label']}): {date_from} to {date_to}")
 
             browser = await p.chromium.launch(headless=True)
             context = await browser.new_context(storage_state=str(session_file))

@@ -1,0 +1,60 @@
+name: Weekly Payroll Sync
+
+on:
+  schedule:
+    # Monday 1:00am AEST (Darwin UTC+9:30 = Sunday 15:30 UTC)
+    - cron: '30 15 * * 0'
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    env:
+      GHL_API_KEY:            ${{ secrets.GHL_API_KEY }}
+      GHL_LOCATION_ID:        ${{ secrets.GHL_LOCATION_ID }}
+      ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
+      FRESHA_EMAIL:           ${{ secrets.FRESHA_EMAIL }}
+      FRESHA_PASSWORD:        ${{ secrets.FRESHA_PASSWORD }}
+      CAIRNS_FRESHA_EMAIL:    ${{ secrets.CAIRNS_FRESHA_EMAIL }}
+      CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
+      CI: "true"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Write session files from secrets
+        run: |
+          mkdir -p data
+          echo "${{ secrets.NT_SESSION_JSON }}" | base64 --decode > data/session.json
+          echo "${{ secrets.CAIRNS_SESSION_JSON }}" | base64 --decode > data/session_cairns.json
+
+      - name: Run fetch_hours.py
+        run: python agent/fetch_hours.py
+
+      - name: Run fetch_performance.py
+        run: python agent/fetch_performance.py
+
+      - name: Save refreshed sessions back to GitHub Secrets
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -f data/session.json ]; then
+            gh secret set NT_SESSION_JSON --body "$(base64 -w 0 data/session.json)" --repo ${{ github.repository }}
+          fi
+          if [ -f data/session_cairns.json ]; then
+            gh secret set CAIRNS_SESSION_JSON --body "$(base64 -w 0 data/session_cairns.json)" --repo ${{ github.repository }}
+          fi
