@@ -225,8 +225,8 @@ CSV DATA:
     for s in staff:
         products    = s.get("products", 0) or 0
         services    = s.get("services", 0) or 0
-        s["commissions"]    = round(products * 0.10, 2)
-        s["service_sales_exc_gst"] = round(services / 1.1, 2)
+        s["commissions"]           = round(products * 0.10, 2)
+        s["service_sales_exc_gst"] = round(services * 0.9, 2)
 
     print(f"  Parsed {len(staff)} staff members.")
     for s in staff:
@@ -319,7 +319,7 @@ CSV DATA:
     for loc in locations:
         services = loc.get("services", 0) or 0
         products = loc.get("products", 0) or 0
-        loc["services_ex_gst"]      = round(services / 1.1, 2)
+        loc["services_ex_gst"]      = round(services * 0.9, 2)
         loc["location_commissions"] = round(products * 0.10, 2)
 
     print(f"  Parsed {len(locations)} locations.")
