@@ -71,8 +71,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           if [ -f data/session.json ]; then
-            gh secret set NT_SESSION_JSON --body "$(base64 -w 0 data/session.json)" --repo ${{ github.repository }}
+            base64 -w 0 data/session.json | gh secret set NT_SESSION_JSON --repo ${{ github.repository }}
           fi
           if [ -f data/session_cairns.json ]; then
-            gh secret set CAIRNS_SESSION_JSON --body "$(base64 -w 0 data/session_cairns.json)" --repo ${{ github.repository }}
+            base64 -w 0 data/session_cairns.json | gh secret set CAIRNS_SESSION_JSON --repo ${{ github.repository }}
           fi
