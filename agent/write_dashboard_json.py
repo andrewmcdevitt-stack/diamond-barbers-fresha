@@ -69,19 +69,19 @@ def build_performance_doc(week_start, week_end, employees, locations):
     """
     staff_list = []
     for e in employees:
-        svc_inc   = round((e.get("service_sales_exc_gst") or 0) * 1.1, 2)
-        products  = round(((e.get("commissions") or 0) / 0.10) if (e.get("commissions") or 0) > 0 else 0, 2)
+        svc_ex    = round(e.get("service_sales_exc_gst") or 0, 2)
+        prod_ex   = round(((e.get("commissions") or 0) / 0.10 / 1.1) if (e.get("commissions") or 0) > 0 else 0, 2)
         tips      = round(e.get("tips") or 0, 2)
-        total_sls = round(svc_inc + products + tips, 2)
+        total_sls = round(svc_ex + prod_ex + tips, 2)
         staff_list.append({
-            "name":           e.get("name", ""),
-            "services":       svc_inc,
-            "products":       products,
-            "tips":           tips,
-            "total_sales":    total_sls,
-            "total_appts":    0,
+            "name":            e.get("name", ""),
+            "services":        svc_ex,
+            "products":        prod_ex,
+            "tips":            tips,
+            "total_sales":     total_sls,
+            "total_appts":     0,
             "cancelled_appts": 0,
-            "occupancy_pct":  e.get("occupancy_rate") or 0,
+            "occupancy_pct":   e.get("occupancy_rate") or 0,
         })
 
     # Sort by total_sales descending (matches dashboard sort)
@@ -96,13 +96,13 @@ def build_performance_doc(week_start, week_end, employees, locations):
     # Build location cards
     loc_list = []
     for loc in locations:
-        svc_inc  = round((loc.get("services_ex_gst") or 0) * 1.1, 2)
-        products = round(((loc.get("commissions") or 0) / 0.10) if (loc.get("commissions") or 0) > 0 else 0, 2)
+        svc_ex   = round(loc.get("services_ex_gst") or 0, 2)
+        prod_ex  = round(((loc.get("commissions") or 0) / 0.10 / 1.1) if (loc.get("commissions") or 0) > 0 else 0, 2)
         loc_list.append({
-            "name":         loc.get("name", ""),
-            "services":     svc_inc,
-            "products":     products,
-            "total_sales":  round(svc_inc + products, 2),
+            "name":          loc.get("name", ""),
+            "services":      svc_ex,
+            "products":      prod_ex,
+            "total_sales":   round(svc_ex + prod_ex, 2),
             "occupancy_pct": loc.get("occupancy_rate") or 0,
         })
 
