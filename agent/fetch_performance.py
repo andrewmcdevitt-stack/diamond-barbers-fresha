@@ -240,7 +240,8 @@ async def run():
                 print(f"  WARNING: {session_file.name} not found — skipping.")
                 continue
 
-            browser = await p.chromium.launch(headless=False)
+            headless = os.environ.get("CI", "false").lower() == "true"
+            browser = await p.chromium.launch(headless=headless)
             context = await browser.new_context(
                 storage_state=str(session_file),
                 accept_downloads=True,
