@@ -30,34 +30,24 @@ jobs:
       - name: Install Playwright browser
         run: playwright install chromium --with-deps
 
-      - name: Scrape NT (Darwin) Fresha performance data
+      - name: Fetch performance data (NT + QLD)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FRESHA_EMAIL: ${{ secrets.FRESHA_EMAIL }}
           FRESHA_PASSWORD: ${{ secrets.FRESHA_PASSWORD }}
-        run: python agent/fresha_performance_nt.py
-
-      - name: Scrape QLD (Cairns & Townsville) Fresha performance data
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CAIRNS_FRESHA_EMAIL: ${{ secrets.CAIRNS_FRESHA_EMAIL }}
           CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
-        run: python agent/fresha_performance_qld.py
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        run: python agent/fetch_performance.py
 
-      - name: Send NT (Darwin) weekly hours report
+      - name: Fetch hours data (NT + QLD)
         env:
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: python agent/fresha_hours_nt.py
+        run: python agent/fetch_hours.py
 
-      - name: Send QLD (Cairns & Townsville) weekly hours report
-        env:
-          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          CAIRNS_PROVIDER_ID: ${{ secrets.CAIRNS_PROVIDER_ID }}
-        run: python agent/fresha_hours_qld.py
-
-      - name: Send Xero payroll report (all regions)
+      - name: Generate Xero payroll report
         env:
           XERO_CLIENT_ID: ${{ secrets.XERO_CLIENT_ID }}
           XERO_CLIENT_SECRET: ${{ secrets.XERO_CLIENT_SECRET }}
