@@ -71,8 +71,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           if [ -f data/session.json ]; then
-            base64 -w 0 data/session.json | gh secret set NT_SESSION_JSON --repo ${{ github.repository }}
+            jq '{cookies: .cookies}' data/session.json > /tmp/session_slim.json
+            base64 -w 0 /tmp/session_slim.json | gh secret set NT_SESSION_JSON --repo ${{ github.repository }}
           fi
           if [ -f data/session_cairns.json ]; then
-            base64 -w 0 data/session_cairns.json | gh secret set CAIRNS_SESSION_JSON --repo ${{ github.repository }}
+            jq '{cookies: .cookies}' data/session_cairns.json > /tmp/session_cairns_slim.json
+            base64 -w 0 /tmp/session_cairns_slim.json | gh secret set CAIRNS_SESSION_JSON --repo ${{ github.repository }}
           fi
