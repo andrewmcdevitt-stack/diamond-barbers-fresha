@@ -69,8 +69,9 @@ def build_performance_doc(week_start, week_end, employees, locations):
     """
     staff_list = []
     for e in employees:
-        svc_ex    = round(e.get("service_sales_exc_gst") or 0, 2)
-        prod_ex   = round(((e.get("commissions") or 0) / 0.10 / 1.1) if (e.get("commissions") or 0) > 0 else 0, 2)
+        # service_sales_exc_gst stored as services/1.1; restore then take 10% off
+        svc_ex    = round((e.get("service_sales_exc_gst") or 0) * 1.1 * 0.9, 2)
+        prod_ex   = round(((e.get("commissions") or 0) / 0.10 * 0.9) if (e.get("commissions") or 0) > 0 else 0, 2)
         tips      = round(e.get("tips") or 0, 2)
         total_sls = round(svc_ex + prod_ex + tips, 2)
         staff_list.append({
@@ -96,8 +97,8 @@ def build_performance_doc(week_start, week_end, employees, locations):
     # Build location cards
     loc_list = []
     for loc in locations:
-        svc_ex   = round(loc.get("services_ex_gst") or 0, 2)
-        prod_ex  = round(((loc.get("commissions") or 0) / 0.10 / 1.1) if (loc.get("commissions") or 0) > 0 else 0, 2)
+        svc_ex   = round((loc.get("services_ex_gst") or 0) * 1.1 * 0.9, 2)
+        prod_ex  = round(((loc.get("commissions") or 0) / 0.10 * 0.9) if (loc.get("commissions") or 0) > 0 else 0, 2)
         loc_list.append({
             "name":          loc.get("name", ""),
             "services":      svc_ex,
