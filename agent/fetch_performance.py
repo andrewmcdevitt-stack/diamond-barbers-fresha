@@ -384,6 +384,26 @@ def ghl_upsert_location(location_name, week_start, week_end, location_label, ser
     raise Exception(f"GHL {r.status_code}: {r.text[:200]}")
 
 
+# ── Manager commission overrides ──────────────────────────────────────────────
+# Each manager's commission = sum of their location(s) product sales * 0.9 * 0.10
+
+MANAGER_LOCATIONS = {
+    "Anthony Crispo":    ["Diamond Barbers - COOLALINGA"],
+    "Airol Basallo":     ["Diamond Barbers - BELLAMACK"],
+    "Wilfred Vidal":     ["Diamond Barbers - YARRAWONGA"],
+    "Marianne Escobar":  ["Diamond Barbers - COOLALINGA", "Diamond Barbers - BELLAMACK",
+                          "Diamond Barbers - YARRAWONGA", "Diamond Barbers - CASUARINA",
+                          "Diamond Barbers - PARAP", "Diamond Barbers - DARWIN CBD"],
+    "Avinash Borade":    ["Diamond Barbers - CASUARINA"],
+    "Vincenzo Vanzanella": ["Diamond Barbers - PARAP"],
+    "Jairo Espinosa":    ["Diamond Barbers - DARWIN CBD"],
+    "Jerry Guevarra":    ["Diamond Barbers Showgrounds", "Diamond Barbers Night Markets",
+                          "Diamond Barbers Northern Beaches"],
+    "Alfon Amora":       ["Diamond Barbers Rising Sun"],
+    "Brazil Lamsen":     ["Diamond Barbers Wulguru"],
+}
+
+
 # ── Location → Xero org label ──────────────────────────────────────────────────
 
 LOCATION_TO_ORG = {
@@ -440,6 +460,17 @@ async def run():
                 await browser.close()
                 continue
 
+            # ── Location Performance (parse first so manager commissions can use it) ──
+            locations = []
+            if loc_csv_path and Path(loc_csv_path).exists():
+                try:
+                    locations = parse_location_csv(loc_csv_path, api_key)
+                except Exception as e:
+                    print(f"  ERROR parsing location CSV: {e}")
+
+            # Build a lookup: location name → product sales (inc GST)
+            loc_products = {loc["name"]: loc.get("products", 0) or 0 for loc in locations}
+
             print(f"\n  Pushing performance data to GHL (week {date_from})...")
             ok = skipped = 0
             for s in staff:
@@ -450,6 +481,13 @@ async def run():
                 occupancy_rate        = s.get("occupancy_pct", 0) or 0
                 if not name:
                     continue
+
+                # Override commission for managers based on their location(s) product sales
+                if name in MANAGER_LOCATIONS:
+                    total_products = sum(loc_products.get(loc, 0) for loc in MANAGER_LOCATIONS[name])
+                    commissions    = round(total_products * 0.9 * 0.10, 2)
+                    print(f"    MANAGER {name:28s}  location_products=${total_products:.2f}  comm=${commissions:.2f}")
+
                 try:
                     result = ghl_update_performance(name, date_from, tips, commissions, service_sales_exc_gst, occupancy_rate)
                     if result == "no_record":
@@ -466,11 +504,6 @@ async def run():
 
             # ── Location Performance ───────────────────────────────────────────
             if loc_csv_path and Path(loc_csv_path).exists():
-                try:
-                    locations = parse_location_csv(loc_csv_path, api_key)
-                except Exception as e:
-                    print(f"  ERROR parsing location CSV: {e}")
-                    locations = []
 
                 print(f"\n  Pushing {len(locations)} location records to GHL...")
                 lok = 0
