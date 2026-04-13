@@ -695,22 +695,21 @@ async def run():
 
             await browser.close()
 
-    print("\nAll accounts processed.")
+        print("\nAll accounts processed.")
 
-    # ── Send weekly payroll report ─────────────────────────────────────────────
-    try:
-        # Use the date range from the last account processed
-        tz       = ACCOUNTS[-1]["timezone"]
-        today    = datetime.now(tz)
-        last_mon = today - timedelta(days=today.weekday() + 7)
-        last_sun = last_mon + timedelta(days=6)
-        await send_weekly_report(
-            last_mon.strftime("%Y-%m-%d"),
-            last_sun.strftime("%Y-%m-%d"),
-            p,
-        )
-    except Exception as e:
-        print(f"WARNING: Report failed: {e}")
+        # ── Send weekly payroll report ─────────────────────────────────────────
+        try:
+            tz       = ACCOUNTS[-1]["timezone"]
+            today    = datetime.now(tz)
+            last_mon = today - timedelta(days=today.weekday() + 7)
+            last_sun = last_mon + timedelta(days=6)
+            await send_weekly_report(
+                last_mon.strftime("%Y-%m-%d"),
+                last_sun.strftime("%Y-%m-%d"),
+                p,
+            )
+        except Exception as e:
+            print(f"WARNING: Report failed: {e}")
 
 
 if __name__ == "__main__":
