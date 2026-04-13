@@ -51,23 +51,6 @@ LOCATION_TO_ORG = {
     "Diamond Barbers Wulguru":           "Diamond Barbers Cairns",
 }
 
-ACCOUNTS = [
-    {
-        "label":       "NT (Darwin + Parap)",
-        "session":     DATA_DIR / "session.json",
-        "provider_id": "1371504",
-        "timezone":    timezone(timedelta(hours=9, minutes=30)),
-        "holidays":    PUBLIC_HOLIDAYS_NT,
-    },
-    {
-        "label":       "QLD (Cairns)",
-        "session":     DATA_DIR / "session_cairns.json",
-        "provider_id": "1390965",
-        "timezone":    timezone(timedelta(hours=10)),
-        "holidays":    PUBLIC_HOLIDAYS_QLD,
-    },
-]
-
 GQL_QUERY = """
 query employeeWorkingDays($dateFrom: Date!, $dateTo: Date!, $locationId: IID!, $employeeIds: [IID!]!) {
   blockedTimeOccurrences(
@@ -129,6 +112,23 @@ PUBLIC_HOLIDAYS_QLD = {
     "2026-12-26",  # Boxing Day
     "2026-12-28",  # Boxing Day substitute
 }
+
+ACCOUNTS = [
+    {
+        "label":       "NT (Darwin + Parap)",
+        "session":     DATA_DIR / "session.json",
+        "provider_id": "1371504",
+        "timezone":    timezone(timedelta(hours=9, minutes=30)),
+        "holidays":    PUBLIC_HOLIDAYS_NT,
+    },
+    {
+        "label":       "QLD (Cairns)",
+        "session":     DATA_DIR / "session_cairns.json",
+        "provider_id": "1390965",
+        "timezone":    timezone(timedelta(hours=10)),
+        "holidays":    PUBLIC_HOLIDAYS_QLD,
+    },
+]
 
 
 def parse_time_to_minutes(t):
