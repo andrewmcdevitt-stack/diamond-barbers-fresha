@@ -57,12 +57,14 @@ ACCOUNTS = [
         "session":     DATA_DIR / "session.json",
         "provider_id": "1371504",
         "timezone":    timezone(timedelta(hours=9, minutes=30)),
+        "holidays":    PUBLIC_HOLIDAYS_NT,
     },
     {
         "label":       "QLD (Cairns)",
         "session":     DATA_DIR / "session_cairns.json",
         "provider_id": "1390965",
         "timezone":    timezone(timedelta(hours=10)),
+        "holidays":    PUBLIC_HOLIDAYS_QLD,
     },
 ]
 
@@ -96,9 +98,37 @@ query employeeWorkingDays($dateFrom: Date!, $dateTo: Date!, $locationId: IID!, $
 }
 """
 
-PUBLIC_HOLIDAYS_AU = [
-    # Add dates here as needed e.g. "2026-01-01"
-]
+# Public holidays by state — dates when shifts count as public holiday pay
+# Sources: fairwork.gov.au, qld.gov.au
+PUBLIC_HOLIDAYS_NT = {
+    "2026-01-01",  # New Year's Day
+    "2026-01-26",  # Australia Day
+    "2026-04-03",  # Good Friday
+    "2026-04-04",  # Easter Saturday
+    "2026-04-05",  # Easter Sunday
+    "2026-04-06",  # Easter Monday
+    "2026-04-25",  # ANZAC Day
+    "2026-05-04",  # May Day
+    "2026-06-08",  # King's Birthday (NT)
+    "2026-08-03",  # Picnic Day (NT)
+    "2026-12-25",  # Christmas Day
+    "2026-12-26",  # Boxing Day
+}
+
+PUBLIC_HOLIDAYS_QLD = {
+    "2026-01-01",  # New Year's Day
+    "2026-01-26",  # Australia Day
+    "2026-04-03",  # Good Friday
+    "2026-04-04",  # Easter Saturday
+    "2026-04-05",  # Easter Sunday
+    "2026-04-06",  # Easter Monday
+    "2026-04-25",  # ANZAC Day
+    "2026-05-04",  # Labour Day
+    "2026-10-05",  # King's Birthday (QLD)
+    "2026-12-25",  # Christmas Day
+    "2026-12-26",  # Boxing Day
+    "2026-12-28",  # Boxing Day substitute
+}
 
 
 def parse_time_to_minutes(t):
@@ -106,14 +136,14 @@ def parse_time_to_minutes(t):
     return int(parts[0]) * 60 + int(parts[1])
 
 
-def day_bucket(date_str):
-    if date_str in PUBLIC_HOLIDAYS_AU:
+def day_bucket(date_str, holidays):
+    if date_str in holidays:
         return "public_holiday"
     d = datetime.strptime(date_str, "%Y-%m-%d").weekday()
     return ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"][d]
 
 
-def calc_hours(schedule_days, blocked_times, times_off, employee_ids, date_from, date_to):
+def calc_hours(schedule_days, blocked_times, times_off, employee_ids, date_from, date_to, holidays):
     results = {}
     for emp_id in employee_ids:
         buckets = {d: 0 for d in ["monday","tuesday","wednesday","thursday","friday","saturday","sunday","public_holiday"]}
@@ -123,7 +153,7 @@ def calc_hours(schedule_days, blocked_times, times_off, employee_ids, date_from,
                 continue
             if not (date_from <= day["date"] <= date_to):
                 continue
-            bucket = day_bucket(day["date"])
+            bucket = day_bucket(day["date"], holidays)
             for shift in day.get("shifts", []):
                 buckets[bucket] += parse_time_to_minutes(shift["endTime"]) - parse_time_to_minutes(shift["startTime"])
 
@@ -132,7 +162,7 @@ def calc_hours(schedule_days, blocked_times, times_off, employee_ids, date_from,
                 continue
             if not (date_from <= block["date"] <= date_to):
                 continue
-            bucket = day_bucket(block["date"])
+            bucket = day_bucket(block["date"], holidays)
             buckets[bucket] -= parse_time_to_minutes(block["endTime"]) - parse_time_to_minutes(block["startTime"])
 
         for off in times_off:
@@ -141,7 +171,7 @@ def calc_hours(schedule_days, blocked_times, times_off, employee_ids, date_from,
             if not (date_from <= off.get("date", "") <= date_to):
                 continue
             if off.get("startTime") and off.get("endTime"):
-                bucket = day_bucket(off["date"])
+                bucket = day_bucket(off["date"], holidays)
                 buckets[bucket] -= parse_time_to_minutes(off["endTime"]) - parse_time_to_minutes(off["startTime"])
 
         results[emp_id] = {k: round(max(0, v) / 60, 2) for k, v in buckets.items()}
@@ -218,7 +248,7 @@ def ghl_upsert_record(employee_name, week_start, week_end, xero_org, hours):
 
 # ── Per-account fetch ──────────────────────────────────────────────────────────
 
-async def fetch_account(account, context, date_from, date_to):
+async def fetch_account(account, context, date_from, date_to, holidays):
     pid     = account["provider_id"]
     label   = account["label"]
     gql_url = f"https://staff-working-hours-api.fresha.com/graphql?__pid={pid}"
@@ -285,7 +315,7 @@ async def fetch_account(account, context, date_from, date_to):
             wh.get("employeeScheduleDays", []),
             wh.get("blockedTimeOccurrences", []),
             wh.get("timesOffOccurrences", []),
-            emp_ids, date_from, date_to,
+            emp_ids, date_from, date_to, holidays,
         )
 
         for emp in employees:
@@ -328,7 +358,7 @@ async def run():
             browser = await p.chromium.launch(headless=True)
             context = await browser.new_context(storage_state=str(session_file))
 
-            employees = await fetch_account(account, context, date_from, date_to)
+            employees = await fetch_account(account, context, date_from, date_to, account["holidays"])
 
             print(f"\nPushing {len(employees)} employees to GHL...")
             ok = 0
