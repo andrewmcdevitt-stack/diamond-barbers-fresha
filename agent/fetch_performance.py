@@ -15,7 +15,12 @@ Requires:  data/session.json        (NT Fresha session)
 import asyncio
 import json
 import os
+import smtplib
 from datetime import datetime, timedelta, timezone
+from email import encoders as email_encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -419,6 +424,166 @@ LOCATION_TO_ORG = {
 }
 
 
+# ── Weekly report ─────────────────────────────────────────────────────────────
+
+def fetch_report_data(week_start):
+    """Read all payroll records for the week from GHL."""
+    r = requests.post(
+        f"{GHL_BASE}/objects/custom_objects.payroll/records/search",
+        headers=GHL_HEADERS,
+        json={"locationId": GHL_LOCATION_ID, "page": 1, "pageLimit": 100},
+    )
+    records = r.json().get("records", [])
+    return [
+        rec for rec in records
+        if rec.get("properties", {}).get("week_start") == week_start
+    ]
+
+
+def build_report_html(week_start, week_end, records):
+    rows = ""
+    totals = {k: 0.0 for k in ["monday","tuesday","wednesday","thursday","friday","saturday","sunday","public_holiday","tips","commissions","total_hours"]}
+
+    sorted_records = sorted(records, key=lambda r: r.get("properties", {}).get("employee_name", ""))
+
+    for i, rec in enumerate(sorted_records):
+        p   = rec.get("properties", {})
+        bg  = "#f5f5f5" if i % 2 == 0 else "#ffffff"
+        name = p.get("employee_name", "")
+        mon  = float(p.get("monday_hours", 0) or 0)
+        tue  = float(p.get("tuesday_hours", 0) or 0)
+        wed  = float(p.get("wednesday_hours", 0) or 0)
+        thu  = float(p.get("thursday_hours", 0) or 0)
+        fri  = float(p.get("friday_hours", 0) or 0)
+        sat  = float(p.get("saturday_hours", 0) or 0)
+        sun  = float(p.get("sunday_hours", 0) or 0)
+        ph   = float(p.get("public_holiday_hours", 0) or 0)
+        tips = float(p.get("tips", 0) or 0)
+        comm = float(p.get("commissions", 0) or 0)
+        total = float(p.get("total_hours", 0) or 0)
+
+        for k, v in [("monday",mon),("tuesday",tue),("wednesday",wed),("thursday",thu),
+                     ("friday",fri),("saturday",sat),("sunday",sun),("public_holiday",ph),
+                     ("tips",tips),("commissions",comm),("total_hours",total)]:
+            totals[k] += v
+
+        def h(v): return f"{v:.2f}h" if v > 0 else "-"
+        def d(v): return f"${v:.2f}" if v > 0 else "-"
+
+        rows += f"""<tr style="background:{bg}">
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0">{name}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{h(mon)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{h(tue)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{h(wed)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{h(thu)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{h(fri)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{h(sat)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{h(sun)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{h(ph)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{h(total)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{d(tips)}</td>
+          <td style="padding:4px 8px;border-bottom:1px solid #e0e0e0;text-align:right">{d(comm)}</td>
+        </tr>"""
+
+    def h(v): return f"{v:.2f}h" if v > 0 else "-"
+    def d(v): return f"${v:.2f}" if v > 0 else "-"
+
+    totals_row = f"""<tr style="background:#1a1a2e;color:#ffffff;font-weight:600">
+      <td style="padding:5px 8px">TOTAL</td>
+      <td style="padding:5px 8px;text-align:right">{h(totals['monday'])}</td>
+      <td style="padding:5px 8px;text-align:right">{h(totals['tuesday'])}</td>
+      <td style="padding:5px 8px;text-align:right">{h(totals['wednesday'])}</td>
+      <td style="padding:5px 8px;text-align:right">{h(totals['thursday'])}</td>
+      <td style="padding:5px 8px;text-align:right">{h(totals['friday'])}</td>
+      <td style="padding:5px 8px;text-align:right">{h(totals['saturday'])}</td>
+      <td style="padding:5px 8px;text-align:right">{h(totals['sunday'])}</td>
+      <td style="padding:5px 8px;text-align:right">{h(totals['public_holiday'])}</td>
+      <td style="padding:5px 8px;text-align:right">{h(totals['total_hours'])}</td>
+      <td style="padding:5px 8px;text-align:right">{d(totals['tips'])}</td>
+      <td style="padding:5px 8px;text-align:right">{d(totals['commissions'])}</td>
+    </tr>"""
+
+    return f"""<html><head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:16px">
+<h2 style="color:#1a1a2e;margin-bottom:2px;font-size:15px">Diamond Barbers — Weekly Payroll Summary</h2>
+<p style="color:#888;margin-top:0;margin-bottom:12px;font-size:11px">{week_start} to {week_end}</p>
+<table style="border-collapse:collapse;width:100%;font-size:9px">
+  <thead>
+    <tr style="background:#1a1a2e;color:#ffffff">
+      <th style="padding:5px 8px;text-align:left">Name</th>
+      <th style="padding:5px 8px;text-align:right">Mon</th>
+      <th style="padding:5px 8px;text-align:right">Tue</th>
+      <th style="padding:5px 8px;text-align:right">Wed</th>
+      <th style="padding:5px 8px;text-align:right">Thu</th>
+      <th style="padding:5px 8px;text-align:right">Fri</th>
+      <th style="padding:5px 8px;text-align:right">Sat</th>
+      <th style="padding:5px 8px;text-align:right">Sun</th>
+      <th style="padding:5px 8px;text-align:right">PH</th>
+      <th style="padding:5px 8px;text-align:right">Total</th>
+      <th style="padding:5px 8px;text-align:right">Tips</th>
+      <th style="padding:5px 8px;text-align:right">Commission</th>
+    </tr>
+  </thead>
+  <tbody>{rows}{totals_row}</tbody>
+</table>
+</body></html>"""
+
+
+async def send_weekly_report(week_start, week_end, playwright_instance):
+    """Generate PDF from GHL data and email it."""
+    print("\nGenerating weekly payroll report...")
+    records = fetch_report_data(week_start)
+    if not records:
+        print("  No records found for report.")
+        return
+
+    html = build_report_html(week_start, week_end, records)
+
+    # Generate PDF using Playwright
+    browser  = await playwright_instance.chromium.launch(headless=True)
+    page     = await browser.new_page()
+    await page.set_content(html, wait_until="load")
+    pdf_bytes = await page.pdf(
+        format="A4",
+        landscape=True,
+        margin={"top": "10mm", "right": "10mm", "bottom": "10mm", "left": "10mm"},
+    )
+    await browser.close()
+
+    pdf_path = DATA_DIR / f"payroll_report_{week_start}.pdf"
+    pdf_path.write_bytes(pdf_bytes)
+    print(f"  PDF saved: {pdf_path.name}")
+
+    # Send email
+    email_from = "claude@diamondbarbers.com.au"
+    email_to   = "admin@diamondbarbers.com.au"
+    password   = os.environ.get("EMAIL_PASSWORD", "")
+    host       = os.environ.get("EMAIL_HOST", "mail.diamondbarbers.com.au")
+
+    msg = MIMEMultipart("mixed")
+    msg["Subject"] = f"Diamond Barbers Weekly Payroll — {week_start} to {week_end}"
+    msg["From"]    = email_from
+    msg["To"]      = email_to
+    msg.attach(MIMEText(html, "html"))
+
+    with open(pdf_path, "rb") as f:
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(f.read())
+    email_encoders.encode_base64(part)
+    part.add_header("Content-Disposition", f'attachment; filename="{pdf_path.name}"')
+    msg.attach(part)
+
+    try:
+        with smtplib.SMTP(host, 587) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(email_from, password)
+            smtp.sendmail(email_from, email_to, msg.as_string())
+        print(f"  Report emailed to {email_to}")
+    except Exception as e:
+        print(f"  WARNING: Email failed: {e}")
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 async def run():
@@ -531,6 +696,21 @@ async def run():
             await browser.close()
 
     print("\nAll accounts processed.")
+
+    # ── Send weekly payroll report ─────────────────────────────────────────────
+    try:
+        # Use the date range from the last account processed
+        tz       = ACCOUNTS[-1]["timezone"]
+        today    = datetime.now(tz)
+        last_mon = today - timedelta(days=today.weekday() + 7)
+        last_sun = last_mon + timedelta(days=6)
+        await send_weekly_report(
+            last_mon.strftime("%Y-%m-%d"),
+            last_sun.strftime("%Y-%m-%d"),
+            p,
+        )
+    except Exception as e:
+        print(f"WARNING: Report failed: {e}")
 
 
 if __name__ == "__main__":
