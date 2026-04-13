@@ -18,6 +18,8 @@ jobs:
       FRESHA_PASSWORD:        ${{ secrets.FRESHA_PASSWORD }}
       CAIRNS_FRESHA_EMAIL:    ${{ secrets.CAIRNS_FRESHA_EMAIL }}
       CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
+      EMAIL_HOST:             ${{ secrets.EMAIL_HOST }}
+      EMAIL_PASSWORD:         ${{ secrets.EMAIL_PASSWORD }}
       CI: "true"
 
     steps:
