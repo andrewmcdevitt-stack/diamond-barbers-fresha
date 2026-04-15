@@ -1,0 +1,59 @@
+name: Tuesday Xero Payroll Sync
+
+on:
+  schedule:
+    # Tuesday 12:00pm Darwin time (UTC+9:30) = Tuesday 02:30 UTC
+    - cron: '30 2 * * 2'
+  workflow_dispatch:
+
+jobs:
+  xero-payroll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: agent/requirements.txt
+
+      - name: Install Python dependencies
+        run: pip install -r agent/requirements.txt
+
+      - name: Install Playwright browser
+        run: playwright install chromium --with-deps
+
+      - name: Write Xero token from secret
+        run: echo '${{ secrets.XERO_TOKEN_JSON }}' > data/xero_token.json
+
+      - name: Generate Xero payroll report
+        env:
+          XERO_CLIENT_ID:     ${{ secrets.XERO_CLIENT_ID }}
+          XERO_CLIENT_SECRET: ${{ secrets.XERO_CLIENT_SECRET }}
+          EMAIL_HOST:         ${{ secrets.EMAIL_HOST }}
+          EMAIL_PASSWORD:     ${{ secrets.EMAIL_PASSWORD }}
+        run: python agent/xero_payroll_report.py
+
+      - name: Save updated Xero token back to secret
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          TOKEN_JSON=$(cat data/xero_token.json)
+          gh secret set XERO_TOKEN_JSON --body "$TOKEN_JSON" --repo ${{ github.repository }}
+
+      - name: Commit and push xero_payroll.json
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions"
+          git add data/xero_payroll.json
+          git diff --staged --quiet && echo "No changes to commit." || (
+            git commit -m "chore: xero payroll update $(date -u +'%Y-%m-%d')" &&
+            git push
+          )
