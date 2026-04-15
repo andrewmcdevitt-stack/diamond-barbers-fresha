@@ -32,8 +32,8 @@ jobs:
 
       - name: Write Xero token from secret
         env:
-          XERO_TOKEN_JSON: ${{ secrets.XERO_TOKEN_JSON }}
-        run: echo "$XERO_TOKEN_JSON" > data/xero_token.json
+          XERO_TOKEN_B64: ${{ secrets.XERO_TOKEN_B64 }}
+        run: echo "$XERO_TOKEN_B64" | base64 --decode > data/xero_token.json
 
       - name: Generate Xero payroll report
         env:
@@ -47,8 +47,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          TOKEN_JSON=$(cat data/xero_token.json)
-          gh secret set XERO_TOKEN_JSON --body "$TOKEN_JSON" --repo ${{ github.repository }}
+          TOKEN_B64=$(base64 -w 0 data/xero_token.json)
+          gh secret set XERO_TOKEN_B64 --body "$TOKEN_B64" --repo ${{ github.repository }}
 
       - name: Commit and push xero_payroll.json
         run: |

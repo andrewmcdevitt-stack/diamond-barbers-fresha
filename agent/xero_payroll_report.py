@@ -111,6 +111,7 @@ def refresh_token(token_data):
         new_token = json.loads(resp.read())
 
     new_token["tenants"] = token_data.get("tenants", [])
+    new_token["issued_at"] = datetime.now(timezone.utc).timestamp()
     TOKEN_FILE.write_text(json.dumps(new_token, indent=2))
     print("  Token refreshed and saved.")
     return new_token
@@ -118,6 +119,14 @@ def refresh_token(token_data):
 
 def get_valid_token():
     token = load_token()
+    # Only refresh if the access token is expired (or within 60s of expiry)
+    issued_at = token.get("issued_at")
+    expires_in = token.get("expires_in", 1800)
+    if issued_at:
+        expiry = issued_at + expires_in - 60
+        if datetime.now(timezone.utc).timestamp() < expiry:
+            print("  Token still valid, skipping refresh.")
+            return token
     token = refresh_token(token)
     return token
 
