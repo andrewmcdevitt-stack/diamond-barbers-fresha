@@ -107,8 +107,15 @@ def refresh_token(token_data):
             "Content-Type":  "application/x-www-form-urlencoded",
         },
     )
-    with urllib.request.urlopen(req) as resp:
-        new_token = json.loads(resp.read())
+    print(f"  Refresh token (first 10 chars): {token_data['refresh_token'][:10]}...")
+    print(f"  Client ID: {CLIENT_ID}")
+    try:
+        with urllib.request.urlopen(req) as resp:
+            new_token = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode()
+        print(f"  Xero error response: {error_body}")
+        raise
 
     new_token["tenants"] = token_data.get("tenants", [])
     new_token["issued_at"] = datetime.now(timezone.utc).timestamp()
