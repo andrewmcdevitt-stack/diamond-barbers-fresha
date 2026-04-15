@@ -31,7 +31,9 @@ jobs:
         run: playwright install chromium --with-deps
 
       - name: Write Xero token from secret
-        run: echo '${{ secrets.XERO_TOKEN_JSON }}' > data/xero_token.json
+        env:
+          XERO_TOKEN_JSON: ${{ secrets.XERO_TOKEN_JSON }}
+        run: echo "$XERO_TOKEN_JSON" > data/xero_token.json
 
       - name: Generate Xero payroll report
         env:
