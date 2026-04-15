@@ -1,0 +1,384 @@
+[
+  {
+    "period_start": "2026-03-30",
+    "period_end": "2026-04-05",
+    "sales_summary": {
+      "services": 27890.75,
+      "products": 869.0,
+      "tips": 364.33,
+      "total_sales": 28880.75
+    },
+    "staff": [
+      {
+        "name": "Alex Khaq",
+        "services": 2903.8,
+        "products": 198.0,
+        "tips": 63.01,
+        "total_sales": 3101.8,
+        "total_appts": 57,
+        "cancelled_appts": 1,
+        "no_show_appts": 1,
+        "services_sold": 68,
+        "occupancy_pct": 66.8675
+      },
+      {
+        "name": "Alfon Amora",
+        "services": 2816.0,
+        "products": 32.0,
+        "tips": 6.0,
+        "total_sales": 2860.5,
+        "total_appts": 69,
+        "cancelled_appts": 5,
+        "no_show_appts": 2,
+        "services_sold": 69,
+        "occupancy_pct": 78.1095
+      },
+      {
+        "name": "Andrea Palma",
+        "services": 2176.5,
+        "products": 0.0,
+        "tips": 77.04,
+        "total_sales": 2176.5,
+        "total_appts": 46,
+        "cancelled_appts": 0,
+        "no_show_appts": 1,
+        "services_sold": 54,
+        "occupancy_pct": 59.194
+      },
+      {
+        "name": "Ashleigh Campbell",
+        "services": 538.25,
+        "products": 118.0,
+        "tips": 15.6,
+        "total_sales": 656.25,
+        "total_appts": 16,
+        "cancelled_appts": 1,
+        "no_show_appts": 1,
+        "services_sold": 16,
+        "occupancy_pct": 36.5741
+      },
+      {
+        "name": "Brazil Lamsen",
+        "services": 1822.5,
+        "products": 0.0,
+        "tips": 17.88,
+        "total_sales": 1822.5,
+        "total_appts": 40,
+        "cancelled_appts": 3,
+        "no_show_appts": 0,
+        "services_sold": 47,
+        "occupancy_pct": 40.5983
+      },
+      {
+        "name": "Dion Mataele",
+        "services": 2616.1,
+        "products": 164.0,
+        "tips": 0.0,
+        "total_sales": 2813.6,
+        "total_appts": 67,
+        "cancelled_appts": 6,
+        "no_show_appts": 4,
+        "services_sold": 69,
+        "occupancy_pct": 68.8725
+      },
+      {
+        "name": "Dipen Magar",
+        "services": 910.0,
+        "products": 0.0,
+        "tips": 0.0,
+        "total_sales": 910.0,
+        "total_appts": 20,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 25,
+        "occupancy_pct": 69.0647
+      },
+      {
+        "name": "Ethan Byrne",
+        "services": 2572.75,
+        "products": 0.0,
+        "tips": 5.0,
+        "total_sales": 2572.75,
+        "total_appts": 57,
+        "cancelled_appts": 6,
+        "no_show_appts": 1,
+        "services_sold": 60,
+        "occupancy_pct": 76.0417
+      },
+      {
+        "name": "Jack William Bastock",
+        "services": 2263.0,
+        "products": 96.0,
+        "tips": 0.0,
+        "total_sales": 2359.0,
+        "total_appts": 55,
+        "cancelled_appts": 4,
+        "no_show_appts": 2,
+        "services_sold": 50,
+        "occupancy_pct": 73.8889
+      },
+      {
+        "name": "Jerry Guevarra",
+        "services": 2898.0,
+        "products": 161.0,
+        "tips": 80.4,
+        "total_sales": 3059.0,
+        "total_appts": 66,
+        "cancelled_appts": 5,
+        "no_show_appts": 0,
+        "services_sold": 73,
+        "occupancy_pct": 74.2857
+      },
+      {
+        "name": "Luca Perrone",
+        "services": 2375.85,
+        "products": 66.0,
+        "tips": 61.75,
+        "total_sales": 2441.85,
+        "total_appts": 55,
+        "cancelled_appts": 4,
+        "no_show_appts": 1,
+        "services_sold": 60,
+        "occupancy_pct": 67.0984
+      },
+      {
+        "name": "Michael Dobbs",
+        "services": 948.5,
+        "products": 34.0,
+        "tips": 3.4,
+        "total_sales": 982.5,
+        "total_appts": 24,
+        "cancelled_appts": 1,
+        "no_show_appts": 1,
+        "services_sold": 26,
+        "occupancy_pct": 65.2542
+      },
+      {
+        "name": "Nelson Diwa",
+        "services": 3049.5,
+        "products": 0.0,
+        "tips": 34.25,
+        "total_sales": 3124.5,
+        "total_appts": 65,
+        "cancelled_appts": 2,
+        "no_show_appts": 1,
+        "services_sold": 75,
+        "occupancy_pct": 84.8485
+      }
+    ],
+    "report_date": "2026-04-08",
+    "report_type": "performance_summary"
+  },
+  {
+    "period_start": "2026-04-06",
+    "period_end": "2026-04-12",
+    "sales_summary": {
+      "services": 32452.32,
+      "products": 623.95,
+      "tips": 490.22,
+      "total_sales": 33325.64
+    },
+    "staff": [
+      {
+        "name": "Alex Khaq",
+        "services": 2997.22,
+        "products": 73.95,
+        "tips": 44.94,
+        "total_sales": 3088.03,
+        "total_appts": 63,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 76,
+        "occupancy_pct": 70.3
+      },
+      {
+        "name": "Alfon Amora",
+        "services": 3988.5,
+        "products": 0.0,
+        "tips": 23.75,
+        "total_sales": 3999.75,
+        "total_appts": 95,
+        "cancelled_appts": 8,
+        "no_show_appts": 2,
+        "services_sold": 100,
+        "occupancy_pct": 79.53
+      },
+      {
+        "name": "Andrea Palma",
+        "services": 2636.95,
+        "products": 92.0,
+        "tips": 124.2,
+        "total_sales": 2728.95,
+        "total_appts": 61,
+        "cancelled_appts": 4,
+        "no_show_appts": 1,
+        "services_sold": 69,
+        "occupancy_pct": 57.89
+      },
+      {
+        "name": "Ashleigh Campbell",
+        "services": 1140.25,
+        "products": 0.0,
+        "tips": 40.38,
+        "total_sales": 1182.75,
+        "total_appts": 30,
+        "cancelled_appts": 0,
+        "no_show_appts": 1,
+        "services_sold": 35,
+        "occupancy_pct": 55.46
+      },
+      {
+        "name": "Bailey Wosomo",
+        "services": 325.0,
+        "products": 0.0,
+        "tips": 0.0,
+        "total_sales": 325.0,
+        "total_appts": 11,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 11,
+        "occupancy_pct": 32.16
+      },
+      {
+        "name": "Brazil Lamsen",
+        "services": 2854.8,
+        "products": 64.0,
+        "tips": 18.75,
+        "total_sales": 2968.8,
+        "total_appts": 61,
+        "cancelled_appts": 3,
+        "no_show_appts": 3,
+        "services_sold": 77,
+        "occupancy_pct": 52.95
+      },
+      {
+        "name": "Dion Mataele",
+        "services": 539.0,
+        "products": 0.0,
+        "tips": 0.0,
+        "total_sales": 550.88,
+        "total_appts": 13,
+        "cancelled_appts": 2,
+        "no_show_appts": 1,
+        "services_sold": 15,
+        "occupancy_pct": 62.5
+      },
+      {
+        "name": "Dipen Magar",
+        "services": 1360.0,
+        "products": 32.0,
+        "tips": 0.0,
+        "total_sales": 1392.0,
+        "total_appts": 32,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 35,
+        "occupancy_pct": 72.59
+      },
+      {
+        "name": "Ethan Byrne",
+        "services": 3513.0,
+        "products": 96.0,
+        "tips": 12.2,
+        "total_sales": 3609.0,
+        "total_appts": 73,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 85,
+        "occupancy_pct": 82.72
+      },
+      {
+        "name": "Jack William Bastock",
+        "services": 1274.0,
+        "products": 34.0,
+        "tips": 8.55,
+        "total_sales": 1319.88,
+        "total_appts": 36,
+        "cancelled_appts": 9,
+        "no_show_appts": 0,
+        "services_sold": 32,
+        "occupancy_pct": 68.06
+      },
+      {
+        "name": "Jerry Guevarra",
+        "services": 4039.5,
+        "products": 68.0,
+        "tips": 96.5,
+        "total_sales": 4157.5,
+        "total_appts": 89,
+        "cancelled_appts": 5,
+        "no_show_appts": 1,
+        "services_sold": 101,
+        "occupancy_pct": 80.47
+      },
+      {
+        "name": "Luca Perrone",
+        "services": 2568.1,
+        "products": 130.0,
+        "tips": 109.45,
+        "total_sales": 2713.1,
+        "total_appts": 59,
+        "cancelled_appts": 3,
+        "no_show_appts": 0,
+        "services_sold": 66,
+        "occupancy_pct": 66.43
+      },
+      {
+        "name": "Michael Dobbs",
+        "services": 732.0,
+        "products": 0.0,
+        "tips": 0.0,
+        "total_sales": 732.0,
+        "total_appts": 18,
+        "cancelled_appts": 1,
+        "no_show_appts": 0,
+        "services_sold": 18,
+        "occupancy_pct": 56.02
+      },
+      {
+        "name": "Nelson Diwa",
+        "services": 4484.0,
+        "products": 34.0,
+        "tips": 11.5,
+        "total_sales": 4558.0,
+        "total_appts": 93,
+        "cancelled_appts": 4,
+        "no_show_appts": 1,
+        "services_sold": 106,
+        "occupancy_pct": 91.03
+      }
+    ],
+    "locations": [
+      {
+        "name": "Diamond Barbers Night Markets",
+        "services": 2185.0,
+        "products": 66.0,
+        "total_sales": 2251.0,
+        "occupancy_pct": 77.027
+      },
+      {
+        "name": "Diamond Barbers Northern Beaches",
+        "services": 6493.7,
+        "products": 109.95,
+        "total_sales": 6713.03,
+        "occupancy_pct": 68.1211
+      },
+      {
+        "name": "Diamond Barbers Rising Sun",
+        "services": 10237.0,
+        "products": 68.0,
+        "total_sales": 10368.76,
+        "occupancy_pct": 76.0437
+      },
+      {
+        "name": "Diamond Barbers Showgrounds",
+        "services": 10308.3,
+        "products": 316.0,
+        "total_sales": 10639.3,
+        "occupancy_pct": 68.2708
+      }
+    ],
+    "report_date": "2026-04-15",
+    "report_type": "performance_summary"
+  }
+]
