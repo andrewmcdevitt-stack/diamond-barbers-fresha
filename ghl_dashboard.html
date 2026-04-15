@@ -397,15 +397,15 @@ function render(rec) {
     const staff     = rec.staff             || [];
     const locations = rec.locations         || [];
 
-    const netSvc    = parseFloat(sales.services)               || 0;
-    const netProd   = parseFloat(sales.products)               || 0;
+    const netSvc    = (parseFloat(sales.services)               || 0) / 1.1;
+    const netProd   = (parseFloat(sales.products)               || 0) / 1.1;
     const tips      = parseFloat(sales.tips)                   || 0;
-    const total     = parseFloat(sales.total_sales)            || 0;
+    const total     = netSvc + netProd + tips;
     const incTips   = parseFloat(sales.total_sales_and_other)  || 0;
     const cancFee   = parseFloat(sales.late_cancellation_fees) || 0;
     const noShowFee = parseFloat(sales.no_show_fees)           || 0;
     const svcAddon  = parseFloat(sales.service_addons)         || 0;
-    const avgSvc    = parseFloat(perf.avg_service_value)       || 0;
+    const avgSvc    = (parseFloat(perf.avg_service_value)      || 0) / 1.1;
     const svcSold   = fi(perf.services_sold);
     const prodSold  = fi(perf.products_sold);
 
@@ -432,8 +432,8 @@ function render(rec) {
         <div class="db-card">
             <div class="card-label">Location</div>
             <div class="loc-name">${loc.name || '—'}</div>
-            <div class="loc-svc">${fc(loc.services)}</div>
-            <div class="loc-sub">Services &nbsp;·&nbsp; Total: ${fc(loc.total_sales)}</div>
+            <div class="loc-svc">${fc((parseFloat(loc.services)||0)/1.1)}</div>
+            <div class="loc-sub">Services &nbsp;·&nbsp; Total: ${fc((parseFloat(loc.total_sales)||0)/1.1)}</div>
             ${hasOcc
                 ? `<span class="pill" style="background:${bg};color:${col};">${fp(loc.occupancy_pct)} occupancy</span>`
                 : `<span class="pill" style="background:${C.border};color:${C.muted};">No occupancy data</span>`
@@ -455,9 +455,9 @@ function render(rec) {
         <tr>
             <td><span class="rank ${cls}">#${rank}</span></td>
             <td style="font-weight:600;">${s.name||'—'}</td>
-            <td class="r" style="color:${C.gold};font-weight:700;">${fc(s.total_sales)}</td>
-            <td class="r">${fc(s.services)}</td>
-            <td class="r">${fc(s.products)}</td>
+            <td class="r" style="color:${C.gold};font-weight:700;">${fc((parseFloat(s.services)||0)/1.1 + (parseFloat(s.products)||0)/1.1 + (parseFloat(s.tips)||0))}</td>
+            <td class="r">${fc((parseFloat(s.services)||0)/1.1)}</td>
+            <td class="r">${fc((parseFloat(s.products)||0)/1.1)}</td>
             <td class="r">${fc(s.tips)}</td>
             <td class="r">${fi(s.total_appts)}</td>
             <td class="r" style="color:${C.red};">${fi(s.cancelled_appts)}</td>
