@@ -1,120 +1,129 @@
 {
+  "date_from": "2026-04-13",
+  "date_to": "2026-04-19",
+  "generated": "2026-04-19T22:05:12.492274",
   "summary": {
     "Abuel Basallo": {
+      "weekday_hrs": 18.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 32.0
+    },
+    "Ahmet Koysu": {
+      "weekday_hrs": 31.0,
+      "saturday_hrs": 7.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 38.0
+    },
+    "Airol Basallo": {
       "weekday_hrs": 23.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
       "total_hrs": 37.0
     },
-    "Airol Basallo": {
-      "weekday_hrs": 33.0,
-      "saturday_hrs": 8.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 46.0
-    },
     "Anthony Crispo": {
-      "weekday_hrs": 33.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 47.0
-    },
-    "Avinash Borade": {
-      "weekday_hrs": 30.0,
-      "saturday_hrs": 8.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 43.0
-    },
-    "David Garcia": {
-      "weekday_hrs": 34.5,
-      "saturday_hrs": 7.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 41.5
-    },
-    "Jack Matthew": {
-      "weekday_hrs": 27.5,
+      "weekday_hrs": 28.5,
       "saturday_hrs": 0.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 32.5
+      "total_hrs": 33.5
     },
-    "Jairo Espinosa": {
-      "weekday_hrs": 26.0,
-      "saturday_hrs": 9.0,
+    "Avinash Borade": {
+      "weekday_hrs": 31.0,
+      "saturday_hrs": 8.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 40.0
+      "total_hrs": 44.0
     },
-    "Jamaine McGee": {
-      "weekday_hrs": 27.0,
-      "saturday_hrs": 7.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 34.0
-    },
-    "John Zagorianos": {
-      "weekday_hrs": 32.0,
+    "David Garcia": {
+      "weekday_hrs": 26.5,
       "saturday_hrs": 6.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 38.0
+      "total_hrs": 32.5
     },
-    "JoJo Aligam": {
-      "weekday_hrs": 35.0,
-      "saturday_hrs": 8.0,
+    "Jack Matthew": {
+      "weekday_hrs": 33.0,
+      "saturday_hrs": 6.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 43.0
+      "total_hrs": 39.0
     },
-    "Krish Manocha": {
-      "weekday_hrs": 28.0,
+    "Jairo Espinosa": {
+      "weekday_hrs": 32.0,
+      "saturday_hrs": 7.5,
+      "sunday_hrs": 0.0,
+      "total_hrs": 39.5
+    },
+    "Jamaine McGee": {
+      "weekday_hrs": 22.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 37.0
+      "total_hrs": 31.0
     },
-    "Laura Marshall": {
+    "John Zagorianos": {
+      "weekday_hrs": 24.0,
+      "saturday_hrs": 0.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 24.0
+    },
+    "JoJo Aligam": {
+      "weekday_hrs": 36.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 45.0
+    },
+    "Krish Manocha": {
       "weekday_hrs": 29.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 0.0,
       "total_hrs": 38.0
     },
+    "Laura Marshall": {
+      "weekday_hrs": 29.0,
+      "saturday_hrs": 8.5,
+      "sunday_hrs": 0.0,
+      "total_hrs": 37.5
+    },
     "Liem Nguyen": {
-      "weekday_hrs": 28.0,
+      "weekday_hrs": 23.0,
       "saturday_hrs": 9.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 37.0
+    },
+    "Luca Marzocchi": {
+      "weekday_hrs": 29.0,
+      "saturday_hrs": 8.0,
       "sunday_hrs": 5.0,
       "total_hrs": 42.0
     },
-    "Luca Marzocchi": {
-      "weekday_hrs": 23.0,
-      "saturday_hrs": 8.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 36.0
-    },
     "Marianne Escobar": {
-      "weekday_hrs": 26.0,
+      "weekday_hrs": 25.5,
       "saturday_hrs": 6.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 32.0
+      "total_hrs": 31.5
     },
     "Nico Diamantis": {
-      "weekday_hrs": 12.0,
-      "saturday_hrs": 6.83,
+      "weekday_hrs": 7.17,
+      "saturday_hrs": 7.5,
       "sunday_hrs": 5.0,
-      "total_hrs": 23.83
+      "total_hrs": 19.67
     },
     "Robert Jugan": {
-      "weekday_hrs": 33.5,
-      "saturday_hrs": 8.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 41.5
-    },
-    "Sean Maguire": {
-      "weekday_hrs": 31.0,
+      "weekday_hrs": 36.0,
       "saturday_hrs": 9.0,
-      "sunday_hrs": 5.0,
+      "sunday_hrs": 0.0,
       "total_hrs": 45.0
     },
-    "Tam Nguyen": {
-      "weekday_hrs": 28.0,
-      "saturday_hrs": 7.0,
+    "Sean Maguire": {
+      "weekday_hrs": 24.0,
+      "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 40.0
+      "total_hrs": 38.0
     },
-    "Vince Vincenzo": {
+    "Tam Nguyen": {
+      "weekday_hrs": 25.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 34.0
+    },
+    "Vincenzo Vanzanella": {
       "weekday_hrs": 28.0,
       "saturday_hrs": 9.5,
       "sunday_hrs": 5.0,
@@ -157,10 +166,10 @@
           "total_hrs": 22.0
         },
         "3328939": {
-          "weekday_hrs": 32.0,
-          "saturday_hrs": 6.0,
+          "weekday_hrs": 24.0,
+          "saturday_hrs": 0.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 38.0
+          "total_hrs": 24.0
         }
       }
     },
@@ -185,28 +194,28 @@
       ],
       "hours": {
         "3328952": {
-          "weekday_hrs": 12.0,
-          "saturday_hrs": 6.83,
+          "weekday_hrs": 7.17,
+          "saturday_hrs": 7.5,
           "sunday_hrs": 5.0,
-          "total_hrs": 23.83
+          "total_hrs": 19.67
         },
         "3328935": {
-          "weekday_hrs": 30.0,
+          "weekday_hrs": 31.0,
           "saturday_hrs": 8.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 43.0
+          "total_hrs": 44.0
         },
         "3328941": {
-          "weekday_hrs": 23.0,
+          "weekday_hrs": 29.0,
           "saturday_hrs": 8.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 36.0
+          "total_hrs": 42.0
         },
         "3328931": {
-          "weekday_hrs": 33.5,
-          "saturday_hrs": 8.0,
+          "weekday_hrs": 36.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 41.5
+          "total_hrs": 45.0
         }
       }
     },
@@ -237,10 +246,10 @@
           "total_hrs": 0.0
         },
         "3328945": {
-          "weekday_hrs": 10.0,
+          "weekday_hrs": 9.5,
           "saturday_hrs": 0.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 10.0
+          "total_hrs": 9.5
         },
         "3441552": {
           "weekday_hrs": 33.0,
@@ -249,10 +258,10 @@
           "total_hrs": 47.0
         },
         "5076778": {
-          "weekday_hrs": 27.0,
-          "saturday_hrs": 7.0,
+          "weekday_hrs": 22.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 34.0
+          "total_hrs": 31.0
         }
       }
     },
@@ -267,20 +276,12 @@
           "name": "Airol Basallo"
         },
         {
-          "id": "3328939",
-          "name": "John Zagorianos"
-        },
-        {
           "id": "3328946",
           "name": "Abuel Basallo"
         },
         {
           "id": "5076665",
           "name": "JoJo Aligam"
-        },
-        {
-          "id": "5076778",
-          "name": "Jamaine McGee"
         }
       ],
       "hours": {
@@ -291,34 +292,22 @@
           "total_hrs": 0.0
         },
         "3328938": {
-          "weekday_hrs": 33.0,
-          "saturday_hrs": 8.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 46.0
-        },
-        "3328939": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        },
-        "3328946": {
           "weekday_hrs": 23.0,
           "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
           "total_hrs": 37.0
         },
-        "5076665": {
-          "weekday_hrs": 35.0,
-          "saturday_hrs": 8.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 43.0
+        "3328946": {
+          "weekday_hrs": 18.0,
+          "saturday_hrs": 9.0,
+          "sunday_hrs": 5.0,
+          "total_hrs": 32.0
         },
-        "5076778": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
+        "5076665": {
+          "weekday_hrs": 36.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 0.0
+          "total_hrs": 45.0
         }
       }
     },
@@ -329,10 +318,6 @@
           "name": "Jairo Espinosa"
         },
         {
-          "id": "3328939",
-          "name": "John Zagorianos"
-        },
-        {
           "id": "4900249",
           "name": "Tam Nguyen"
         },
@@ -341,40 +326,34 @@
           "name": "David Garcia"
         },
         {
-          "id": "4998932",
-          "name": "JOSH Mailloux"
+          "id": "4954863",
+          "name": "Ahmet Koysu"
         }
       ],
       "hours": {
         "3328944": {
-          "weekday_hrs": 26.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 40.0
-        },
-        "3328939": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
+          "weekday_hrs": 32.0,
+          "saturday_hrs": 7.5,
           "sunday_hrs": 0.0,
-          "total_hrs": 0.0
+          "total_hrs": 39.5
         },
         "4900249": {
-          "weekday_hrs": 28.0,
-          "saturday_hrs": 7.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 40.0
+          "weekday_hrs": 25.0,
+          "saturday_hrs": 9.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 34.0
         },
         "3328930": {
-          "weekday_hrs": 34.5,
+          "weekday_hrs": 26.5,
+          "saturday_hrs": 6.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 32.5
+        },
+        "4954863": {
+          "weekday_hrs": 31.0,
           "saturday_hrs": 7.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 41.5
-        },
-        "4998932": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
+          "total_hrs": 38.0
         }
       }
     },
@@ -409,16 +388,16 @@
           "total_hrs": 0.0
         },
         "3328940": {
-          "weekday_hrs": 33.0,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 28.5,
+          "saturday_hrs": 0.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 47.0
+          "total_hrs": 33.5
         },
         "4810192": {
-          "weekday_hrs": 28.0,
+          "weekday_hrs": 23.0,
           "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 42.0
+          "total_hrs": 37.0
         },
         "4830684": {
           "weekday_hrs": 0.0,
@@ -428,9 +407,9 @@
         },
         "3495852": {
           "weekday_hrs": 29.0,
-          "saturday_hrs": 9.0,
+          "saturday_hrs": 8.5,
           "sunday_hrs": 0.0,
-          "total_hrs": 38.0
+          "total_hrs": 37.5
         }
       }
     },
@@ -442,7 +421,7 @@
         },
         {
           "id": "3328937",
-          "name": "Vince Vincenzo"
+          "name": "Vincenzo Vanzanella"
         },
         {
           "id": "3328942",
@@ -471,22 +450,22 @@
           "total_hrs": 42.5
         },
         "3328942": {
-          "weekday_hrs": 27.5,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 32.5
+          "weekday_hrs": 33.0,
+          "saturday_hrs": 6.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 39.0
         },
         "4830684": {
-          "weekday_hrs": 31.0,
+          "weekday_hrs": 24.0,
           "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 45.0
+          "total_hrs": 38.0
         },
         "4906176": {
-          "weekday_hrs": 28.0,
+          "weekday_hrs": 29.0,
           "saturday_hrs": 9.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 37.0
+          "total_hrs": 38.0
         }
       }
     },

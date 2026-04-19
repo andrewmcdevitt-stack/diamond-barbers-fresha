@@ -1,70 +1,73 @@
 {
+  "date_from": "2026-04-13",
+  "date_to": "2026-04-19",
+  "generated": "2026-04-19T22:05:17.069220",
   "summary": {
     "Alex Khaq": {
-      "weekday_hrs": 29.0,
+      "weekday_hrs": 15.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 43.0
+      "total_hrs": 29.0
     },
     "Alfon Amora": {
-      "weekday_hrs": 32.08,
+      "weekday_hrs": 39.5,
       "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 46.08
+      "total_hrs": 53.5
     },
     "Andrea Palma": {
       "weekday_hrs": 27.0,
-      "saturday_hrs": 8.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 40.0
-    },
-    "Ashleigh Campbell alexis": {
-      "weekday_hrs": 13.0,
       "saturday_hrs": 9.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 41.0
+    },
+    "Ashleigh Campbell": {
+      "weekday_hrs": 34.0,
+      "saturday_hrs": 6.5,
       "sunday_hrs": 0.0,
-      "total_hrs": 22.0
+      "total_hrs": 40.5
     },
     "Bailey Wosomo": {
-      "weekday_hrs": 20.0,
+      "weekday_hrs": 15.0,
       "saturday_hrs": 0.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 20.0
+      "total_hrs": 15.0
     },
     "Brazil Lamsen": {
-      "weekday_hrs": 39.0,
+      "weekday_hrs": 38.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 53.0
+      "total_hrs": 52.0
+    },
+    "Dion Mataele": {
+      "weekday_hrs": 16.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 30.0
     },
     "Dipen Magar": {
-      "weekday_hrs": 7.83,
-      "saturday_hrs": 0.0,
+      "weekday_hrs": 7.67,
+      "saturday_hrs": 3.75,
       "sunday_hrs": 0.0,
-      "total_hrs": 7.83
+      "total_hrs": 11.42
     },
-    "Di\u2019on Mataele": {
-      "weekday_hrs": 8.0,
-      "saturday_hrs": 0.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 13.0
-    },
-    "Ethan \ud83c\uddee\ud83c\uddea": {
-      "weekday_hrs": 34.0,
+    "Ethan Byrne": {
+      "weekday_hrs": 31.75,
       "saturday_hrs": 9.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 43.0
+      "total_hrs": 40.75
     },
     "Jack William Bastock": {
-      "weekday_hrs": 23.0,
+      "weekday_hrs": 14.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 32.0
+      "total_hrs": 23.0
     },
     "Jerry Guevarra": {
-      "weekday_hrs": 30.5,
+      "weekday_hrs": 46.0,
       "saturday_hrs": 7.0,
-      "sunday_hrs": 9.0,
-      "total_hrs": 46.5
+      "sunday_hrs": 7.5,
+      "total_hrs": 60.5
     },
     "Luca Perrone": {
       "weekday_hrs": 27.0,
@@ -73,16 +76,16 @@
       "total_hrs": 39.0
     },
     "Michael Dobbs": {
-      "weekday_hrs": 28.75,
+      "weekday_hrs": 27.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 37.75
+      "total_hrs": 36.0
     },
     "Nelson Diwa": {
-      "weekday_hrs": 31.5,
+      "weekday_hrs": 33.5,
       "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 45.5
+      "total_hrs": 47.5
     }
   },
   "by_location": {
@@ -110,7 +113,7 @@
         },
         {
           "id": "3313059",
-          "name": "Nico Diamantis"
+          "name": "Nikolaos Diamantis"
         }
       ],
       "hours": {
@@ -127,10 +130,10 @@
           "total_hrs": 0.0
         },
         "3340508": {
-          "weekday_hrs": 39.0,
+          "weekday_hrs": 38.0,
           "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 53.0
+          "total_hrs": 52.0
         },
         "3340507": {
           "weekday_hrs": 9.0,
@@ -164,7 +167,7 @@
         },
         {
           "id": "4623420",
-          "name": "Di\u2019on Mataele"
+          "name": "Dion Mataele"
         },
         {
           "id": "3340507",
@@ -176,39 +179,39 @@
         },
         {
           "id": "3313059",
-          "name": "Nico Diamantis"
+          "name": "Nikolaos Diamantis"
         }
       ],
       "hours": {
         "4993074": {
-          "weekday_hrs": 23.0,
+          "weekday_hrs": 14.0,
           "saturday_hrs": 9.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 32.0
+          "total_hrs": 23.0
         },
         "4861988": {
-          "weekday_hrs": 20.0,
+          "weekday_hrs": 15.0,
           "saturday_hrs": 0.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 20.0
+          "total_hrs": 15.0
         },
         "4623420": {
-          "weekday_hrs": 8.0,
-          "saturday_hrs": 0.0,
+          "weekday_hrs": 16.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 13.0
+          "total_hrs": 30.0
         },
         "3340507": {
-          "weekday_hrs": 23.08,
+          "weekday_hrs": 30.5,
           "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 37.08
+          "total_hrs": 44.5
         },
         "3340504": {
-          "weekday_hrs": 31.5,
+          "weekday_hrs": 33.5,
           "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 45.5
+          "total_hrs": 47.5
         },
         "3313059": {
           "weekday_hrs": 0.0,
@@ -220,6 +223,10 @@
     },
     "Diamond Barbers Showgrounds": {
       "employees": [
+        {
+          "id": "5206468",
+          "name": "Kyle Abe-Abe"
+        },
         {
           "id": "5034930",
           "name": "Luca Perrone"
@@ -234,7 +241,7 @@
         },
         {
           "id": "3340502",
-          "name": "Ethan \ud83c\uddee\ud83c\uddea"
+          "name": "Ethan Byrne"
         },
         {
           "id": "3340509",
@@ -242,6 +249,12 @@
         }
       ],
       "hours": {
+        "5206468": {
+          "weekday_hrs": 0.0,
+          "saturday_hrs": 0.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 0.0
+        },
         "5034930": {
           "weekday_hrs": 27.0,
           "saturday_hrs": 7.0,
@@ -249,28 +262,28 @@
           "total_hrs": 39.0
         },
         "3340510": {
-          "weekday_hrs": 19.0,
-          "saturday_hrs": 4.0,
+          "weekday_hrs": 23.0,
+          "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 28.0
+          "total_hrs": 37.0
         },
         "4580173": {
-          "weekday_hrs": 28.75,
+          "weekday_hrs": 27.0,
           "saturday_hrs": 9.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 37.75
+          "total_hrs": 36.0
         },
         "3340502": {
-          "weekday_hrs": 34.0,
+          "weekday_hrs": 31.75,
           "saturday_hrs": 9.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 43.0
+          "total_hrs": 40.75
         },
         "3340509": {
-          "weekday_hrs": 0.0,
+          "weekday_hrs": 7.0,
           "saturday_hrs": 0.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 5.0
+          "sunday_hrs": 4.0,
+          "total_hrs": 11.0
         }
       }
     },
@@ -278,7 +291,7 @@
       "employees": [
         {
           "id": "3502930",
-          "name": "Ashleigh Campbell alexis"
+          "name": "Ashleigh Campbell"
         },
         {
           "id": "3495942",
@@ -291,30 +304,38 @@
       ],
       "hours": {
         "3502930": {
-          "weekday_hrs": 13.0,
-          "saturday_hrs": 9.0,
+          "weekday_hrs": 34.0,
+          "saturday_hrs": 6.5,
           "sunday_hrs": 0.0,
-          "total_hrs": 22.0
+          "total_hrs": 40.5
         },
         "3495942": {
-          "weekday_hrs": 29.0,
+          "weekday_hrs": 15.0,
           "saturday_hrs": 9.0,
           "sunday_hrs": 5.0,
-          "total_hrs": 43.0
+          "total_hrs": 29.0
         },
         "3340509": {
-          "weekday_hrs": 26.5,
+          "weekday_hrs": 35.0,
           "saturday_hrs": 7.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 33.5
+          "total_hrs": 42.0
         }
       }
     },
     "Diamond Barbers Night Markets": {
       "employees": [
         {
+          "id": "5206468",
+          "name": "Kyle Abe-Abe"
+        },
+        {
           "id": "3340510",
           "name": "Andrea Palma"
+        },
+        {
+          "id": "4580173",
+          "name": "Michael Dobbs"
         },
         {
           "id": "3460774",
@@ -326,23 +347,35 @@
         }
       ],
       "hours": {
-        "3340510": {
-          "weekday_hrs": 8.0,
-          "saturday_hrs": 4.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 12.0
-        },
-        "3460774": {
-          "weekday_hrs": 7.83,
+        "5206468": {
+          "weekday_hrs": 0.0,
           "saturday_hrs": 0.0,
           "sunday_hrs": 0.0,
-          "total_hrs": 7.83
+          "total_hrs": 0.0
+        },
+        "3340510": {
+          "weekday_hrs": 4.0,
+          "saturday_hrs": 0.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 4.0
+        },
+        "4580173": {
+          "weekday_hrs": 0.0,
+          "saturday_hrs": 0.0,
+          "sunday_hrs": 0.0,
+          "total_hrs": 0.0
+        },
+        "3460774": {
+          "weekday_hrs": 7.67,
+          "saturday_hrs": 3.75,
+          "sunday_hrs": 0.0,
+          "total_hrs": 11.42
         },
         "3340509": {
           "weekday_hrs": 4.0,
           "saturday_hrs": 0.0,
-          "sunday_hrs": 4.0,
-          "total_hrs": 8.0
+          "sunday_hrs": 3.5,
+          "total_hrs": 7.5
         }
       }
     }
