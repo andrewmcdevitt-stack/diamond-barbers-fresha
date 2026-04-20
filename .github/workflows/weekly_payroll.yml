@@ -2,9 +2,9 @@ name: Weekly Payroll Sync
 
 on:
   schedule:
-    # Monday 1:00am AEST (Darwin UTC+9:30 = Sunday 15:30 UTC)
-    - cron: '30 15 * * 0'
-  workflow_dispatch:  # Allow manual trigger from GitHub UI
+    # Monday 6:00 AM Darwin time (UTC+9:30) = Sunday 20:30 UTC
+    - cron: '30 20 * * 0'
+  workflow_dispatch:
 
 jobs:
   sync:
@@ -18,8 +18,6 @@ jobs:
       FRESHA_PASSWORD:        ${{ secrets.FRESHA_PASSWORD }}
       CAIRNS_FRESHA_EMAIL:    ${{ secrets.CAIRNS_FRESHA_EMAIL }}
       CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
-      EMAIL_HOST:             ${{ secrets.EMAIL_HOST }}
-      EMAIL_PASSWORD:         ${{ secrets.EMAIL_PASSWORD }}
       CI: "true"
 
     steps:
@@ -33,9 +31,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          playwright install chromium
-          playwright install-deps chromium
+          pip install -r agent/requirements.txt
+          playwright install chromium --with-deps
 
       - name: Write session files from secrets
         run: |
@@ -43,40 +40,27 @@ jobs:
           echo "${{ secrets.NT_SESSION_JSON }}" | base64 --decode > data/session.json
           echo "${{ secrets.CAIRNS_SESSION_JSON }}" | base64 --decode > data/session_cairns.json
 
-      - name: Run fetch_hours.py
-        run: python agent/fetch_hours.py
+      - name: Run weekly sync (hours + performance -> GHL + dashboard JSON)
+        run: python agent/weekly_sync.py
 
-      - name: Run fetch_performance.py
-        run: python agent/fetch_performance.py
-
-      - name: Write dashboard JSON snapshot
-        run: python agent/write_dashboard_json.py
-
-      - name: Push dashboard JSON to dashboard repo
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+      - name: Commit and push updated dashboard JSON
         run: |
-          git clone https://x-access-token:$GH_TOKEN@github.com/andrewmcdevitt-stack/diamond-barbers-dashboard.git /tmp/dashboard
-          mkdir -p /tmp/dashboard/data
-          cp data/performance_summary.json /tmp/dashboard/data/performance_summary.json
-          cp data/cairns_performance_summary.json /tmp/dashboard/data/cairns_performance_summary.json
-          cd /tmp/dashboard
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions"
           git add data/performance_summary.json data/cairns_performance_summary.json
-          git diff --staged --quiet || git commit -m "Update dashboard snapshot $(date -u +%Y-%m-%d)"
-          git push
+          git diff --staged --quiet && echo "No changes." || (
+            git commit -m "chore: weekly sync $(date -u +'%Y-%m-%d')" &&
+            git push
+          )
 
-      - name: Save refreshed sessions back to GitHub Secrets
+      - name: Save refreshed sessions back to secrets
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           if [ -f data/session.json ]; then
-            jq '{cookies: .cookies}' data/session.json > /tmp/session_slim.json
-            base64 -w 0 /tmp/session_slim.json | gh secret set NT_SESSION_JSON --repo ${{ github.repository }}
+            base64 -w 0 data/session.json | gh secret set NT_SESSION_JSON --repo ${{ github.repository }}
           fi
           if [ -f data/session_cairns.json ]; then
-            jq '{cookies: .cookies}' data/session_cairns.json > /tmp/session_cairns_slim.json
-            base64 -w 0 /tmp/session_cairns_slim.json | gh secret set CAIRNS_SESSION_JSON --repo ${{ github.repository }}
+            base64 -w 0 data/session_cairns.json | gh secret set CAIRNS_SESSION_JSON --repo ${{ github.repository }}
           fi
