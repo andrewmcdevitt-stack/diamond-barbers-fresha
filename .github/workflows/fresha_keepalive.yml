@@ -1,0 +1,50 @@
+name: Fresha Session Keep-Alive
+
+on:
+  schedule:
+    # Wednesday and Saturday at 6:00 AM Darwin time (UTC+9:30) = 20:30 UTC Tuesday/Friday
+    - cron: "30 20 * * 2"
+    - cron: "30 20 * * 5"
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: agent/requirements.txt
+
+      - name: Install Python dependencies
+        run: pip install -r agent/requirements.txt
+
+      - name: Install Playwright browser
+        run: playwright install chromium --with-deps
+
+      - name: Refresh Fresha sessions
+        env:
+          FRESHA_EMAIL: ${{ secrets.FRESHA_EMAIL }}
+          FRESHA_PASSWORD: ${{ secrets.FRESHA_PASSWORD }}
+          CAIRNS_FRESHA_EMAIL: ${{ secrets.CAIRNS_FRESHA_EMAIL }}
+          CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
+        run: python agent/keepalive.py
+
+      - name: Commit refreshed sessions
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions"
+          git add data/session.json data/session_cairns.json
+          git diff --staged --quiet && echo "No session changes." || (
+            git commit -m "chore: refresh Fresha sessions $(date -u +'%Y-%m-%d')" &&
+            git push
+          )
