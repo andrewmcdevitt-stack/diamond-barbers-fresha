@@ -71,20 +71,13 @@ ACCOUNTS = [
     },
 ]
 
-# Fresha location name → Xero org label (used for xero_org field in GHL payroll records)
-LOCATION_TO_XERO_ORG = {
-    "Diamond Barbers - COOLALINGA":     "Diamond Barbers Darwin",
-    "Diamond Barbers - BELLAMACK":      "Diamond Barbers Darwin",
-    "Diamond Barbers - YARRAWONGA":     "Diamond Barbers Darwin",
-    "Diamond Barbers - CASUARINA":      "Diamond Barbers Darwin",
-    "Diamond Barbers - DARWIN CBD":     "Diamond Barbers Darwin",
-    "Diamond Barbers - DELUXE":         "Diamond Barbers Darwin",
-    "Diamond Barbers - PARAP":          "Diamond Barbers Parap",
-    "Diamond Barbers Rising Sun":       "Diamond Barbers Cairns",
-    "Diamond Barbers Showgrounds":      "Diamond Barbers Cairns",
-    "Diamond Barbers Northern Beaches": "Diamond Barbers Cairns",
-    "Diamond Barbers Night Markets":    "Diamond Barbers Cairns",
-    "Diamond Barbers Wulguru":          "Diamond Barbers Cairns",
+# Static employee → Xero org mapping.
+# This is the source of truth — never derived from which location they work at.
+# Default if not listed: NT staff → "Diamond Barbers Darwin", QLD staff → "Diamond Barbers Cairns"
+EMPLOYEE_XERO_ORG = {
+    "Vincenzo Vanzanella": "Diamond Barbers Parap",
+    "Krish Manocha":       "Diamond Barbers Parap",
+    "Sean Maguire":        "Diamond Barbers Parap",
 }
 
 # Fresha location name → GHL location_performance label
@@ -266,19 +259,10 @@ async def fetch_hours(account, context, date_from, date_to):
             if name not in combined:
                 combined[name] = {d: 0.0 for d in DAY_NAMES}
                 combined[name]["total"]    = 0.0
-                combined[name]["xero_org"] = xero_org
-                combined[name]["loc_hrs"]  = {}
+                combined[name]["xero_org"] = EMPLOYEE_XERO_ORG.get(name, default)
             for d in DAY_NAMES:
                 combined[name][d] += h[d]
             combined[name]["total"] += h["total"]
-            combined[name]["loc_hrs"][loc_name] = combined[name]["loc_hrs"].get(loc_name, 0) + h["total"]
-
-    # Determine primary xero_org from location with most hours
-    for name, data in combined.items():
-        if data["loc_hrs"]:
-            primary_loc = max(data["loc_hrs"], key=data["loc_hrs"].get)
-            data["xero_org"] = LOCATION_TO_XERO_ORG.get(primary_loc, default)
-        del data["loc_hrs"]
 
     print(f"  Hours fetched for {len(combined)} staff members.")
     for name, h in sorted(combined.items()):
