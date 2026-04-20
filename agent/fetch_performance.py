@@ -134,7 +134,7 @@ async def download_csv(account, page, context):
     last_sun = last_mon + timedelta(days=6)
     date_from = params.get("dateFrom", [last_mon.strftime("%Y-%m-%d")])[0]
     date_to   = params.get("dateTo",   [last_sun.strftime("%Y-%m-%d")])[0]
-    print(f"  Date range: {date_from} → {date_to}")
+    print(f"  Date range: {date_from} to {date_to}")
 
     # Download CSV
     print("  Downloading CSV...")
