@@ -37,6 +37,8 @@ jobs:
           FRESHA_PASSWORD: ${{ secrets.FRESHA_PASSWORD }}
           CAIRNS_FRESHA_EMAIL: ${{ secrets.CAIRNS_FRESHA_EMAIL }}
           CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
+          GHL_API_KEY: ${{ secrets.GHL_API_KEY }}
+          GHL_LOCATION_ID: ${{ secrets.GHL_LOCATION_ID }}
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: python agent/fetch_performance.py
