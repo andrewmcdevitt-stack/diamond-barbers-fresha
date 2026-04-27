@@ -9,6 +9,8 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     env:
       GHL_API_KEY:            ${{ secrets.GHL_API_KEY }}
