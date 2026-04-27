@@ -209,7 +209,6 @@ async def fetch_hours(account, context, date_from, date_to):
     for loc in locations:
         loc_id   = loc["id"]
         loc_name = loc["name"]
-        xero_org = LOCATION_TO_XERO_ORG.get(loc_name, default)
 
         emp_resp = await context.request.get(
             f"https://partners-api.fresha.com/v2/employees"
