@@ -115,6 +115,25 @@ MANAGER_LOCATIONS = {
 
 DAY_NAMES = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
+# Add public holiday dates here (YYYY-MM-DD). Hours worked on these days go into
+# public_holiday_hours instead of the normal day bucket.
+PUBLIC_HOLIDAYS = {
+    "2026-01-01",  # New Year's Day
+    "2026-01-26",  # Australia Day
+    "2026-04-03",  # Good Friday
+    "2026-04-04",  # Easter Saturday
+    "2026-04-05",  # Easter Sunday
+    "2026-04-06",  # Easter Monday
+    "2026-04-25",  # ANZAC Day
+    "2026-05-04",  # May Day (NT)
+    "2026-06-08",  # Queen's Birthday (QLD)
+    "2026-08-10",  # Picnic Day (NT)
+    "2026-10-05",  # Labour Day (QLD)
+    "2026-12-25",  # Christmas Day
+    "2026-12-26",  # Boxing Day
+    "2026-12-28",  # Boxing Day observed (if 26th is weekend)
+}
+
 GQL_QUERY = """
 query employeeWorkingDays($dateFrom: Date!, $dateTo: Date!, $locationId: IID!, $employeeIds: [IID!]!) {
   blockedTimeOccurrences(employeeIds: $employeeIds locationId: $locationId fromDate: $dateFrom toDate: $dateTo) {
@@ -145,27 +164,33 @@ def _day_index(date_str):
 
 # ── Hours calculation (per day, not just weekday bucket) ───────────────────────
 
+def _day_bucket(date_str):
+    """Return 'public_holiday' if date is a public holiday, else the weekday name."""
+    return "public_holiday" if date_str in PUBLIC_HOLIDAYS else DAY_NAMES[_day_index(date_str)]
+
+
 def calc_hours_per_day(schedule_days, blocked_times, times_off, emp_ids, date_from, date_to):
     results = {}
     for emp_id in emp_ids:
         daily = {d: 0 for d in DAY_NAMES}
+        daily["public_holiday"] = 0
 
         for day in schedule_days:
             if day["employeeId"] != emp_id:
                 continue
             if not (date_from <= day["date"] <= date_to):
                 continue
-            idx = _day_index(day["date"])
+            bucket = _day_bucket(day["date"])
             for shift in day.get("shifts", []):
-                daily[DAY_NAMES[idx]] += _mins(shift["endTime"]) - _mins(shift["startTime"])
+                daily[bucket] += _mins(shift["endTime"]) - _mins(shift["startTime"])
 
         for block in blocked_times:
             if block["employeeId"] != emp_id:
                 continue
             if not (date_from <= block["date"] <= date_to):
                 continue
-            idx = _day_index(block["date"])
-            daily[DAY_NAMES[idx]] -= _mins(block["endTime"]) - _mins(block["startTime"])
+            bucket = _day_bucket(block["date"])
+            daily[bucket] -= _mins(block["endTime"]) - _mins(block["startTime"])
 
         for off in times_off:
             if off["employeeId"] != emp_id:
@@ -173,11 +198,12 @@ def calc_hours_per_day(schedule_days, blocked_times, times_off, emp_ids, date_fr
             if not (date_from <= off.get("date", "") <= date_to):
                 continue
             if off.get("startTime") and off.get("endTime"):
-                idx = _day_index(off["date"])
-                daily[DAY_NAMES[idx]] -= _mins(off["endTime"]) - _mins(off["startTime"])
+                bucket = _day_bucket(off["date"])
+                daily[bucket] -= _mins(off["endTime"]) - _mins(off["startTime"])
 
-        results[emp_id] = {d: round(max(0, daily[d]) / 60, 2) for d in DAY_NAMES}
-        results[emp_id]["total"] = round(sum(max(0, daily[d]) for d in DAY_NAMES) / 60, 2)
+        all_buckets = DAY_NAMES + ["public_holiday"]
+        results[emp_id] = {b: round(max(0, daily[b]) / 60, 2) for b in all_buckets}
+        results[emp_id]["total"] = round(sum(max(0, daily[b]) for b in all_buckets) / 60, 2)
 
     return results
 
