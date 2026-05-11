@@ -276,10 +276,14 @@ async def fetch_hours(account, context, date_from, date_to):
             emp_ids, date_from, date_to,
         )
 
+        loc_org = LOCATION_TO_ORG.get(loc_name, default)
         emp_map = {e["id"]: e["name"] for e in employees}
         for emp_id, h in hours.items():
             name = emp_map.get(emp_id, emp_id)
             if h["total"] == 0:
+                continue
+            # If employee has a fixed org, skip hours from non-matching locations
+            if name in EMPLOYEE_XERO_ORG and EMPLOYEE_XERO_ORG[name] != loc_org:
                 continue
             if name not in combined:
                 combined[name] = {d: 0.0 for d in DAY_NAMES}
