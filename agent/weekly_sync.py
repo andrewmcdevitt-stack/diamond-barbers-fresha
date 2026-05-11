@@ -283,10 +283,12 @@ async def fetch_hours(account, context, date_from, date_to):
                 continue
             if name not in combined:
                 combined[name] = {d: 0.0 for d in DAY_NAMES}
+                combined[name]["public_holiday"] = 0.0
                 combined[name]["total"]    = 0.0
                 combined[name]["xero_org"] = EMPLOYEE_XERO_ORG.get(name, default)
             for d in DAY_NAMES:
                 combined[name][d] += h[d]
+            combined[name]["public_holiday"] += h.get("public_holiday", 0)
             combined[name]["total"] += h["total"]
 
     print(f"  Hours fetched for {len(combined)} staff members.")
