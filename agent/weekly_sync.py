@@ -513,8 +513,26 @@ async def download_performance_csvs(account, page, context, date_from_fallback, 
     )
     await page.wait_for_timeout(4000)
 
+    # Dismiss any popups/modals that may be blocking interaction
+    print("  Dismissing any popups...")
+    await page.keyboard.press("Escape")
+    await page.wait_for_timeout(500)
+    for close_label in ("Close", "Dismiss", "Got it", "OK", "Done"):
+        try:
+            await page.get_by_role("button", name=close_label).click(timeout=1500)
+            print(f"  Dismissed popup: '{close_label}'")
+            await page.wait_for_timeout(500)
+        except Exception:
+            pass
+
     print("  Selecting Last week...")
-    await page.get_by_text("Month to date", exact=True).first.click(timeout=10000)
+    for label in ("Month to date", "Last week", "This week", "Last month"):
+        try:
+            await page.get_by_text(label, exact=True).first.click(timeout=5000)
+            print(f"  Clicked date chip: '{label}'")
+            break
+        except Exception:
+            pass
     await page.wait_for_timeout(1000)
     await page.locator('select:has(option[value="last_week"])').select_option(value="last_week")
     await page.wait_for_timeout(1000)
@@ -699,11 +717,154 @@ CSV DATA:
     return locations
 
 
+# ── Email report ──────────────────────────────────────────────────────────────
+
+def build_sync_email(week_start, week_end, sync_results):
+    has_issues = any(r.get("issues") for r in sync_results)
+
+    alert_banner = ""
+    if has_issues:
+        alert_banner = (
+            '<div style="background:#ffebee;border:1px solid #ef9a9a;padding:10px 16px;'
+            'margin-bottom:16px;border-radius:4px;color:#c62828;font-size:12px">'
+            '<strong>&#9888; Issues detected during this sync — see details below.</strong>'
+            '</div>'
+        )
+
+    sections = ""
+    for r in sync_results:
+        label  = r["label"]
+        status = r["status"]
+        issues = r.get("issues", [])
+        staff  = r.get("staff", [])
+
+        status_color = {"ok": "#2e7d32", "partial": "#f57c00", "error": "#c62828"}.get(status, "#666")
+        status_text  = {"ok": "OK", "partial": "PARTIAL — some steps failed", "error": "FAILED"}.get(status, status.upper())
+
+        stats_parts = []
+        if r.get("hours_pushed") or r.get("hours_errors"):
+            stats_parts.append(f"Hours pushed: {r.get('hours_pushed', 0)}")
+            if r.get("hours_errors"):
+                stats_parts.append(f"{r['hours_errors']} errors")
+        if r.get("perf_updated") is not None:
+            stats_parts.append(f"Performance updated: {r['perf_updated']}")
+            if r.get("perf_skipped"):
+                stats_parts.append(f"{r['perf_skipped']} skipped (no GHL record)")
+        stats_line = " &nbsp;|&nbsp; ".join(stats_parts) if stats_parts else "No data pushed"
+
+        # Staff tips/commissions table
+        if staff:
+            staff_rows = ""
+            for s in sorted(staff, key=lambda x: x.get("name", "")):
+                name  = s.get("name", "")
+                tips  = s.get("tips", 0) or 0
+                comm  = s.get("commissions", 0) or 0
+                svc   = s.get("service_sales_exc_gst", 0) or 0
+                bg    = "#f9f9f9" if staff.index(s) % 2 == 0 else "#ffffff"
+                staff_rows += (
+                    f'<tr style="background:{bg}">'
+                    f'<td style="padding:3px 8px;border-bottom:1px solid #eee">{name}</td>'
+                    f'<td style="padding:3px 8px;border-bottom:1px solid #eee;text-align:right">{"$%.2f" % tips if tips else "-"}</td>'
+                    f'<td style="padding:3px 8px;border-bottom:1px solid #eee;text-align:right">{"$%.2f" % comm if comm else "-"}</td>'
+                    f'<td style="padding:3px 8px;border-bottom:1px solid #eee;text-align:right">{"$%.2f" % svc if svc else "-"}</td>'
+                    f'</tr>'
+                )
+            total_tips = sum(s.get("tips", 0) or 0 for s in staff)
+            total_comm = sum(s.get("commissions", 0) or 0 for s in staff)
+            total_svc  = sum(s.get("service_sales_exc_gst", 0) or 0 for s in staff)
+            staff_rows += (
+                '<tr style="background:#1a1a2e;color:#fff;font-weight:600">'
+                '<td style="padding:4px 8px">TOTAL</td>'
+                f'<td style="padding:4px 8px;text-align:right">${total_tips:.2f}</td>'
+                f'<td style="padding:4px 8px;text-align:right">${total_comm:.2f}</td>'
+                f'<td style="padding:4px 8px;text-align:right">${total_svc:.2f}</td>'
+                '</tr>'
+            )
+            staff_table = (
+                '<table style="border-collapse:collapse;width:100%;font-size:11px;margin-top:8px">'
+                '<thead><tr style="background:#1a1a2e;color:#fff">'
+                '<th style="padding:4px 8px;text-align:left">Name</th>'
+                '<th style="padding:4px 8px;text-align:right">Tips</th>'
+                '<th style="padding:4px 8px;text-align:right">Commission</th>'
+                '<th style="padding:4px 8px;text-align:right">Services (ex GST)</th>'
+                f'</tr></thead><tbody>{staff_rows}</tbody></table>'
+            )
+        else:
+            staff_table = '<p style="color:#888;font-size:11px;margin:8px 0">No performance data — CSV download may have failed.</p>'
+
+        issues_html = ""
+        if issues:
+            items = "".join(f"<li style='margin:3px 0'>{i}</li>" for i in issues)
+            issues_html = (
+                '<div style="margin-top:10px;background:#fff8e1;border-left:3px solid #f9a825;'
+                'padding:8px 12px;font-size:11px">'
+                f'<strong>Issues ({len(issues)}):</strong>'
+                f'<ul style="margin:4px 0;padding-left:18px">{items}</ul>'
+                '</div>'
+            )
+
+        sections += (
+            '<div style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e0e0e0">'
+            f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">'
+            f'<h3 style="margin:0;font-size:13px;color:#1a1a2e">{label}</h3>'
+            f'<span style="background:{status_color};color:#fff;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:600">{status_text}</span>'
+            '</div>'
+            f'<p style="margin:2px 0 6px;color:#888;font-size:10px">{stats_line}</p>'
+            f'{staff_table}{issues_html}'
+            '</div>'
+        )
+
+    return (
+        '<html><head><meta charset="utf-8"></head>'
+        '<body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:20px;max-width:900px">'
+        '<h2 style="color:#1a1a2e;margin-bottom:2px;font-size:16px">Diamond Barbers — Weekly Sync Report</h2>'
+        f'<p style="color:#888;margin-top:0;margin-bottom:16px;font-size:11px">Week: {week_start} to {week_end}</p>'
+        f'{alert_banner}{sections}'
+        '</body></html>'
+    )
+
+
+def send_sync_email(html, week_start, week_end, has_issues, csv_files=None):
+    email_from = "claude@diamondbarbers.com.au"
+    email_to   = "admin@diamondbarbers.com.au"
+    password   = os.environ.get("EMAIL_PASSWORD", "")
+    host       = os.environ.get("EMAIL_HOST", "mail.diamondbarbers.com.au")
+
+    flag    = " ⚠ ISSUES" if has_issues else ""
+    msg     = MIMEMultipart("mixed")
+    msg["Subject"] = f"Diamond Barbers Weekly Sync{flag} — {week_start} to {week_end}"
+    msg["From"]    = email_from
+    msg["To"]      = email_to
+    msg.attach(MIMEText(html, "html"))
+
+    for csv_file in csv_files or []:
+        csv_path = Path(csv_file)
+        if not csv_path.exists():
+            continue
+        with open(csv_path, "rb") as f:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(f.read())
+        email_encoders.encode_base64(part)
+        part.add_header("Content-Disposition", f'attachment; filename="{csv_path.name}"')
+        msg.attach(part)
+
+    try:
+        with smtplib.SMTP(host, 587) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(email_from, password)
+            smtp.sendmail(email_from, email_to, msg.as_string())
+        print(f"  Sync report emailed to {email_to}")
+    except Exception as e:
+        print(f"  WARNING: Email failed: {e}")
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 async def run():
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     has_ghl = bool(GHL_API_KEY)
+    sync_results = []
 
     async with async_playwright() as p:
         for account in ACCOUNTS:
@@ -716,8 +877,24 @@ async def run():
             print(f"ACCOUNT: {label}")
             print(f"{'='*60}")
 
+            acct = {
+                "label":        label,
+                "status":       "ok",
+                "issues":       [],
+                "hours_pushed": 0,
+                "hours_errors": 0,
+                "perf_updated": None,
+                "perf_skipped": 0,
+                "staff":        [],
+                "csv_files":    [],
+            }
+
             if not session_file.exists():
-                print(f"  WARNING: {session_file.name} not found -- skipping.")
+                msg = f"{session_file.name} not found — account skipped"
+                print(f"  WARNING: {msg}")
+                acct["status"] = "error"
+                acct["issues"].append(msg)
+                sync_results.append(acct)
                 continue
 
             today     = datetime.now(tz)
@@ -739,14 +916,21 @@ async def run():
             try:
                 await ensure_logged_in(account, page, context)
             except Exception as e:
-                print(f"  ERROR logging in: {e}")
+                msg = f"Login failed: {e}"
+                print(f"  ERROR {msg}")
+                acct["status"] = "error"
+                acct["issues"].append(msg)
                 await browser.close()
+                sync_results.append(acct)
                 continue
 
             try:
                 hours_data = await fetch_hours(account, context, date_from, date_to)
             except Exception as e:
-                print(f"  ERROR fetching hours: {e}")
+                msg = f"Hours fetch failed: {e}"
+                print(f"  ERROR {msg}")
+                acct["issues"].append(msg)
+                acct["status"] = "partial"
                 hours_data = {}
 
             # Push hours to GHL payroll records
@@ -755,18 +939,23 @@ async def run():
                 ok = err = 0
                 for name, h in hours_data.items():
                     try:
-                        result = ghl_upsert_payroll(
+                        action = ghl_upsert_payroll(
                             employee_name = name,
                             week_start    = date_from,
                             week_end      = date_to,
                             xero_org      = h["xero_org"],
                             hours         = h,
                         )
-                        print(f"    {result:7s}  {name}")
+                        print(f"    {action:7s}  {name}")
                         ok += 1
                     except Exception as e:
                         print(f"    ERROR {name}: {e}")
+                        acct["issues"].append(f"GHL hours push failed for {name}: {e}")
                         err += 1
+                acct["hours_pushed"] = ok
+                acct["hours_errors"] = err
+                if err:
+                    acct["status"] = "partial"
                 print(f"  Hours: {ok} pushed, {err} errors.")
             elif not has_ghl:
                 print("\n  GHL_API_KEY not set -- skipping GHL hours push.")
@@ -776,20 +965,31 @@ async def run():
                 csv_path, loc_csv_path, date_from, date_to = await download_performance_csvs(
                     account, page, context, date_from, date_to
                 )
+                acct["csv_files"].append(csv_path)
+                if loc_csv_path:
+                    acct["csv_files"].append(loc_csv_path)
             except Exception as e:
-                print(f"  ERROR downloading CSVs: {e}")
+                msg = f"Performance CSV download failed: {e}"
+                print(f"  ERROR {msg}")
+                acct["issues"].append(msg)
+                acct["status"] = "partial" if acct["hours_pushed"] > 0 else "error"
                 screenshot = str(DATA_DIR / f"error_{label.split()[0].lower()}.png")
                 await page.screenshot(path=screenshot)
                 print(f"  Screenshot saved: {screenshot}")
                 await browser.close()
+                sync_results.append(acct)
                 continue
 
             # Parse staff CSV
             try:
                 perf_data = parse_staff_csv(csv_path, api_key, date_from, date_to)
             except Exception as e:
-                print(f"  ERROR parsing staff CSV: {e}")
+                msg = f"Staff CSV parsing failed: {e}"
+                print(f"  ERROR {msg}")
+                acct["issues"].append(msg)
+                acct["status"] = "partial" if acct["hours_pushed"] > 0 else "error"
                 await browser.close()
+                sync_results.append(acct)
                 continue
 
             # Parse location CSV
@@ -798,7 +998,11 @@ async def run():
                 try:
                     locations = parse_location_csv(loc_csv_path, api_key)
                 except Exception as e:
-                    print(f"  ERROR parsing location CSV: {e}")
+                    msg = f"Location CSV parsing failed: {e}"
+                    print(f"  ERROR {msg}")
+                    acct["issues"].append(msg)
+                    if acct["status"] == "ok":
+                        acct["status"] = "partial"
 
             # ── Step 3: Save JSON history for dashboard ───────────────────────
             perf_data["report_date"] = datetime.now().strftime("%Y-%m-%d")
@@ -821,6 +1025,7 @@ async def run():
 
                 print(f"\n  Updating GHL payroll records with tips/commissions...")
                 ok = skipped = 0
+                staff_for_email = []
                 for s in perf_data.get("staff", []):
                     name                  = s.get("name", "").strip()
                     tips                  = s.get("tips", 0) or 0
@@ -836,16 +1041,30 @@ async def run():
                         print(f"    MANAGER {name:28s}  products=${total_products:.2f}  comm=${commissions:.2f}")
 
                     try:
-                        result = ghl_update_performance(name, date_from, tips, commissions, service_sales_exc_gst, occupancy_rate)
-                        if result == "no_record":
+                        action = ghl_update_performance(name, date_from, tips, commissions, service_sales_exc_gst, occupancy_rate)
+                        if action == "no_record":
                             print(f"    SKIP  {name:30s}  (no payroll record)")
+                            acct["issues"].append(f"No GHL record for {name} — tips/commissions not pushed (hours may not have synced)")
                             skipped += 1
+                            if acct["status"] == "ok":
+                                acct["status"] = "partial"
                         else:
                             print(f"    OK    {name:30s}  tips=${tips:.2f}  comm=${commissions:.2f}")
                             ok += 1
                     except Exception as e:
                         print(f"    ERROR {name}: {e}")
+                        acct["issues"].append(f"GHL performance update failed for {name}: {e}")
 
+                    staff_for_email.append({
+                        "name":                  name,
+                        "tips":                  tips,
+                        "commissions":           commissions,
+                        "service_sales_exc_gst": service_sales_exc_gst,
+                    })
+
+                acct["perf_updated"] = ok
+                acct["perf_skipped"] = skipped
+                acct["staff"]        = staff_for_email
                 print(f"\n  Performance: {ok} updated, {skipped} skipped.")
 
                 # ── Step 5: Push location_performance to GHL ──────────────────
@@ -857,7 +1076,7 @@ async def run():
                         if not loc_name:
                             continue
                         try:
-                            result = ghl_upsert_location(
+                            action = ghl_upsert_location(
                                 location_name   = loc_name,
                                 week_start      = date_from,
                                 week_end        = date_to,
@@ -866,15 +1085,31 @@ async def run():
                                 commissions     = loc.get("location_commissions", 0),
                                 occupancy_pct   = loc.get("occupancy_pct", 0),
                             )
-                            print(f"    {result:7s}  {loc_name}")
+                            print(f"    {action:7s}  {loc_name}")
                             lok += 1
                         except Exception as e:
                             print(f"    ERROR {loc_name}: {e}")
+                            acct["issues"].append(f"Location GHL push failed for {loc_name}: {e}")
                     print(f"  Location records: {lok}/{len(locations)} pushed.")
 
             await browser.close()
+            sync_results.append(acct)
 
     print("\nAll accounts processed.")
+
+    # ── Send sync summary email ────────────────────────────────────────────────
+    tz       = ACCOUNTS[0]["timezone"]
+    today    = datetime.now(tz)
+    last_mon = today - timedelta(days=today.weekday() + 7)
+    last_sun = last_mon + timedelta(days=6)
+    w_start  = last_mon.strftime("%Y-%m-%d")
+    w_end    = last_sun.strftime("%Y-%m-%d")
+
+    if sync_results:
+        has_issues = any(r.get("issues") for r in sync_results)
+        email_html = build_sync_email(w_start, w_end, sync_results)
+        csv_files  = [f for r in sync_results for f in r.get("csv_files", [])]
+        send_sync_email(email_html, w_start, w_end, has_issues, csv_files)
 
 
 if __name__ == "__main__":
