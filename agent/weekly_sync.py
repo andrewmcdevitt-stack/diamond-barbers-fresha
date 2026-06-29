@@ -21,6 +21,7 @@ import asyncio
 import json
 import os
 import smtplib
+import subprocess
 from datetime import datetime, timedelta, timezone
 from email import encoders as email_encoders
 from email.mime.base import MIMEBase
@@ -453,9 +454,97 @@ def ghl_upsert_location(location_name, week_start, week_end, location_label, ser
     raise Exception(f"GHL {r.status_code}: {r.text[:200]}")
 
 
+# ── Issue-detection checklist ───────────────────────────────────────────────────
+# Every notable click/login/download/push step gets recorded here as
+# OK / FAIL / SKIP / FLAG so the end-of-run report is a copy-pasteable
+# checklist of exactly what happened, rather than a wall of print() output.
+
+async def _try_click(checklist, name, click_coro, required=False):
+    """Await a click action and record the outcome on the checklist.
+
+    required=True means this step is essential (e.g. the actual sign-in
+    button) — failure raises so the caller's error handling kicks in.
+    required=False means it's an optional dismissal (cookie banners, modals
+    that may or may not appear) — failure is recorded as SKIP, not an error.
+    """
+    try:
+        await click_coro
+        checklist.append({"check": name, "status": "OK"})
+        return True
+    except Exception as e:
+        detail = str(e).splitlines()[0][:160]
+        checklist.append({"check": name, "status": "FAIL" if required else "SKIP", "detail": detail})
+        if required:
+            raise Exception(f"{name} failed: {detail}")
+        return False
+
+
+def flag_zero_value_issues(perf_data, locations, checklist):
+    """Flag suspicious zero totals so a silently-broken scrape doesn't get pushed unnoticed."""
+    summary = perf_data.get("sales_summary", {})
+    if summary.get("total_sales", 0) == 0:
+        checklist.append({
+            "check": "Weekly total_sales",
+            "status": "FLAG",
+            "detail": "Total sales = $0 for the week — verify the CSV covered the correct date range",
+        })
+    for s in perf_data.get("staff", []):
+        if (s.get("total_sales", 0) or 0) == 0 and (s.get("total_appts", 0) or 0) == 0:
+            checklist.append({
+                "check": f"Staff '{s.get('name')}' totals",
+                "status": "FLAG",
+                "detail": "Zero sales AND zero appointments — confirm this is expected, not a parse miss",
+            })
+    for loc in locations:
+        if (loc.get("total_sales", 0) or 0) == 0:
+            checklist.append({
+                "check": f"Location '{loc.get('name')}' totals",
+                "status": "FLAG",
+                "detail": "Zero total sales for the week",
+            })
+
+
+def git_commit_and_push(files, commit_message):
+    """Commit + push the given files from a local (non-CI) run. Returns a checklist item."""
+    repo_root = Path(__file__).parent.parent
+    try:
+        subprocess.run(["git", "add", *files], cwd=repo_root, check=True, capture_output=True, text=True)
+        staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo_root)
+        if staged.returncode == 0:
+            return {"check": "Git commit + push to GitHub", "status": "SKIP", "detail": "No changes to commit"}
+        subprocess.run(["git", "commit", "-m", commit_message], cwd=repo_root, check=True, capture_output=True, text=True)
+        subprocess.run(["git", "push"], cwd=repo_root, check=True, capture_output=True, text=True)
+        return {"check": "Git commit + push to GitHub", "status": "OK"}
+    except subprocess.CalledProcessError as e:
+        detail = (e.stderr or str(e)).strip().splitlines()[-1][:200] if (e.stderr or str(e)) else str(e)
+        return {"check": "Git commit + push to GitHub", "status": "FAIL", "detail": detail}
+
+
+def print_final_checklist(sync_results, push_status):
+    print("\n" + "=" * 60)
+    print("SYNC CHECKLIST")
+    print("=" * 60)
+    for r in sync_results:
+        print(f"\n[{r['label']}]  overall status: {r['status'].upper()}")
+        for item in r.get("checklist", []):
+            line = f"  [{item['status']}] {item['check']}"
+            if item.get("detail"):
+                line += f" -- {item['detail']}"
+            print(line)
+        if not r.get("checklist"):
+            print("  (no checklist items recorded)")
+    if push_status:
+        print(f"\n[GLOBAL]")
+        line = f"  [{push_status['status']}] {push_status['check']}"
+        if push_status.get("detail"):
+            line += f" -- {push_status['detail']}"
+        print(line)
+    print("=" * 60)
+
+
 # ── Fresha session login ───────────────────────────────────────────────────────
 
-async def ensure_logged_in(account, page, context):
+async def ensure_logged_in(account, page, context, checklist):
     session_file = account["session"]
     label        = account["label"]
 
@@ -463,30 +552,44 @@ async def ensure_logged_in(account, page, context):
     await page.wait_for_timeout(3000)
 
     if "/users/sign-in" not in page.url:
+        checklist.append({"check": "Fresha session valid (no login required)", "status": "OK"})
         return
 
     print("  Session expired. Logging in...")
     session_file.unlink(missing_ok=True)
+    checklist.append({"check": "Fresha session valid (no login required)", "status": "SKIP", "detail": "Session expired -- logging in"})
 
     email    = os.environ.get(account["email_env"], "")
     password = os.environ.get(account["pass_env"], "")
 
-    try:
-        await page.get_by_role("button", name="Accept all").click(timeout=5000)
-    except Exception:
-        pass
+    await _try_click(checklist, "Cookie banner 'Accept all' dismissed",
+                      page.get_by_role("button", name="Accept all").click(timeout=5000))
 
     email_field = page.locator('input[placeholder="Enter your email address"]')
-    await email_field.wait_for(timeout=10000)
-    await email_field.fill(email)
-    await page.click('[data-qa="continue"]', force=True)
-    await page.wait_for_selector('input[type="password"]:not([tabindex="-1"])', timeout=15000)
-    await page.locator('input[type="password"]:not([tabindex="-1"])').fill(password)
+    try:
+        await email_field.wait_for(timeout=10000)
+        await email_field.fill(email)
+        checklist.append({"check": "Email field found and filled", "status": "OK"})
+    except Exception as e:
+        checklist.append({"check": "Email field found and filled", "status": "FAIL", "detail": str(e).splitlines()[0][:160]})
+        raise Exception(f"Login failed for {label}: email field not found ({e})")
+
+    await _try_click(checklist, "'Continue' button clicked",
+                      page.click('[data-qa="continue"]', force=True), required=True)
 
     try:
-        await page.locator('button[type="submit"]').click(force=True, timeout=5000)
-    except Exception:
+        await page.wait_for_selector('input[type="password"]:not([tabindex="-1"])', timeout=15000)
+        await page.locator('input[type="password"]:not([tabindex="-1"])').fill(password)
+        checklist.append({"check": "Password field found and filled", "status": "OK"})
+    except Exception as e:
+        checklist.append({"check": "Password field found and filled", "status": "FAIL", "detail": str(e).splitlines()[0][:160]})
+        raise Exception(f"Login failed for {label}: password field not found ({e})")
+
+    submitted = await _try_click(checklist, "'Sign in' submit button clicked",
+                                  page.locator('button[type="submit"]').click(force=True, timeout=5000))
+    if not submitted:
         await page.keyboard.press("Enter")
+        checklist.append({"check": "Fallback Enter keypress used to submit sign-in", "status": "INFO"})
 
     print("  Waiting for 2FA (5 minutes)...")
     try:
@@ -495,15 +598,17 @@ async def ensure_logged_in(account, page, context):
         pass
 
     if "/users/sign-in" in page.url:
+        checklist.append({"check": f"Login completed for {label}", "status": "FAIL", "detail": "Still on sign-in page after 2FA wait (5 min)"})
         raise Exception(f"Login failed for {label}.")
 
+    checklist.append({"check": f"Login completed for {label}", "status": "OK"})
     await context.storage_state(path=str(session_file))
     print("  Session saved.")
 
 
 # ── Fresha performance CSV download ───────────────────────────────────────────
 
-async def download_performance_csvs(account, page, context, date_from_fallback, date_to_fallback):
+async def download_performance_csvs(account, page, context, checklist, date_from_fallback, date_to_fallback):
     label = account["label"]
     print(f"\n  [PERFORMANCE] Navigating to Performance Summary...")
 
@@ -517,30 +622,40 @@ async def download_performance_csvs(account, page, context, date_from_fallback, 
     print("  Dismissing any popups...")
     await page.keyboard.press("Escape")
     await page.wait_for_timeout(500)
+    dismissed_any = False
     for close_label in ("Close", "Dismiss", "Got it", "OK", "Done"):
-        try:
-            await page.get_by_role("button", name=close_label).click(timeout=1500)
+        clicked = await _try_click(checklist, f"Popup dismiss button '{close_label}' clicked",
+                                    page.get_by_role("button", name=close_label).click(timeout=1500))
+        if clicked:
+            dismissed_any = True
             print(f"  Dismissed popup: '{close_label}'")
             await page.wait_for_timeout(500)
-        except Exception:
-            pass
+    if not dismissed_any:
+        checklist.append({"check": "Popups present to dismiss", "status": "INFO", "detail": "None found -- page loaded clean"})
 
     print("  Selecting Last week...")
-    for label in ("Month to date", "Last week", "This week", "Last month"):
+    date_chip_clicked = False
+    for chip_label in ("Month to date", "Last week", "This week", "Last month"):
         try:
-            await page.get_by_text(label, exact=True).first.click(timeout=5000)
-            print(f"  Clicked date chip: '{label}'")
+            await page.get_by_text(chip_label, exact=True).first.click(timeout=5000)
+            print(f"  Clicked date chip: '{chip_label}'")
+            checklist.append({"check": f"Date range chip '{chip_label}' clicked", "status": "OK"})
+            date_chip_clicked = True
             break
         except Exception:
-            pass
+            continue
+    if not date_chip_clicked:
+        checklist.append({"check": "Date range chip clicked", "status": "FAIL", "detail": "None of the expected chip labels were found"})
     await page.wait_for_timeout(1000)
-    await page.locator('select:has(option[value="last_week"])').select_option(value="last_week")
+    try:
+        await page.locator('select:has(option[value="last_week"])').select_option(value="last_week")
+        checklist.append({"check": "'Last week' dropdown option selected", "status": "OK"})
+    except Exception as e:
+        checklist.append({"check": "'Last week' dropdown option selected", "status": "FAIL", "detail": str(e).splitlines()[0][:160]})
     await page.wait_for_timeout(1000)
 
-    try:
-        await page.get_by_role("button", name="Apply").click(timeout=5000)
-    except Exception:
-        pass
+    await _try_click(checklist, "'Apply' button clicked",
+                      page.get_by_role("button", name="Apply").click(timeout=5000))
 
     await page.wait_for_load_state("networkidle")
     await page.wait_for_timeout(10000)
@@ -557,14 +672,20 @@ async def download_performance_csvs(account, page, context, date_from_fallback, 
 
     # Team member CSV
     print("  Downloading team member CSV...")
-    async with page.expect_download(timeout=30000) as dl_info:
-        await page.get_by_role("button", name="Options").click(timeout=10000)
-        await page.wait_for_timeout(1500)
-        await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
+    try:
+        async with page.expect_download(timeout=30000) as dl_info:
+            await page.get_by_role("button", name="Options").click(timeout=10000)
+            await page.wait_for_timeout(1500)
+            await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
+        checklist.append({"check": "Team member CSV: Options -> CSV menu clicked", "status": "OK"})
+    except Exception as e:
+        checklist.append({"check": "Team member CSV: Options -> CSV menu clicked", "status": "FAIL", "detail": str(e).splitlines()[0][:160]})
+        raise
 
     download  = await dl_info.value
     csv_path  = DATA_DIR / f"fresha_report_{label.split()[0].lower()}_{datetime.now().strftime('%Y%m%d')}.csv"
     await download.save_as(str(csv_path))
+    checklist.append({"check": "Team member CSV downloaded", "status": "OK", "detail": csv_path.name})
     print(f"  Team member CSV saved: {csv_path.name}")
 
     # Location CSV
@@ -579,6 +700,7 @@ async def download_performance_csvs(account, page, context, date_from_fallback, 
         await page.get_by_text("Location", exact=True).click(timeout=5000)
         await page.wait_for_load_state("networkidle")
         await page.wait_for_timeout(6000)
+        checklist.append({"check": "Switched grouping to 'Location'", "status": "OK"})
 
         print("  Downloading location CSV...")
         async with page.expect_download(timeout=30000) as dl_info2:
@@ -589,8 +711,11 @@ async def download_performance_csvs(account, page, context, date_from_fallback, 
         dl2 = await dl_info2.value
         loc_csv_path = DATA_DIR / f"fresha_location_{label.split()[0].lower()}_{datetime.now().strftime('%Y%m%d')}.csv"
         await dl2.save_as(str(loc_csv_path))
+        checklist.append({"check": "Location CSV downloaded", "status": "OK", "detail": loc_csv_path.name})
         print(f"  Location CSV saved: {loc_csv_path.name}")
     except Exception as e:
+        detail = str(e).splitlines()[0][:160]
+        checklist.append({"check": "Location CSV downloaded", "status": "FAIL", "detail": detail})
         print(f"  WARNING: Could not download location CSV: {e}")
 
     await context.storage_state(path=str(account["session"]))
@@ -887,7 +1012,9 @@ async def run():
                 "perf_skipped": 0,
                 "staff":        [],
                 "csv_files":    [],
+                "checklist":    [],
             }
+            checklist = acct["checklist"]
 
             if not session_file.exists():
                 msg = f"{session_file.name} not found — account skipped"
@@ -914,7 +1041,7 @@ async def run():
 
             # ── Step 1: Check login, then fetch hours via API ─────────────────
             try:
-                await ensure_logged_in(account, page, context)
+                await ensure_logged_in(account, page, context, checklist)
             except Exception as e:
                 msg = f"Login failed: {e}"
                 print(f"  ERROR {msg}")
@@ -957,13 +1084,19 @@ async def run():
                 if err:
                     acct["status"] = "partial"
                 print(f"  Hours: {ok} pushed, {err} errors.")
+                checklist.append({
+                    "check": "GHL hours push",
+                    "status": "OK" if err == 0 else "FAIL",
+                    "detail": f"{ok} pushed, {err} errors" if err else None,
+                })
             elif not has_ghl:
                 print("\n  GHL_API_KEY not set -- skipping GHL hours push.")
+                checklist.append({"check": "GHL hours push", "status": "SKIP", "detail": "GHL_API_KEY not set"})
 
             # ── Step 2: Download performance CSVs (browser navigation) ────────
             try:
                 csv_path, loc_csv_path, date_from, date_to = await download_performance_csvs(
-                    account, page, context, date_from, date_to
+                    account, page, context, checklist, date_from, date_to
                 )
                 acct["csv_files"].append(csv_path)
                 if loc_csv_path:
@@ -1003,6 +1136,8 @@ async def run():
                     acct["issues"].append(msg)
                     if acct["status"] == "ok":
                         acct["status"] = "partial"
+
+            flag_zero_value_issues(perf_data, locations, checklist)
 
             # ── Step 3: Save JSON history for dashboard ───────────────────────
             perf_data["report_date"] = datetime.now().strftime("%Y-%m-%d")
@@ -1066,6 +1201,11 @@ async def run():
                 acct["perf_skipped"] = skipped
                 acct["staff"]        = staff_for_email
                 print(f"\n  Performance: {ok} updated, {skipped} skipped.")
+                checklist.append({
+                    "check": "GHL performance (tips/commissions) push",
+                    "status": "OK" if skipped == 0 else "FLAG",
+                    "detail": f"{ok} updated, {skipped} skipped (no matching payroll record)" if skipped else f"{ok} updated",
+                })
 
                 # ── Step 5: Push location_performance to GHL ──────────────────
                 if locations:
@@ -1091,6 +1231,14 @@ async def run():
                             print(f"    ERROR {loc_name}: {e}")
                             acct["issues"].append(f"Location GHL push failed for {loc_name}: {e}")
                     print(f"  Location records: {lok}/{len(locations)} pushed.")
+                    checklist.append({
+                        "check": "GHL location_performance push",
+                        "status": "OK" if lok == len(locations) else "FAIL",
+                        "detail": f"{lok}/{len(locations)} pushed",
+                    })
+
+            if acct["status"] == "ok" and any(item["status"] in ("FAIL", "FLAG") for item in checklist):
+                acct["status"] = "partial"
 
             await browser.close()
             sync_results.append(acct)
@@ -1110,6 +1258,18 @@ async def run():
         email_html = build_sync_email(w_start, w_end, sync_results)
         csv_files  = [f for r in sync_results for f in r.get("csv_files", [])]
         send_sync_email(email_html, w_start, w_end, has_issues, csv_files)
+
+    # ── Local manual run: commit + push results to GitHub ourselves ───────────
+    # (GitHub Actions runs already do this as a separate workflow step under
+    # CI=true, so this only fires for runs you trigger by hand on your machine.)
+    push_status = None
+    if os.environ.get("CI", "false").lower() != "true":
+        push_status = git_commit_and_push(
+            ["data/performance_summary.json", "data/cairns_performance_summary.json"],
+            f"chore: manual weekly sync {datetime.now().strftime('%Y-%m-%d')}",
+        )
+
+    print_final_checklist(sync_results, push_status)
 
 
 if __name__ == "__main__":

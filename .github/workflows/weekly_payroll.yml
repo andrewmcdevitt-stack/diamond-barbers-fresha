@@ -1,9 +1,9 @@
 name: Weekly Payroll Sync
 
+# Manual only — triggered by hand from the Actions tab (or `gh workflow run`) so
+# the report download can be watched and any popup/cookie-banner changes caught
+# before they silently break the sync. Cron schedule intentionally removed.
 on:
-  schedule:
-    # Monday 6:00 AM Darwin time (UTC+9:30) = Sunday 20:30 UTC
-    - cron: '30 20 * * 0'
   workflow_dispatch:
 
 jobs:
