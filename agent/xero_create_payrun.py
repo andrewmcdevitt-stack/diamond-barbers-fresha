@@ -370,11 +370,19 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
         full   = f"{e.get('FirstName','')} {e.get('LastName','')}".strip()
         emp_id = e["EmployeeID"]
         emp_id_map[norm(full)] = emp_id
-        # Extract ordinary hourly rate from PayTemplate (first earnings line with RatePerUnit)
-        for line in e.get("PayTemplate", {}).get("EarningsLines", []):
-            if line.get("RatePerUnit", 0) > 0:
-                emp_rate_map[emp_id] = line["RatePerUnit"]
-                break
+
+    # Fetch each employee individually to get PayTemplate (not included in list response)
+    for emp_id in emp_id_map.values():
+        try:
+            detail = xero_get(f"/payroll.xro/1.0/Employees/{emp_id}", tenant_id, access_token)
+            emp    = detail.get("Employees", [{}])[0]
+            for line in emp.get("PayTemplate", {}).get("EarningsLines", []):
+                if line.get("RatePerUnit", 0) > 0:
+                    emp_rate_map[emp_id] = line["RatePerUnit"]
+                    break
+        except Exception:
+            pass
+    print(f"  Loaded rates for {len(emp_rate_map)}/{len(emp_id_map)} employees")
 
     # ── Build payslip data from Fresha ────────────────────────────────────────
     payslip_list, skipped = build_payslip_list(emp_id_map, hours, perf, rates, bonuses)
@@ -476,12 +484,15 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
                 earnings.append(line)
 
             print(f"  Writing to {ps['_name']} ({slip_id})...")
-            xero_post(f"/payroll.xro/1.0/Payslip/{slip_id}", tenant_id, access_token, [{
-                "PayslipID":     slip_id,
-                "EarningsLines": earnings,
-            }])
-            activated += 1
-        print(f"  Activated {activated} payslips.")
+            try:
+                xero_post(f"/payroll.xro/1.0/Payslip/{slip_id}", tenant_id, access_token, [{
+                    "PayslipID":     slip_id,
+                    "EarningsLines": earnings,
+                }])
+                activated += 1
+            except Exception as e:
+                print(f"  ERROR writing {ps['_name']}: {e}")
+        print(f"  Activated {activated}/{len(payslip_list)} payslips.")
     except Exception as e:
         print(f"  ERROR in activation: {e}")
         import traceback; traceback.print_exc()
