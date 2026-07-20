@@ -71,6 +71,7 @@ ACCOUNTS = [
         "default_org":         "Diamond Barbers Cairns",
         "output":              DATA_DIR / "cairns_performance_summary.json",
         "night_markets_loc":   "Diamond Barbers Night Markets",
+        "night_markets_loc_id": "1472834",
     },
 ]
 
@@ -908,54 +909,20 @@ async def download_night_markets_csv(account, page, context, checklist, date_fro
 
     print(f"\n  [NIGHT MARKETS] Downloading filtered team-member CSV ({nm_loc})...")
 
+    loc_id = account.get("night_markets_loc_id", "")
+    url = (
+        f"https://partners.fresha.com/reports/table/performance-summary"
+        f"?groupBy=employee_name&location_id={loc_id}&employee_id=all"
+        f"&dateFrom={date_from}&dateTo={date_to}"
+    )
     try:
-        await page.goto(
-            f"https://partners.fresha.com/reports/table/performance-summary"
-            f"?dateFrom={date_from}&dateTo={date_to}",
-            wait_until="networkidle",
-            timeout=60000,
-        )
+        await page.goto(url, wait_until="networkidle", timeout=60000)
         await page.wait_for_timeout(3000)
         checklist.append({"check": "Night Markets: performance page loaded", "status": "OK"})
     except Exception as e:
         checklist.append({"check": "Night Markets: performance page loaded", "status": "FAIL",
                           "detail": str(e).splitlines()[0][:160]})
         return None
-
-    # Ensure Team member grouping (page may default to it on fresh nav)
-    try:
-        await page.get_by_role("button", name="Location").click(timeout=4000)
-        await page.wait_for_timeout(500)
-        await page.get_by_text("Team member", exact=True).click(timeout=4000)
-        await page.wait_for_load_state("networkidle")
-        await page.wait_for_timeout(2000)
-    except Exception:
-        pass  # Already on Team member view
-
-    # Open the Filters panel
-    clicked = await _try_click(checklist, "Night Markets: Filters panel opened",
-                                page.get_by_role("button", name="Filters").click(timeout=8000),
-                                required=True)
-    if not clicked:
-        return None
-    await page.wait_for_timeout(1000)
-
-    # Select the Location filter category, then choose Night Markets
-    try:
-        await page.get_by_text("Location", exact=True).first.click(timeout=6000)
-        await page.wait_for_timeout(500)
-        await page.get_by_text(nm_loc, exact=True).first.click(timeout=6000)
-        await page.wait_for_timeout(500)
-        checklist.append({"check": f"Night Markets: '{nm_loc}' filter selected", "status": "OK"})
-    except Exception as e:
-        checklist.append({"check": f"Night Markets: '{nm_loc}' filter selected", "status": "FAIL",
-                          "detail": str(e).splitlines()[0][:160]})
-        return None
-
-    await _try_click(checklist, "Night Markets: filter Apply clicked",
-                      page.get_by_role("button", name="Apply").click(timeout=6000))
-    await page.wait_for_load_state("networkidle")
-    await page.wait_for_timeout(5000)
 
     # Download team-member CSV
     try:
