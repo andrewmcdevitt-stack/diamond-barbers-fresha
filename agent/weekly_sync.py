@@ -51,26 +51,32 @@ GHL_HEADERS     = {
 
 ACCOUNTS = [
     {
-        "label":        "NT (Darwin)",
-        "session":      DATA_DIR / "session.json",
-        "email_env":    "FRESHA_EMAIL",
-        "pass_env":     "FRESHA_PASSWORD",
-        "timezone":     timezone(timedelta(hours=9, minutes=30)),
-        "provider_id":  "1371504",
-        "default_org":  "Diamond Barbers Darwin",
-        "output":       DATA_DIR / "performance_summary.json",
+        "label":               "NT (Darwin)",
+        "session":             DATA_DIR / "session.json",
+        "email_env":           "FRESHA_EMAIL",
+        "pass_env":            "FRESHA_PASSWORD",
+        "timezone":            timezone(timedelta(hours=9, minutes=30)),
+        "provider_id":         "1371504",
+        "default_org":         "Diamond Barbers Darwin",
+        "output":              DATA_DIR / "performance_summary.json",
+        "night_markets_loc":   None,
     },
     {
-        "label":        "QLD (Cairns)",
-        "session":      DATA_DIR / "session_cairns.json",
-        "email_env":    "CAIRNS_FRESHA_EMAIL",
-        "pass_env":     "CAIRNS_FRESHA_PASSWORD",
-        "timezone":     timezone(timedelta(hours=10)),
-        "provider_id":  "1390965",
-        "default_org":  "Diamond Barbers Cairns",
-        "output":       DATA_DIR / "cairns_performance_summary.json",
+        "label":               "QLD (Cairns)",
+        "session":             DATA_DIR / "session_cairns.json",
+        "email_env":           "CAIRNS_FRESHA_EMAIL",
+        "pass_env":            "CAIRNS_FRESHA_PASSWORD",
+        "timezone":            timezone(timedelta(hours=10)),
+        "provider_id":         "1390965",
+        "default_org":         "Diamond Barbers Cairns",
+        "output":              DATA_DIR / "cairns_performance_summary.json",
+        "night_markets_loc":   "Diamond Barbers Night Markets",
     },
 ]
+
+# Barbers at Night Markets are paid 50% of their Night Markets service revenue
+# (ex-GST) as a bonus instead of hourly rates for that location.
+NIGHT_MARKETS_COMMISSION_RATE = 0.50
 
 # Static employee → Xero org mapping.
 # This is the source of truth — never derived from which location they work at.
@@ -451,6 +457,42 @@ def ghl_upsert_location(location_name, week_start, week_end, location_label, ser
 
     if r.status_code in (200, 201):
         return action
+    raise Exception(f"GHL {r.status_code}: {r.text[:200]}")
+
+
+def ghl_update_bonus(employee_name, week_start, bonus):
+    """Push Night Markets 50-50 service bonus to the GHL payroll record's bonus field."""
+    if not GHL_API_KEY:
+        return "no_key"
+
+    r = requests.post(
+        f"{GHL_BASE}/objects/custom_objects.payroll/records/search",
+        headers=GHL_HEADERS,
+        json={
+            "locationId": GHL_LOCATION_ID,
+            "page":        1,
+            "pageLimit":   20,
+            "filters": [{"field": "properties.employee_name", "operator": "eq", "value": employee_name}],
+        },
+    )
+    if r.status_code not in (200, 201):
+        raise Exception(f"Search failed {r.status_code}: {r.text[:200]}")
+
+    records = [
+        rec for rec in r.json().get("records", [])
+        if rec.get("properties", {}).get("week_start") == week_start
+    ]
+    if not records:
+        return "no_record"
+
+    r = requests.put(
+        f"{GHL_BASE}/objects/custom_objects.payroll/records/{records[0]['id']}",
+        headers=GHL_HEADERS,
+        params={"locationId": GHL_LOCATION_ID},
+        json={"properties": {"bonus": bonus}},
+    )
+    if r.status_code in (200, 201):
+        return "updated"
     raise Exception(f"GHL {r.status_code}: {r.text[:200]}")
 
 
@@ -852,6 +894,134 @@ CSV DATA:
     return locations
 
 
+# ── Night Markets 50-50 bonus ──────────────────────────────────────────────────
+
+async def download_night_markets_csv(account, page, context, checklist, date_from, date_to):
+    """Download a team-member CSV filtered to Night Markets only.
+
+    Called after the main CSVs are already downloaded so the page is still
+    open.  Returns the local CSV path, or None on failure.
+    """
+    nm_loc = account.get("night_markets_loc")
+    if not nm_loc:
+        return None
+
+    print(f"\n  [NIGHT MARKETS] Downloading filtered team-member CSV ({nm_loc})...")
+
+    try:
+        await page.goto(
+            f"https://partners.fresha.com/reports/table/performance-summary"
+            f"?dateFrom={date_from}&dateTo={date_to}",
+            wait_until="networkidle",
+            timeout=60000,
+        )
+        await page.wait_for_timeout(3000)
+        checklist.append({"check": "Night Markets: performance page loaded", "status": "OK"})
+    except Exception as e:
+        checklist.append({"check": "Night Markets: performance page loaded", "status": "FAIL",
+                          "detail": str(e).splitlines()[0][:160]})
+        return None
+
+    # Ensure Team member grouping (page may default to it on fresh nav)
+    try:
+        await page.get_by_role("button", name="Location").click(timeout=4000)
+        await page.wait_for_timeout(500)
+        await page.get_by_text("Team member", exact=True).click(timeout=4000)
+        await page.wait_for_load_state("networkidle")
+        await page.wait_for_timeout(2000)
+    except Exception:
+        pass  # Already on Team member view
+
+    # Open the Filters panel
+    clicked = await _try_click(checklist, "Night Markets: Filters panel opened",
+                                page.get_by_role("button", name="Filters").click(timeout=8000),
+                                required=True)
+    if not clicked:
+        return None
+    await page.wait_for_timeout(1000)
+
+    # Select the Location filter category, then choose Night Markets
+    try:
+        await page.get_by_text("Location", exact=True).first.click(timeout=6000)
+        await page.wait_for_timeout(500)
+        await page.get_by_text(nm_loc, exact=True).first.click(timeout=6000)
+        await page.wait_for_timeout(500)
+        checklist.append({"check": f"Night Markets: '{nm_loc}' filter selected", "status": "OK"})
+    except Exception as e:
+        checklist.append({"check": f"Night Markets: '{nm_loc}' filter selected", "status": "FAIL",
+                          "detail": str(e).splitlines()[0][:160]})
+        return None
+
+    await _try_click(checklist, "Night Markets: filter Apply clicked",
+                      page.get_by_role("button", name="Apply").click(timeout=6000))
+    await page.wait_for_load_state("networkidle")
+    await page.wait_for_timeout(5000)
+
+    # Download team-member CSV
+    try:
+        async with page.expect_download(timeout=30000) as dl_info:
+            await page.get_by_role("button", name="Options").click(timeout=10000)
+            await page.wait_for_timeout(1500)
+            await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
+        download = await dl_info.value
+        csv_path = DATA_DIR / f"fresha_night_markets_{datetime.now().strftime('%Y%m%d')}.csv"
+        await download.save_as(str(csv_path))
+        checklist.append({"check": "Night Markets: CSV downloaded", "status": "OK",
+                          "detail": csv_path.name})
+        print(f"  Night Markets CSV saved: {csv_path.name}")
+        return str(csv_path)
+    except Exception as e:
+        checklist.append({"check": "Night Markets: CSV downloaded", "status": "FAIL",
+                          "detail": str(e).splitlines()[0][:160]})
+        return None
+
+
+def parse_night_markets_csv(csv_path, api_key):
+    """Parse a Night Markets-filtered team-member CSV.
+
+    Returns a dict of {staff_name: {"services_ex_gst": float, "bonus": float}}
+    where bonus = services_ex_gst * NIGHT_MARKETS_COMMISSION_RATE.
+    """
+    with open(csv_path, "r", encoding="utf-8-sig") as f:
+        csv_content = f.read()
+
+    print("  Parsing Night Markets CSV with Claude AI...")
+    client  = anthropic.Anthropic(api_key=api_key)
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": f"""This is a Fresha Performance Summary CSV filtered to ONE location (Night Markets).
+Ignore any Total/summary rows. Extract ONLY individual named staff members.
+
+Return ONLY a valid JSON array:
+[{{"name": "Staff Name", "services": 0.00}}]
+
+Rules: monetary values as plain numbers (no currency symbols).
+CSV DATA:
+{csv_content}"""}]
+    )
+
+    raw   = message.content[0].text
+    start = raw.find("[")
+    end   = raw.rfind("]") + 1
+    staff_list = json.loads(raw[start:end])
+
+    result = {}
+    for s in staff_list:
+        name     = (s.get("name") or "").strip()
+        services = s.get("services", 0) or 0
+        if not name or services == 0:
+            continue
+        svc_ex_gst = round(services / 1.1, 2)
+        bonus      = round(svc_ex_gst * NIGHT_MARKETS_COMMISSION_RATE, 2)
+        result[name] = {"services_ex_gst": svc_ex_gst, "bonus": bonus}
+
+    print(f"  Night Markets 50-50 bonus ({len(result)} staff):")
+    for name, d in sorted(result.items()):
+        print(f"    {name:30s}  svc_ex_gst=${d['services_ex_gst']:.2f}  bonus=${d['bonus']:.2f}")
+    return result
+
+
 # ── Email report ──────────────────────────────────────────────────────────────
 
 def build_sync_email(week_start, week_end, sync_results):
@@ -889,32 +1059,43 @@ def build_sync_email(week_start, week_end, sync_results):
 
         # Staff tips/commissions table
         if staff:
+            has_bonus = any(s.get("bonus") for s in staff)
             staff_rows = ""
-            for s in sorted(staff, key=lambda x: x.get("name", "")):
+            for idx, s in enumerate(sorted(staff, key=lambda x: x.get("name", ""))):
                 name  = s.get("name", "")
                 tips  = s.get("tips", 0) or 0
                 comm  = s.get("commissions", 0) or 0
                 svc   = s.get("service_sales_exc_gst", 0) or 0
-                bg    = "#f9f9f9" if staff.index(s) % 2 == 0 else "#ffffff"
+                bonus = s.get("bonus", 0) or 0
+                bg    = "#f9f9f9" if idx % 2 == 0 else "#ffffff"
+                bonus_cell = (f'<td style="padding:3px 8px;border-bottom:1px solid #eee;text-align:right">{"$%.2f" % bonus if bonus else "-"}</td>'
+                              if has_bonus else "")
                 staff_rows += (
                     f'<tr style="background:{bg}">'
                     f'<td style="padding:3px 8px;border-bottom:1px solid #eee">{name}</td>'
                     f'<td style="padding:3px 8px;border-bottom:1px solid #eee;text-align:right">{"$%.2f" % tips if tips else "-"}</td>'
                     f'<td style="padding:3px 8px;border-bottom:1px solid #eee;text-align:right">{"$%.2f" % comm if comm else "-"}</td>'
                     f'<td style="padding:3px 8px;border-bottom:1px solid #eee;text-align:right">{"$%.2f" % svc if svc else "-"}</td>'
+                    f'{bonus_cell}'
                     f'</tr>'
                 )
-            total_tips = sum(s.get("tips", 0) or 0 for s in staff)
-            total_comm = sum(s.get("commissions", 0) or 0 for s in staff)
-            total_svc  = sum(s.get("service_sales_exc_gst", 0) or 0 for s in staff)
+            total_tips  = sum(s.get("tips", 0) or 0 for s in staff)
+            total_comm  = sum(s.get("commissions", 0) or 0 for s in staff)
+            total_svc   = sum(s.get("service_sales_exc_gst", 0) or 0 for s in staff)
+            total_bonus = sum(s.get("bonus", 0) or 0 for s in staff)
+            bonus_total_cell = (f'<td style="padding:4px 8px;text-align:right">${total_bonus:.2f}</td>'
+                                if has_bonus else "")
             staff_rows += (
                 '<tr style="background:#1a1a2e;color:#fff;font-weight:600">'
                 '<td style="padding:4px 8px">TOTAL</td>'
                 f'<td style="padding:4px 8px;text-align:right">${total_tips:.2f}</td>'
                 f'<td style="padding:4px 8px;text-align:right">${total_comm:.2f}</td>'
                 f'<td style="padding:4px 8px;text-align:right">${total_svc:.2f}</td>'
+                f'{bonus_total_cell}'
                 '</tr>'
             )
+            bonus_header = ('<th style="padding:4px 8px;text-align:right">Night Mkts Bonus</th>'
+                            if has_bonus else "")
             staff_table = (
                 '<table style="border-collapse:collapse;width:100%;font-size:11px;margin-top:8px">'
                 '<thead><tr style="background:#1a1a2e;color:#fff">'
@@ -922,6 +1103,7 @@ def build_sync_email(week_start, week_end, sync_results):
                 '<th style="padding:4px 8px;text-align:right">Tips</th>'
                 '<th style="padding:4px 8px;text-align:right">Commission</th>'
                 '<th style="padding:4px 8px;text-align:right">Services (ex GST)</th>'
+                f'{bonus_header}'
                 f'</tr></thead><tbody>{staff_rows}</tbody></table>'
             )
         else:
@@ -1246,6 +1428,55 @@ async def run():
                         "status": "OK" if lok == len(locations) else "FAIL",
                         "detail": f"{lok}/{len(locations)} pushed",
                     })
+
+            # ── Step 6: Night Markets 50-50 bonus (QLD only) ─────────────────
+            if has_ghl and account.get("night_markets_loc"):
+                print(f"\n  [NIGHT MARKETS] Processing 50-50 service bonus...")
+                nm_csv = None
+                try:
+                    nm_csv = await download_night_markets_csv(
+                        account, page, context, checklist, date_from, date_to
+                    )
+                except Exception as e:
+                    checklist.append({
+                        "check": "Night Markets: CSV download",
+                        "status": "FAIL",
+                        "detail": str(e).splitlines()[0][:160],
+                    })
+
+                if nm_csv:
+                    try:
+                        nm_bonuses = parse_night_markets_csv(nm_csv, ANTHROPIC_API_KEY)
+                        nm_ok = nm_skip = 0
+                        for nm_name, nm_data in nm_bonuses.items():
+                            try:
+                                action = ghl_update_bonus(nm_name, date_from, nm_data["bonus"])
+                                if action == "no_record":
+                                    print(f"    SKIP  {nm_name:30s}  (no payroll record)")
+                                    nm_skip += 1
+                                elif action == "no_key":
+                                    nm_skip += 1
+                                else:
+                                    print(f"    OK    {nm_name:30s}  bonus=${nm_data['bonus']:.2f}")
+                                    nm_ok += 1
+                                    # Attach bonus to staff_for_email if present
+                                    for s in acct.get("staff", []):
+                                        if s["name"] == nm_name:
+                                            s["bonus"] = nm_data["bonus"]
+                            except Exception as e:
+                                print(f"    ERROR {nm_name}: {e}")
+                                acct["issues"].append(f"Night Markets bonus push failed for {nm_name}: {e}")
+                        checklist.append({
+                            "check": "Night Markets: bonus GHL push",
+                            "status": "OK" if nm_skip == 0 else "FLAG",
+                            "detail": f"{nm_ok} updated, {nm_skip} skipped",
+                        })
+                    except Exception as e:
+                        checklist.append({
+                            "check": "Night Markets: bonus CSV parse",
+                            "status": "FAIL",
+                            "detail": str(e).splitlines()[0][:160],
+                        })
 
             if acct["status"] == "ok" and any(item["status"] in ("FAIL", "FLAG") for item in checklist):
                 acct["status"] = "partial"
