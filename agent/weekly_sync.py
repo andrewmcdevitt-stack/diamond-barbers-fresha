@@ -1413,7 +1413,7 @@ async def run():
 
                 if nm_csv:
                     try:
-                        nm_bonuses = parse_night_markets_csv(nm_csv, ANTHROPIC_API_KEY)
+                        nm_bonuses = parse_night_markets_csv(nm_csv, api_key)
                         nm_ok = nm_skip = 0
                         for nm_name, nm_data in nm_bonuses.items():
                             try:
