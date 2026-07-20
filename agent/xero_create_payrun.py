@@ -44,27 +44,39 @@ CLIENT_SECRET = os.environ["XERO_CLIENT_SECRET"]
 
 ORG_RATES = {
     "Diamond Barbers Pty Ltd": {
-        "weekday":    "ba08c024-1289-420e-8e46-4a00d989815b",  # MONDAY-FRIDAY
-        "saturday":   "b7771727-60d0-4e37-8f60-fca50b0f4423",  # SATURDAY
-        "sunday":     "c7d4a9e4-e735-485f-8700-c7d29a17dff4",  # SUNDAY
-        "tips":       "759bbf1f-a20a-4123-bb17-80842dc688ec",  # Tips
-        "commission": "fb04b066-99fa-4b56-815b-94092a009e38",  # Commission
-        "bonus":      "7cd33337-ad09-42d6-b83b-ae75637afe3f",  # Night Markets Bonus
+        "monday":     "ba08c024-1289-420e-8e46-4a00d989815b",
+        "tuesday":    "00cfd9c0-cf8d-46b1-8503-02c8b4e25e50",
+        "wednesday":  "414c36eb-b5cc-4b25-8063-9358930e8368",
+        "thursday":   "95b47ce1-19f0-4fd1-9fa6-386b27ea3696",
+        "friday":     "4652ee75-937b-41a8-adc3-40b570ec24dc",
+        "saturday":   "b7771727-60d0-4e37-8f60-fca50b0f4423",
+        "sunday":     "c7d4a9e4-e735-485f-8700-c7d29a17dff4",
+        "tips":       "759bbf1f-a20a-4123-bb17-80842dc688ec",
+        "commission": "fb04b066-99fa-4b56-815b-94092a009e38",
+        "bonus":      "7cd33337-ad09-42d6-b83b-ae75637afe3f",
     },
     "DIAMOND BARBERS CAIRNS PTY LTD": {
-        "weekday":    "0ac27a0f-b798-4f26-b53a-7e1c1c300f03",  # MONDAY-FRIDAY
-        "saturday":   "18b97f5d-455b-42ee-846b-63550acb6b5d",  # SATURDAY
-        "sunday":     "3c88813b-e892-4b9b-9e27-22c5fa734379",  # SUNDAY
-        "tips":       "d6aef20e-4ed4-4d92-88c8-3dd3afa6eb23",  # Tips
-        "commission": "42714ec9-fb41-4498-9cea-b0a2c8b6f4f3",  # Commission
-        "bonus":      "1f61ce7e-2e5b-43e6-85d4-55f9e194a9e5",  # Night Markets Bonus
+        "monday":     "0ac27a0f-b798-4f26-b53a-7e1c1c300f03",
+        "tuesday":    "10a69950-d8b3-4be3-bba1-363cefab7342",
+        "wednesday":  "3538e9ac-111d-4653-95bc-b6194278e013",
+        "thursday":   "29ab0820-40de-4b45-9f77-ecc4ee2392aa",
+        "friday":     "5e2a8ce0-e9d4-4b97-9d9a-bb28e1a927d4",
+        "saturday":   "18b97f5d-455b-42ee-846b-63550acb6b5d",
+        "sunday":     "3c88813b-e892-4b9b-9e27-22c5fa734379",
+        "tips":       "d6aef20e-4ed4-4d92-88c8-3dd3afa6eb23",
+        "commission": "42714ec9-fb41-4498-9cea-b0a2c8b6f4f3",
+        "bonus":      "1f61ce7e-2e5b-43e6-85d4-55f9e194a9e5",
     },
     "D.B. Parap Pty Ltd": {
-        "weekday":    "2c266681-811c-4c02-9ea0-f133885b214c",  # MONDAY-FRIDAY
-        "saturday":   "3d92631e-7e25-4ba6-9c4c-d0e3a822e674",  # SATURDAY
-        "sunday":     "ca82390d-dacf-4dfc-8bad-29647fc118fa",  # SUNDAY
-        "tips":       "f9261b3a-0659-48e4-990c-40d770cef73c",  # TIPS
-        "commission": "9b40d911-89b7-401b-82c1-662fa9e2c782",  # COMMISSIONS
+        "monday":     "2c266681-811c-4c02-9ea0-f133885b214c",
+        "tuesday":    "3b2a9946-1718-43d1-821a-5102dd089d55",
+        "wednesday":  "856c518d-88ce-4af7-9f4b-f05cab2fda5d",
+        "thursday":   "1ba75264-93a0-4170-a7f5-edccf065ec9c",
+        "friday":     "bf2ecf3b-13ba-4f85-8cb2-564b18694390",
+        "saturday":   "3d92631e-7e25-4ba6-9c4c-d0e3a822e674",
+        "sunday":     "ca82390d-dacf-4dfc-8bad-29647fc118fa",
+        "tips":       "f9261b3a-0659-48e4-990c-40d770cef73c",
+        "commission": "9b40d911-89b7-401b-82c1-662fa9e2c782",
     },
 }
 
@@ -292,12 +304,10 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None):
             continue
 
         lines = []
-        if h and h.get("weekday_hrs", 0) > 0:
-            lines.append({"EarningsRateID": rates["weekday"], "NumberOfUnits": round(h["weekday_hrs"], 2)})
-        if h and h.get("saturday_hrs", 0) > 0:
-            lines.append({"EarningsRateID": rates["saturday"], "NumberOfUnits": round(h["saturday_hrs"], 2)})
-        if h and h.get("sunday_hrs", 0) > 0:
-            lines.append({"EarningsRateID": rates["sunday"], "NumberOfUnits": round(h["sunday_hrs"], 2)})
+        for day in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"):
+            hrs = h.get(day, 0) if h else 0
+            if hrs > 0 and day in rates:
+                lines.append({"EarningsRateID": rates[day], "NumberOfUnits": round(hrs, 2)})
         tips = p.get("tips", 0) or 0
         if tips > 0:
             lines.append({"EarningsRateID": rates["tips"], "NumberOfUnits": 1, "RatePerUnit": round(tips, 2)})
@@ -461,13 +471,12 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
         comm  = ps["_commission"]
         bonus = ps["_bonus"]
         bonus_str = f"  bonus=${bonus:6.2f}" if bonus else ""
-        print(
-            f"  OK  {ps['_name']:30s}  "
-            f"wk={h.get('weekday_hrs',0):4.1f}h  "
-            f"sat={h.get('saturday_hrs',0):4.1f}h  "
-            f"sun={h.get('sunday_hrs',0):4.1f}h  "
-            f"tips=${tips:6.2f}  comm=${comm:6.2f}{bonus_str}"
+        day_str = "  ".join(
+            f"{d[:3]}={h.get(d,0):.1f}h"
+            for d in ("monday","tuesday","wednesday","thursday","friday","saturday","sunday")
+            if h.get(d, 0) > 0
         )
+        print(f"  OK  {ps['_name']:30s}  {day_str}  tips=${tips:6.2f}  comm=${comm:6.2f}{bonus_str}")
 
     print(f"\n  Summary — filled: {len(payslip_list)}  skipped: {len(skipped)}")
     if skipped:
