@@ -99,6 +99,7 @@ XERO_TO_FRESHA = {
     "nikolaos diamantis":   "nico diamantis",
     "vincenzo vanzanella":  "vince vincenzo",
     "dion mataele":         "d mataele",
+    "daniel carmago":       "daniel camargo",
 }
 
 
