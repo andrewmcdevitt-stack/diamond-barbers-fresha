@@ -548,10 +548,20 @@ async def ensure_logged_in(account, page, context, checklist):
     session_file = account["session"]
     label        = account["label"]
 
-    await page.goto("https://partners.fresha.com/reports", wait_until="networkidle")
+    for attempt in range(1, 4):
+        try:
+            await page.goto("https://partners.fresha.com/reports", wait_until="networkidle", timeout=60000)
+            break
+        except Exception as e:
+            if attempt == 3:
+                checklist.append({"check": "Fresha page load", "status": "FAIL", "detail": f"Timed out after 3 attempts: {str(e).splitlines()[0][:120]}"})
+                raise Exception(f"Page load failed for {label} after 3 attempts: {e}")
+            print(f"  Page load attempt {attempt} timed out, retrying...")
+            await page.wait_for_timeout(5000)
     await page.wait_for_timeout(3000)
 
     if "/users/sign-in" not in page.url:
+        checklist.append({"check": "Fresha page load", "status": "OK"})
         checklist.append({"check": "Fresha session valid (no login required)", "status": "OK"})
         return
 
