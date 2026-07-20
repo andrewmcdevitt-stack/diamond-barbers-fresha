@@ -447,16 +447,41 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
         slips      = run_data.get("Payslips", [])
         emp_to_slip = {s["EmployeeID"]: s["PayslipID"] for s in slips if "PayslipID" in s}
         print(f"  Found {len(emp_to_slip)} PayslipIDs")
-        activated  = 0
+
+        # Fetch each payslip to extract per-rate RatePerUnit from the employee's pay template.
+        # Some earnings rates in Xero are variable-rate (require RatePerUnit to be passed).
+        slip_rates = {}  # slip_id -> {earnings_rate_id: rate_per_unit}
+        for emp_id, slip_id in emp_to_slip.items():
+            try:
+                detail = xero_get(f"/payroll.xro/1.0/Payslip/{slip_id}", tenant_id, access_token)
+                lines  = detail.get("Payslips", [{}])[0].get("EarningsLines", [])
+                slip_rates[slip_id] = {
+                    l["EarningsRateID"]: l["RatePerUnit"]
+                    for l in lines if "RatePerUnit" in l and l.get("RatePerUnit", 0) > 0
+                }
+            except Exception:
+                slip_rates[slip_id] = {}
+
+        activated = 0
         for ps in payslip_list:
             slip_id = emp_to_slip.get(ps["EmployeeID"])
             if not slip_id:
                 print(f"  No PayslipID for {ps['_name']}")
                 continue
+
+            # Inject RatePerUnit from pay template for any variable-rate earnings lines
+            known_rates = slip_rates.get(slip_id, {})
+            earnings = []
+            for line in clean(ps)["EarningsLines"]:
+                line = dict(line)
+                if "RatePerUnit" not in line and line["EarningsRateID"] in known_rates:
+                    line["RatePerUnit"] = known_rates[line["EarningsRateID"]]
+                earnings.append(line)
+
             print(f"  Writing to {ps['_name']} ({slip_id})...")
             xero_post(f"/payroll.xro/1.0/Payslip/{slip_id}", tenant_id, access_token, [{
-                "PayslipID":    slip_id,
-                "EarningsLines": clean(ps)["EarningsLines"],
+                "PayslipID":     slip_id,
+                "EarningsLines": earnings,
             }])
             activated += 1
         print(f"  Activated {activated} payslips.")
