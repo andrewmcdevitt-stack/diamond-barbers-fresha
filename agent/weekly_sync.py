@@ -1252,6 +1252,27 @@ async def run():
                 print("\n  GHL_API_KEY not set -- skipping GHL hours push.")
                 checklist.append({"check": "GHL hours push", "status": "SKIP", "detail": "GHL_API_KEY not set"})
 
+            # Save hours to JSON for xero_create_payrun.py
+            if hours_data:
+                suffix = "nt" if "NT" in account["label"] else "qld"
+                hours_json_path = DATA_DIR / f"fresha_hours_{suffix}.json"
+                hours_summary = {}
+                for _nm, _h in hours_data.items():
+                    wk = sum(_h.get(d, 0) for d in ["monday", "tuesday", "wednesday", "thursday", "friday"])
+                    hours_summary[_nm] = {
+                        "weekday_hrs": round(wk, 2),
+                        "saturday_hrs": round(_h.get("saturday", 0), 2),
+                        "sunday_hrs":   round(_h.get("sunday", 0), 2),
+                        "total_hrs":    round(_h.get("total", 0), 2),
+                    }
+                hours_json_path.write_text(json.dumps({
+                    "date_from":  date_from,
+                    "date_to":    date_to,
+                    "generated":  datetime.now(timezone.utc).isoformat(),
+                    "summary":    hours_summary,
+                }, indent=2))
+                print(f"  Saved {hours_json_path.name} ({len(hours_summary)} staff)")
+
             # ── Step 2: Download performance CSVs (browser navigation) ────────
             try:
                 csv_path, loc_csv_path, date_from, date_to = await download_performance_csvs(

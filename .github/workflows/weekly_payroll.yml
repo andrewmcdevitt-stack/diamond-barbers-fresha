@@ -22,6 +22,8 @@ jobs:
       CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
       EMAIL_HOST:             ${{ secrets.EMAIL_HOST }}
       EMAIL_PASSWORD:         ${{ secrets.EMAIL_PASSWORD }}
+      XERO_CLIENT_ID:         ${{ secrets.XERO_CLIENT_ID }}
+      XERO_CLIENT_SECRET:     ${{ secrets.XERO_CLIENT_SECRET }}
       CI: "true"
 
     steps:
@@ -43,15 +45,31 @@ jobs:
           mkdir -p data
           echo "${{ secrets.NT_SESSION_JSON }}" | base64 --decode > data/session.json
           echo "${{ secrets.CAIRNS_SESSION_JSON }}" | base64 --decode > data/session_cairns.json
+          echo "${{ secrets.XERO_TOKEN_B64 }}" | base64 --decode > data/xero_token.json
 
-      - name: Run weekly sync (hours + performance -> GHL + dashboard JSON)
+      - name: Run weekly sync (hours + performance -> GHL + hours/bonus JSON)
         run: python agent/weekly_sync.py
 
-      - name: Commit and push updated dashboard JSON
+      - name: Create Xero draft pay runs with hours, tips, commissions and bonus
+        run: python agent/xero_create_payrun.py
+
+      - name: Save updated Xero token back to secret
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -f data/xero_token.json ]; then
+            TOKEN_B64=$(base64 -w 0 data/xero_token.json)
+            gh secret set XERO_TOKEN_B64 --body "$TOKEN_B64" --repo ${{ github.repository }}
+          fi
+
+      - name: Commit and push updated JSON files
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "GitHub Actions"
-          git add data/performance_summary.json data/cairns_performance_summary.json
+          git add data/performance_summary.json data/cairns_performance_summary.json \
+                  data/fresha_hours_nt.json data/fresha_hours_qld.json \
+                  data/night_markets_bonus.json
           git diff --staged --quiet && echo "No changes." || (
             git commit -m "chore: weekly sync $(date -u +'%Y-%m-%d')" &&
             git push

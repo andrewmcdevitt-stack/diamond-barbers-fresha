@@ -49,6 +49,7 @@ ORG_RATES = {
         "sunday":     "c7d4a9e4-e735-485f-8700-c7d29a17dff4",  # SUNDAY
         "tips":       "759bbf1f-a20a-4123-bb17-80842dc688ec",  # Tips
         "commission": "fb04b066-99fa-4b56-815b-94092a009e38",  # Commission
+        "bonus":      "7cd33337-ad09-42d6-b83b-ae75637afe3f",  # Night Markets Bonus
     },
     "DIAMOND BARBERS CAIRNS PTY LTD": {
         "weekday":    "0ac27a0f-b798-4f26-b53a-7e1c1c300f03",  # MONDAY-FRIDAY
@@ -56,6 +57,7 @@ ORG_RATES = {
         "sunday":     "3c88813b-e892-4b9b-9e27-22c5fa734379",  # SUNDAY
         "tips":       "d6aef20e-4ed4-4d92-88c8-3dd3afa6eb23",  # Tips
         "commission": "42714ec9-fb41-4498-9cea-b0a2c8b6f4f3",  # Commission
+        "bonus":      "1f61ce7e-2e5b-43e6-85d4-55f9e194a9e5",  # Night Markets Bonus
     },
     "D.B. Parap Pty Ltd": {
         "weekday":    "2c266681-811c-4c02-9ea0-f133885b214c",  # MONDAY-FRIDAY
@@ -67,7 +69,7 @@ ORG_RATES = {
 }
 
 # Orgs with no employees or no suitable rates — skip entirely
-SKIP_ORGS = {"DB WULGURU PTY LTD", "DIAMOND BARBERS CAIRNS PTY LTD", "D.B. Parap Pty Ltd"}
+SKIP_ORGS = {"DB WULGURU PTY LTD", "D.B. Parap Pty Ltd"}
 
 # Employees to exclude from all pay runs (owners, managers)
 EXCLUDED_EMPLOYEES = {
@@ -229,7 +231,8 @@ def load_hours():
 def load_performance():
     """Load tips and commissions per employee from performance JSONs."""
     perf = {}
-    for fname in ("fresha_performance_nt.json", "fresha_performance_qld.json"):
+    for fname in ("fresha_performance_nt.json", "fresha_performance_qld.json",
+                  "performance_summary.json", "cairns_performance_summary.json"):
         path = DATA_DIR / fname
         if not path.exists():
             continue
@@ -249,9 +252,18 @@ def load_performance():
     return perf
 
 
+def load_night_markets_bonus():
+    """Load Night Markets 50-50 bonus per employee."""
+    path = DATA_DIR / "night_markets_bonus.json"
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text())
+    return {norm(name): round(float(d.get("bonus", 0)), 2) for name, d in data.items()}
+
+
 # ── Pay run processing per org ────────────────────────────────────────────────
 
-def build_payslip_list(emp_id_map, hours, perf, rates):
+def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None):
     """Build payslip entries for all employees with hours data."""
     payslip_list = []
     skipped      = []
@@ -286,6 +298,12 @@ def build_payslip_list(emp_id_map, hours, perf, rates):
         commission = p.get("commission", 0) or 0
         if commission > 0:
             lines.append({"EarningsRateID": rates["commission"], "NumberOfUnits": 1, "RatePerUnit": round(commission, 2)})
+        bonus = (bonuses or {}).get(fname, 0) or 0
+        if not bonus:
+            first = fname.split()[0]
+            bonus = next((v for k, v in (bonuses or {}).items() if k.split()[0] == first), 0)
+        if bonus > 0 and "bonus" in rates:
+            lines.append({"EarningsRateID": rates["bonus"], "NumberOfUnits": 1, "RatePerUnit": round(bonus, 2)})
 
         if not lines:
             skipped.append(f"{xero_nm_norm} (all values zero)")
@@ -298,12 +316,13 @@ def build_payslip_list(emp_id_map, hours, perf, rates):
             "_h":            h,
             "_tips":         tips,
             "_commission":   commission,
+            "_bonus":        bonus,
         })
 
     return payslip_list, skipped
 
 
-def process_org(tenant_id, tenant_name, access_token, hours, perf):
+def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None):
     print(f"\n{'='*65}")
     print(f"ORG: {tenant_name}")
     print(f"{'='*65}")
@@ -336,7 +355,7 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf):
         emp_id_map[norm(full)] = e["EmployeeID"]
 
     # ── Build payslip data from Fresha ────────────────────────────────────────
-    payslip_list, skipped = build_payslip_list(emp_id_map, hours, perf, rates)
+    payslip_list, skipped = build_payslip_list(emp_id_map, hours, perf, rates, bonuses)
 
     # Strip internal keys before sending to Xero
     def clean(ps):
@@ -435,15 +454,17 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf):
     # ── Print summary ─────────────────────────────────────────────────────────
     print(f"\n  Filled {len(payslip_list)} payslips:\n")
     for ps in payslip_list:
-        h    = ps["_h"]
-        tips = ps["_tips"]
-        comm = ps["_commission"]
+        h     = ps["_h"]
+        tips  = ps["_tips"]
+        comm  = ps["_commission"]
+        bonus = ps["_bonus"]
+        bonus_str = f"  bonus=${bonus:6.2f}" if bonus else ""
         print(
             f"  OK  {ps['_name']:30s}  "
             f"wk={h.get('weekday_hrs',0):4.1f}h  "
             f"sat={h.get('saturday_hrs',0):4.1f}h  "
             f"sun={h.get('sunday_hrs',0):4.1f}h  "
-            f"tips=${tips:6.2f}  comm=${comm:6.2f}"
+            f"tips=${tips:6.2f}  comm=${comm:6.2f}{bonus_str}"
         )
 
     print(f"\n  Summary — filled: {len(payslip_list)}  skipped: {len(skipped)}")
@@ -462,13 +483,15 @@ def main():
     tenants      = token.get("tenants", [])
 
     print("Loading Fresha data...")
-    hours = load_hours()
-    perf  = load_performance()
+    hours   = load_hours()
+    perf    = load_performance()
+    bonuses = load_night_markets_bonus()
     print(f"  {len(hours)} employees in hours data")
     print(f"  {len(perf)} employees in performance data")
+    print(f"  {len(bonuses)} employees with Night Markets bonus")
 
     for tenant in tenants:
-        process_org(tenant["id"], tenant["name"], access_token, hours, perf)
+        process_org(tenant["id"], tenant["name"], access_token, hours, perf, bonuses)
 
     print("\n\nDone. Log in to Xero to review and post the draft pay runs.")
 
