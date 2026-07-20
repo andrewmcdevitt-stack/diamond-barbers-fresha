@@ -57,6 +57,7 @@ ORG_RATES = {
         "sunday":     "3c88813b-e892-4b9b-9e27-22c5fa734379",
         "tips":       "d6aef20e-4ed4-4d92-88c8-3dd3afa6eb23",
         "commission": "42714ec9-fb41-4498-9cea-b0a2c8b6f4f3",
+        "bonus":      "1f61ce7e-2e5b-43e6-85d4-55f9e194a9e5",
     },
     "D.B. Parap Pty Ltd": {
         "weekday":    "2c266681-811c-4c02-9ea0-f133885b214c",
@@ -208,9 +209,18 @@ def load_performance():
     return perf
 
 
+def load_night_markets_bonus():
+    """Load Night Markets 50-50 bonus per employee from JSON saved by weekly_sync."""
+    path = DATA_DIR / "night_markets_bonus.json"
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text())
+    return {norm(name): round(float(d.get("bonus", 0)), 2) for name, d in data.items()}
+
+
 # ── Pay run processing ────────────────────────────────────────────────────────
 
-def process_org(tenant_id, tenant_name, access_token, hours, perf):
+def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None):
     print(f"\n{'='*65}")
     print(f"ORG: {tenant_name}")
     print(f"{'='*65}")
@@ -308,6 +318,10 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf):
         if commission > 0:
             lines.append({"EarningsRateID": rates["commission"], "NumberOfUnits": 1, "RatePerUnit": round(commission, 2)})
 
+        bonus = (bonuses or {}).get(fname, 0) or 0
+        if bonus > 0 and "bonus" in rates:
+            lines.append({"EarningsRateID": rates["bonus"], "NumberOfUnits": 1, "RatePerUnit": round(bonus, 2)})
+
         if not lines:
             skipped.append(f"{xero_nm_norm} (all values zero)")
             continue
@@ -352,13 +366,15 @@ def main():
     tenants      = token.get("tenants", [])
 
     print("Loading Fresha data...")
-    hours = load_hours()
-    perf  = load_performance()
+    hours   = load_hours()
+    perf    = load_performance()
+    bonuses = load_night_markets_bonus()
     print(f"  {len(hours)} employees in hours data")
     print(f"  {len(perf)} employees in performance data")
+    print(f"  {len(bonuses)} employees with Night Markets bonus")
 
     for tenant in tenants:
-        process_org(tenant["id"], tenant["name"], access_token, hours, perf)
+        process_org(tenant["id"], tenant["name"], access_token, hours, perf, bonuses)
 
     print("\nDone. Log in to Xero to review and post the draft pay runs.")
 

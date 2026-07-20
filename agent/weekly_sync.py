@@ -1414,6 +1414,10 @@ async def run():
                 if nm_csv:
                     try:
                         nm_bonuses = parse_night_markets_csv(nm_csv, api_key)
+                        # Save for xero_payrun.py to pick up
+                        (DATA_DIR / "night_markets_bonus.json").write_text(
+                            json.dumps(nm_bonuses, indent=2)
+                        )
                         nm_ok = nm_skip = 0
                         for nm_name, nm_data in nm_bonuses.items():
                             try:
