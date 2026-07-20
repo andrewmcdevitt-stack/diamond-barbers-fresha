@@ -241,9 +241,16 @@ async def fetch_hours(account, context, date_from, date_to):
     # combined[emp_name] = {monday: 0, ..., total: 0, xero_org: "..."}
     combined = {}
 
+    night_markets_loc_id = account.get("night_markets_loc_id")
+
     for loc in locations:
         loc_id   = loc["id"]
         loc_name = loc["name"]
+
+        # Night Markets hours are paid as a 50/50 bonus, not regular hours — skip
+        if night_markets_loc_id and loc_id == night_markets_loc_id:
+            print(f"  Skipping {loc_name} (Night Markets — bonus only)")
+            continue
 
         emp_resp = await context.request.get(
             f"https://partners-api.fresha.com/v2/employees"
