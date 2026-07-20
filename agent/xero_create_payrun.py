@@ -281,16 +281,22 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None):
             first = fname.split()[0]
             h = next((v for k, v in hours.items() if k.split()[0] == first), None)
 
-        if not h or h.get("total_hrs", 0) == 0:
+        # Check bonus early — an employee may have bonus-only earnings (e.g. Night Markets only)
+        bonus = (bonuses or {}).get(fname, 0) or 0
+        if not bonus:
+            first = fname.split()[0]
+            bonus = next((v for k, v in (bonuses or {}).items() if k.split()[0] == first), 0)
+
+        if (not h or h.get("total_hrs", 0) == 0) and not bonus:
             skipped.append(f"{xero_nm_norm} (no hours)")
             continue
 
         lines = []
-        if h.get("weekday_hrs", 0) > 0:
+        if h and h.get("weekday_hrs", 0) > 0:
             lines.append({"EarningsRateID": rates["weekday"], "NumberOfUnits": round(h["weekday_hrs"], 2)})
-        if h.get("saturday_hrs", 0) > 0:
+        if h and h.get("saturday_hrs", 0) > 0:
             lines.append({"EarningsRateID": rates["saturday"], "NumberOfUnits": round(h["saturday_hrs"], 2)})
-        if h.get("sunday_hrs", 0) > 0:
+        if h and h.get("sunday_hrs", 0) > 0:
             lines.append({"EarningsRateID": rates["sunday"], "NumberOfUnits": round(h["sunday_hrs"], 2)})
         tips = p.get("tips", 0) or 0
         if tips > 0:
@@ -298,10 +304,6 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None):
         commission = p.get("commission", 0) or 0
         if commission > 0:
             lines.append({"EarningsRateID": rates["commission"], "NumberOfUnits": 1, "RatePerUnit": round(commission, 2)})
-        bonus = (bonuses or {}).get(fname, 0) or 0
-        if not bonus:
-            first = fname.split()[0]
-            bonus = next((v for k, v in (bonuses or {}).items() if k.split()[0] == first), 0)
         if bonus > 0 and "bonus" in rates:
             lines.append({"EarningsRateID": rates["bonus"], "NumberOfUnits": 1, "RatePerUnit": round(bonus, 2)})
 
@@ -313,7 +315,7 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None):
             "EmployeeID":    emp_id,
             "EarningsLines": lines,
             "_name":         xero_nm_norm,
-            "_h":            h,
+            "_h":            h or {},
             "_tips":         tips,
             "_commission":   commission,
             "_bonus":        bonus,
