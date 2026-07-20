@@ -50,6 +50,7 @@ ORG_RATES = {
         "sunday":     "c7d4a9e4-e735-485f-8700-c7d29a17dff4",
         "tips":       "759bbf1f-a20a-4123-bb17-80842dc688ec",
         "commission": "fb04b066-99fa-4b56-815b-94092a009e38",
+        "bonus":      "7cd33337-ad09-42d6-b83b-ae75637afe3f",
     },
     "DIAMOND BARBERS CAIRNS PTY LTD": {
         "weekday":    "0ac27a0f-b798-4f26-b53a-7e1c1c300f03",
