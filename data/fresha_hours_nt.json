@@ -1,127 +1,127 @@
 {
-  "date_from": "2026-04-13",
-  "date_to": "2026-04-19",
-  "generated": "2026-04-19T22:05:12.492274",
+  "date_from": "2026-07-13",
+  "date_to": "2026-07-19",
+  "generated": "2026-07-20T07:18:00.652327+00:00",
   "summary": {
-    "Abuel Basallo": {
+    "John Zagorianos": {
       "weekday_hrs": 18.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 32.0
-    },
-    "Ahmet Koysu": {
-      "weekday_hrs": 31.0,
-      "saturday_hrs": 7.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 38.0
-    },
-    "Airol Basallo": {
-      "weekday_hrs": 23.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 37.0
-    },
-    "Anthony Crispo": {
-      "weekday_hrs": 28.5,
       "saturday_hrs": 0.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 33.5
+      "total_hrs": 23.0
+    },
+    "Daniel Camargo": {
+      "weekday_hrs": 40.0,
+      "saturday_hrs": 10.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 50.0
+    },
+    "Rohit More": {
+      "weekday_hrs": 24.5,
+      "saturday_hrs": 8.5,
+      "sunday_hrs": 5.0,
+      "total_hrs": 38.0
     },
     "Avinash Borade": {
+      "weekday_hrs": 27.17,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 41.17
+    },
+    "Luca Marzocchi": {
+      "weekday_hrs": 27.17,
+      "saturday_hrs": 6.5,
+      "sunday_hrs": 5.0,
+      "total_hrs": 38.67
+    },
+    "Robert Jugan": {
       "weekday_hrs": 31.0,
       "saturday_hrs": 8.0,
-      "sunday_hrs": 5.0,
-      "total_hrs": 44.0
-    },
-    "David Garcia": {
-      "weekday_hrs": 26.5,
-      "saturday_hrs": 6.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 32.5
-    },
-    "Jack Matthew": {
-      "weekday_hrs": 33.0,
-      "saturday_hrs": 6.0,
       "sunday_hrs": 0.0,
       "total_hrs": 39.0
     },
-    "Jairo Espinosa": {
-      "weekday_hrs": 32.0,
-      "saturday_hrs": 7.5,
-      "sunday_hrs": 0.0,
-      "total_hrs": 39.5
+    "Nico Diamantis": {
+      "weekday_hrs": 14.5,
+      "saturday_hrs": 7.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 26.5
     },
-    "Jamaine McGee": {
-      "weekday_hrs": 22.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 31.0
-    },
-    "John Zagorianos": {
-      "weekday_hrs": 24.0,
-      "saturday_hrs": 0.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 24.0
-    },
-    "JoJo Aligam": {
-      "weekday_hrs": 36.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 45.0
-    },
-    "Krish Manocha": {
-      "weekday_hrs": 29.0,
-      "saturday_hrs": 9.0,
-      "sunday_hrs": 0.0,
-      "total_hrs": 38.0
-    },
-    "Laura Marshall": {
-      "weekday_hrs": 29.0,
-      "saturday_hrs": 8.5,
-      "sunday_hrs": 0.0,
-      "total_hrs": 37.5
-    },
-    "Liem Nguyen": {
+    "Wilfred Vidal": {
       "weekday_hrs": 23.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
       "total_hrs": 37.0
     },
-    "Luca Marzocchi": {
-      "weekday_hrs": 29.0,
-      "saturday_hrs": 8.0,
+    "JoJo Aligam": {
+      "weekday_hrs": 27.0,
+      "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 42.0
+      "total_hrs": 41.0
     },
     "Marianne Escobar": {
-      "weekday_hrs": 25.5,
+      "weekday_hrs": 31.0,
       "saturday_hrs": 6.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 31.5
+      "total_hrs": 37.0
     },
-    "Nico Diamantis": {
-      "weekday_hrs": 7.17,
-      "saturday_hrs": 7.5,
+    "Airol Basallo": {
+      "weekday_hrs": 27.0,
+      "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 19.67
+      "total_hrs": 41.0
     },
-    "Robert Jugan": {
+    "Icham Mellou": {
+      "weekday_hrs": 31.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 40.0
+    },
+    "Abuel Basallo": {
+      "weekday_hrs": 29.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 38.0
+    },
+    "Jairo Espinosa": {
+      "weekday_hrs": 25.0,
+      "saturday_hrs": 9.5,
+      "sunday_hrs": 5.0,
+      "total_hrs": 39.5
+    },
+    "Tam Nguyen": {
+      "weekday_hrs": 14.0,
+      "saturday_hrs": 0.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 14.0
+    },
+    "David Garcia": {
       "weekday_hrs": 36.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 0.0,
       "total_hrs": 45.0
     },
-    "Sean Maguire": {
-      "weekday_hrs": 24.0,
+    "Ahmet Koysu": {
+      "weekday_hrs": 29.5,
       "saturday_hrs": 9.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 38.0
+      "total_hrs": 43.5
     },
-    "Tam Nguyen": {
-      "weekday_hrs": 25.0,
+    "Anthony Crispo": {
+      "weekday_hrs": 33.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 47.0
+    },
+    "Liem Nguyen": {
+      "weekday_hrs": 30.0,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 5.0,
+      "total_hrs": 44.0
+    },
+    "Laura Marshall": {
+      "weekday_hrs": 29.0,
       "saturday_hrs": 9.0,
       "sunday_hrs": 0.0,
-      "total_hrs": 34.0
+      "total_hrs": 38.0
     },
     "Vincenzo Vanzanella": {
       "weekday_hrs": 28.0,
@@ -129,381 +129,23 @@
       "sunday_hrs": 5.0,
       "total_hrs": 42.5
     },
-    "Wilfred Vidal": {
-      "weekday_hrs": 33.0,
+    "Sean Maguire": {
+      "weekday_hrs": 31.5,
       "saturday_hrs": 9.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 40.5
+    },
+    "Krish Manocha": {
+      "weekday_hrs": 23.0,
+      "saturday_hrs": 8.0,
       "sunday_hrs": 5.0,
-      "total_hrs": 47.0
-    }
-  },
-  "by_location": {
-    "Diamond Barbers - DELUXE": {
-      "employees": [
-        {
-          "id": "3328952",
-          "name": "Nico Diamantis"
-        },
-        {
-          "id": "3328945",
-          "name": "Marianne Escobar"
-        },
-        {
-          "id": "3328939",
-          "name": "John Zagorianos"
-        }
-      ],
-      "hours": {
-        "3328952": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        },
-        "3328945": {
-          "weekday_hrs": 16.0,
-          "saturday_hrs": 6.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 22.0
-        },
-        "3328939": {
-          "weekday_hrs": 24.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 24.0
-        }
-      }
+      "total_hrs": 36.0
     },
-    "Diamond Barbers - CASUARINA": {
-      "employees": [
-        {
-          "id": "3328952",
-          "name": "Nico Diamantis"
-        },
-        {
-          "id": "3328935",
-          "name": "Avinash Borade"
-        },
-        {
-          "id": "3328941",
-          "name": "Luca Marzocchi"
-        },
-        {
-          "id": "3328931",
-          "name": "Robert Jugan"
-        }
-      ],
-      "hours": {
-        "3328952": {
-          "weekday_hrs": 7.17,
-          "saturday_hrs": 7.5,
-          "sunday_hrs": 5.0,
-          "total_hrs": 19.67
-        },
-        "3328935": {
-          "weekday_hrs": 31.0,
-          "saturday_hrs": 8.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 44.0
-        },
-        "3328941": {
-          "weekday_hrs": 29.0,
-          "saturday_hrs": 8.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 42.0
-        },
-        "3328931": {
-          "weekday_hrs": 36.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 45.0
-        }
-      }
-    },
-    "Diamond Barbers - YARRAWONGA": {
-      "employees": [
-        {
-          "id": "3328952",
-          "name": "Nico Diamantis"
-        },
-        {
-          "id": "3328945",
-          "name": "Marianne Escobar"
-        },
-        {
-          "id": "3441552",
-          "name": "Wilfred Vidal"
-        },
-        {
-          "id": "5076778",
-          "name": "Jamaine McGee"
-        }
-      ],
-      "hours": {
-        "3328952": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        },
-        "3328945": {
-          "weekday_hrs": 9.5,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 9.5
-        },
-        "3441552": {
-          "weekday_hrs": 33.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 47.0
-        },
-        "5076778": {
-          "weekday_hrs": 22.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 31.0
-        }
-      }
-    },
-    "Diamond Barbers - BELLAMACK": {
-      "employees": [
-        {
-          "id": "3328952",
-          "name": "Nico Diamantis"
-        },
-        {
-          "id": "3328938",
-          "name": "Airol Basallo"
-        },
-        {
-          "id": "3328946",
-          "name": "Abuel Basallo"
-        },
-        {
-          "id": "5076665",
-          "name": "JoJo Aligam"
-        }
-      ],
-      "hours": {
-        "3328952": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        },
-        "3328938": {
-          "weekday_hrs": 23.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 37.0
-        },
-        "3328946": {
-          "weekday_hrs": 18.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 32.0
-        },
-        "5076665": {
-          "weekday_hrs": 36.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 45.0
-        }
-      }
-    },
-    "Diamond Barbers - DARWIN CBD": {
-      "employees": [
-        {
-          "id": "3328944",
-          "name": "Jairo Espinosa"
-        },
-        {
-          "id": "4900249",
-          "name": "Tam Nguyen"
-        },
-        {
-          "id": "3328930",
-          "name": "David Garcia"
-        },
-        {
-          "id": "4954863",
-          "name": "Ahmet Koysu"
-        }
-      ],
-      "hours": {
-        "3328944": {
-          "weekday_hrs": 32.0,
-          "saturday_hrs": 7.5,
-          "sunday_hrs": 0.0,
-          "total_hrs": 39.5
-        },
-        "4900249": {
-          "weekday_hrs": 25.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 34.0
-        },
-        "3328930": {
-          "weekday_hrs": 26.5,
-          "saturday_hrs": 6.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 32.5
-        },
-        "4954863": {
-          "weekday_hrs": 31.0,
-          "saturday_hrs": 7.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 38.0
-        }
-      }
-    },
-    "Diamond Barbers - COOLALINGA": {
-      "employees": [
-        {
-          "id": "3328952",
-          "name": "Nico Diamantis"
-        },
-        {
-          "id": "3328940",
-          "name": "Anthony Crispo"
-        },
-        {
-          "id": "4810192",
-          "name": "Liem Nguyen"
-        },
-        {
-          "id": "4830684",
-          "name": "Sean Maguire"
-        },
-        {
-          "id": "3495852",
-          "name": "Laura Marshall"
-        }
-      ],
-      "hours": {
-        "3328952": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        },
-        "3328940": {
-          "weekday_hrs": 28.5,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 33.5
-        },
-        "4810192": {
-          "weekday_hrs": 23.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 37.0
-        },
-        "4830684": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        },
-        "3495852": {
-          "weekday_hrs": 29.0,
-          "saturday_hrs": 8.5,
-          "sunday_hrs": 0.0,
-          "total_hrs": 37.5
-        }
-      }
-    },
-    "Diamond Barbers - PARAP": {
-      "employees": [
-        {
-          "id": "3328952",
-          "name": "Nico Diamantis"
-        },
-        {
-          "id": "3328937",
-          "name": "Vincenzo Vanzanella"
-        },
-        {
-          "id": "3328942",
-          "name": "Jack Matthew"
-        },
-        {
-          "id": "4830684",
-          "name": "Sean Maguire"
-        },
-        {
-          "id": "4906176",
-          "name": "Krish Manocha"
-        }
-      ],
-      "hours": {
-        "3328952": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        },
-        "3328937": {
-          "weekday_hrs": 28.0,
-          "saturday_hrs": 9.5,
-          "sunday_hrs": 5.0,
-          "total_hrs": 42.5
-        },
-        "3328942": {
-          "weekday_hrs": 33.0,
-          "saturday_hrs": 6.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 39.0
-        },
-        "4830684": {
-          "weekday_hrs": 24.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 5.0,
-          "total_hrs": 38.0
-        },
-        "4906176": {
-          "weekday_hrs": 29.0,
-          "saturday_hrs": 9.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 38.0
-        }
-      }
-    },
-    "Diamond Barbers - HAIR CLINIC": {
-      "employees": [
-        {
-          "id": "5174784",
-          "name": "Claude Claw"
-        },
-        {
-          "id": "3328945",
-          "name": "Marianne Escobar"
-        },
-        {
-          "id": "3495852",
-          "name": "Laura Marshall"
-        }
-      ],
-      "hours": {
-        "5174784": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        },
-        "3328945": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        },
-        "3495852": {
-          "weekday_hrs": 0.0,
-          "saturday_hrs": 0.0,
-          "sunday_hrs": 0.0,
-          "total_hrs": 0.0
-        }
-      }
+    "Josh Mailloux": {
+      "weekday_hrs": 29.5,
+      "saturday_hrs": 9.0,
+      "sunday_hrs": 0.0,
+      "total_hrs": 38.5
     }
   }
 }
