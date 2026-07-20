@@ -86,6 +86,7 @@ EMPLOYEE_XERO_ORG = {
     "Vincenzo Vanzanella": "Diamond Barbers Parap",
     "Krish Manocha":       "Diamond Barbers Parap",
     "Sean Maguire":        "Diamond Barbers Parap",
+    "Josh Mailloux":       "Diamond Barbers Parap",
 }
 
 # Fresha location name → GHL location_performance label
