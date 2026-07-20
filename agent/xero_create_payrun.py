@@ -81,7 +81,7 @@ ORG_RATES = {
 }
 
 # Orgs with no employees or no suitable rates — skip entirely
-SKIP_ORGS = {"DB WULGURU PTY LTD", "D.B. Parap Pty Ltd"}
+SKIP_ORGS = {"DB WULGURU PTY LTD"}
 
 # Employees to exclude from all pay runs (owners, managers)
 EXCLUDED_EMPLOYEES = {
