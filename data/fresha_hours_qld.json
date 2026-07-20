@@ -1,7 +1,7 @@
 {
   "date_from": "2026-07-13",
   "date_to": "2026-07-19",
-  "generated": "2026-07-20T08:00:39.240069+00:00",
+  "generated": "2026-07-20T08:20:39.534166+00:00",
   "summary": {
     "Brazil Lamsen": {
       "monday": 9.0,
@@ -64,14 +64,14 @@
       "total_hrs": 46.0
     },
     "Kyle Abe-Abe": {
-      "monday": 4.0,
-      "tuesday": 4.0,
-      "wednesday": 4.0,
+      "monday": 0.0,
+      "tuesday": 0.0,
+      "wednesday": 0.0,
       "thursday": 0.0,
       "friday": 0.0,
-      "saturday": 4.0,
+      "saturday": 0.0,
       "sunday": 5.0,
-      "total_hrs": 21.0
+      "total_hrs": 5.0
     },
     "Luca Perrone": {
       "monday": 0.0,
@@ -87,21 +87,21 @@
       "monday": 6.0,
       "tuesday": 0.0,
       "wednesday": 7.0,
-      "thursday": 8.0,
+      "thursday": 4.0,
       "friday": 5.0,
       "saturday": 9.0,
-      "sunday": 3.0,
-      "total_hrs": 38.0
+      "sunday": 0.0,
+      "total_hrs": 31.0
     },
     "Michael Dobbs": {
       "monday": 7.0,
       "tuesday": 6.0,
       "wednesday": 0.0,
-      "thursday": 8.0,
+      "thursday": 4.0,
       "friday": 0.0,
       "saturday": 0.0,
       "sunday": 0.0,
-      "total_hrs": 21.0
+      "total_hrs": 17.0
     },
     "Ashleigh Campbell": {
       "monday": 0.0,
