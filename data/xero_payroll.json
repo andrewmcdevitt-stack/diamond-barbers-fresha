@@ -1,328 +1,342 @@
 {
-  "generated_at": "14 Jul 2026 14:43",
-  "pay_period": "29 Jun \u2013 5 Jul 2026",
+  "generated_at": "21 Jul 2026 15:05",
+  "pay_period": "13 Jul \u2013 19 Jul 2026",
   "locations": [
     {
       "org": "Diamond Barbers Pty Ltd",
       "short_name": "Darwin",
-      "pay_period_start": "2026-06-29",
-      "pay_period_end": "2026-07-05",
-      "payment_date": "2026-07-07",
-      "gross_wages": 46302.01,
-      "tax": 8455.0,
-      "net_pay": 33175.73,
-      "super": 4671.28,
-      "employee_count": 24,
+      "pay_period_start": "2026-07-13",
+      "pay_period_end": "2026-07-19",
+      "payment_date": "2026-07-21",
+      "gross_wages": 43978.32,
+      "tax": 7551.0,
+      "net_pay": 31892.41,
+      "super": 4534.91,
+      "employee_count": 25,
       "employees": [
         {
           "name": "Abuel Basallo",
-          "gross": 1655.17,
-          "net": 1214.43,
-          "tax": 271.0,
-          "super": 169.74
-        },
-        {
-          "name": "Ahmet Koysu",
-          "gross": 1954.4,
-          "net": 1406.37,
-          "tax": 349.0,
-          "super": 199.03
-        },
-        {
-          "name": "Airol Basallo",
-          "gross": 2147.67,
-          "net": 1543.47,
-          "tax": 390.0,
-          "super": 214.2
-        },
-        {
-          "name": "Anthony  Crispo",
-          "gross": 2334.34,
-          "net": 1642.14,
-          "tax": 454.0,
-          "super": 238.2
-        },
-        {
-          "name": "Avinash Borade",
-          "gross": 2075.18,
-          "net": 1437.58,
-          "tax": 421.0,
-          "super": 216.6
-        },
-        {
-          "name": "Daniel Carmago",
-          "gross": 2204.24,
-          "net": 1539.32,
-          "tax": 434.0,
-          "super": 230.92
-        },
-        {
-          "name": "David Garcia",
-          "gross": 1810.43,
-          "net": 1319.63,
-          "tax": 378.0,
-          "super": 112.8
-        },
-        {
-          "name": "Icham Mellou",
-          "gross": 2078.22,
-          "net": 1586.44,
-          "tax": 280.0,
-          "super": 211.78
-        },
-        {
-          "name": "Jairo Espinosa Mejia",
-          "gross": 1946.28,
-          "net": 1267.68,
-          "tax": 474.0,
-          "super": 204.6
-        },
-        {
-          "name": "JoJo Aligam",
-          "gross": 1884.19,
-          "net": 1320.62,
-          "tax": 369.0,
-          "super": 194.57
-        },
-        {
-          "name": "John Zagorianos",
-          "gross": 1954.31,
-          "net": 1407.85,
-          "tax": 348.0,
-          "super": 198.46
-        },
-        {
-          "name": "Josh Mailloux",
-          "gross": 2155.23,
-          "net": 1635.31,
-          "tax": 289.0,
-          "super": 230.92
-        },
-        {
-          "name": "Krish Manocha",
-          "gross": 1375.48,
-          "net": 1056.11,
-          "tax": 172.0,
-          "super": 147.37
-        },
-        {
-          "name": "Laura Marshall",
-          "gross": 1928.4,
-          "net": 1348.57,
-          "tax": 380.0,
-          "super": 199.83
-        },
-        {
-          "name": "Liem Nguyen",
-          "gross": 1581.96,
-          "net": 1142.46,
-          "tax": 270.0,
+          "gross": 1622.71,
+          "net": 1177.21,
+          "tax": 276.0,
           "super": 169.5
         },
         {
+          "name": "Ahmet Koysu",
+          "gross": 1952.3,
+          "net": 1409.27,
+          "tax": 349.0,
+          "super": 194.03
+        },
+        {
+          "name": "Airol Basallo",
+          "gross": 1896.42,
+          "net": 1330.62,
+          "tax": 369.0,
+          "super": 196.8
+        },
+        {
+          "name": "Anthony  Crispo",
+          "gross": 2259.89,
+          "net": 1562.29,
+          "tax": 472.0,
+          "super": 225.6
+        },
+        {
+          "name": "Avinash Borade",
+          "gross": 1885.16,
+          "net": 1323.54,
+          "tax": 364.0,
+          "super": 197.62
+        },
+        {
+          "name": "Daniel Carmago",
+          "gross": 2210.84,
+          "net": 1551.84,
+          "tax": 437.0,
+          "super": 222.0
+        },
+        {
+          "name": "David Garcia",
+          "gross": 2081.98,
+          "net": 1525.18,
+          "tax": 357.0,
+          "super": 199.8
+        },
+        {
+          "name": "Icham Mellou",
+          "gross": 1739.05,
+          "net": 1327.45,
+          "tax": 234.0,
+          "super": 177.6
+        },
+        {
+          "name": "Jairo Espinosa Mejia",
+          "gross": 1780.63,
+          "net": 1157.03,
+          "tax": 434.0,
+          "super": 189.6
+        },
+        {
+          "name": "JoJo Aligam",
+          "gross": 1859.65,
+          "net": 1370.77,
+          "tax": 306.0,
+          "super": 182.88
+        },
+        {
+          "name": "John Zagorianos",
+          "gross": 1592.4,
+          "net": 1144.12,
+          "tax": 284.0,
+          "super": 164.28
+        },
+        {
+          "name": "Josh Mailloux",
+          "gross": 1794.99,
+          "net": 1362.67,
+          "tax": 240.0,
+          "super": 192.32
+        },
+        {
+          "name": "Krish Manocha",
+          "gross": 1096.03,
+          "net": 927.6,
+          "tax": 51.0,
+          "super": 117.43
+        },
+        {
+          "name": "Laura Marshall",
+          "gross": 1525.27,
+          "net": 1111.99,
+          "tax": 253.0,
+          "super": 160.28
+        },
+        {
+          "name": "Liem Nguyen",
+          "gross": 1926.19,
+          "net": 1387.93,
+          "tax": 342.0,
+          "super": 196.26
+        },
+        {
           "name": "Luca Marzocchi",
-          "gross": 1550.31,
-          "net": 1178.35,
-          "tax": 208.0,
-          "super": 163.96
+          "gross": 1610.3,
+          "net": 1222.61,
+          "tax": 216.0,
+          "super": 171.69
         },
         {
           "name": "Marianne Escobar",
-          "gross": 1865.0,
-          "net": 1328.2,
-          "tax": 355.0,
-          "super": 181.8
+          "gross": 1753.76,
+          "net": 1239.16,
+          "tax": 337.0,
+          "super": 177.6
         },
         {
           "name": "Nikolaos Diamantis",
-          "gross": 1938.46,
-          "net": 1358.77,
-          "tax": 372.0,
-          "super": 207.69
+          "gross": 1394.31,
+          "net": 1045.47,
+          "tax": 204.0,
+          "super": 144.84
         },
         {
           "name": "Robert Jugan",
-          "gross": 1634.65,
-          "net": 1177.47,
-          "tax": 283.0,
-          "super": 174.18
+          "gross": 1658.76,
+          "net": 1202.8,
+          "tax": 282.0,
+          "super": 173.96
         },
         {
           "name": "Rohit Shantaram",
-          "gross": 1809.58,
-          "net": 1288.97,
-          "tax": 329.0,
-          "super": 191.61
+          "gross": 1593.53,
+          "net": 1155.81,
+          "tax": 269.0,
+          "super": 168.72
         },
         {
           "name": "Sean Maguire",
-          "gross": 1783.87,
-          "net": 1353.74,
-          "tax": 239.0,
-          "super": 191.13
+          "gross": 1713.61,
+          "net": 1303.79,
+          "tax": 230.0,
+          "super": 179.82
+        },
+        {
+          "name": "Sean Maguire",
+          "gross": 1717.84,
+          "net": 1303.79,
+          "tax": 230.0,
+          "super": 184.05
         },
         {
           "name": "Tam Nguyen",
-          "gross": 1710.07,
-          "net": 1266.05,
-          "tax": 330.0,
-          "super": 114.02
+          "gross": 600.49,
+          "net": 514.04,
+          "tax": 24.0,
+          "super": 62.45
         },
         {
           "name": "Vincenzo Vanzanella",
-          "gross": 2521.58,
-          "net": 1697.41,
-          "tax": 554.0,
-          "super": 270.17
+          "gross": 2473.16,
+          "net": 1676.18,
+          "tax": 532.0,
+          "super": 264.98
         },
         {
           "name": "Wilfred Vidal",
-          "gross": 2402.99,
-          "net": 1658.79,
-          "tax": 506.0,
-          "super": 238.2
+          "gross": 2239.05,
+          "net": 1559.25,
+          "tax": 459.0,
+          "super": 220.8
         }
       ]
     },
     {
       "org": "Virtual",
       "short_name": "Townsville",
-      "pay_period_start": "2026-07-06",
-      "pay_period_end": "2026-07-12",
-      "payment_date": "2026-07-13",
-      "gross_wages": 9876.32,
-      "tax": 1867.0,
-      "net_pay": 6974.56,
-      "super": 1034.76,
+      "pay_period_start": "2026-07-13",
+      "pay_period_end": "2026-07-19",
+      "payment_date": "2026-07-21",
+      "gross_wages": 10371.29,
+      "tax": 2021.0,
+      "net_pay": 7258.44,
+      "super": 1091.85,
       "employee_count": 5,
       "employees": [
         {
           "name": "Alfon Amora",
-          "gross": 1523.52,
-          "net": 1136.3,
-          "tax": 232.0,
-          "super": 155.22
+          "gross": 2904.3,
+          "net": 1942.1,
+          "tax": 655.0,
+          "super": 307.2
         },
         {
           "name": "Brazil Lamsen",
-          "gross": 2516.69,
-          "net": 1718.69,
-          "tax": 531.0,
-          "super": 267.0
+          "gross": 2111.6,
+          "net": 1466.0,
+          "tax": 420.0,
+          "super": 225.6
         },
         {
           "name": "Dion Mataele",
-          "gross": 2132.59,
-          "net": 1492.59,
-          "tax": 416.0,
-          "super": 224.0
+          "gross": 1773.86,
+          "net": 1303.02,
+          "tax": 293.0,
+          "super": 177.84
         },
         {
           "name": "Jack Bastock",
-          "gross": 1658.2,
-          "net": 1191.46,
-          "tax": 290.0,
-          "super": 176.74
+          "gross": 1564.36,
+          "net": 1131.75,
+          "tax": 265.0,
+          "super": 167.61
         },
         {
           "name": "Nelson Diwa",
-          "gross": 2045.32,
-          "net": 1435.52,
-          "tax": 398.0,
-          "super": 211.8
+          "gross": 2017.17,
+          "net": 1415.57,
+          "tax": 388.0,
+          "super": 213.6
         }
       ]
     },
     {
       "org": "DIAMOND BARBERS CAIRNS PTY LTD",
       "short_name": "Cairns",
-      "pay_period_start": "2026-07-06",
-      "pay_period_end": "2026-07-12",
-      "payment_date": "2026-07-13",
-      "gross_wages": 13765.24,
-      "tax": 2359.0,
-      "net_pay": 10014.06,
-      "super": 1392.18,
-      "employee_count": 10,
+      "pay_period_start": "2026-07-13",
+      "pay_period_end": "2026-07-19",
+      "payment_date": "2026-07-21",
+      "gross_wages": 12399.9,
+      "tax": 1891.0,
+      "net_pay": 9374.25,
+      "super": 1134.65,
+      "employee_count": 11,
       "employees": [
         {
           "name": "Alex Khaq",
-          "gross": 1823.92,
-          "net": 1292.74,
-          "tax": 344.0,
-          "super": 187.18
+          "gross": 1560.47,
+          "net": 1154.19,
+          "tax": 246.0,
+          "super": 160.28
         },
         {
           "name": "Andrea Palma",
-          "gross": 1444.79,
-          "net": 1103.06,
-          "tax": 199.0,
-          "super": 142.73
+          "gross": 1660.57,
+          "net": 1216.3,
+          "tax": 306.0,
+          "super": 138.27
         },
         {
           "name": "Ashleigh Campbell",
-          "gross": 909.5,
-          "net": 735.06,
-          "tax": 80.0,
-          "super": 94.44
+          "gross": 221.13,
+          "net": 198.45,
+          "tax": 0.0,
+          "super": 22.68
         },
         {
           "name": "Dipen Magar",
-          "gross": 386.98,
-          "net": 345.52,
-          "tax": 0.0,
-          "super": 41.46
+          "gross": 596.7,
+          "net": 508.43,
+          "tax": 25.0,
+          "super": 63.27
         },
         {
           "name": "Ethan Byrne",
-          "gross": 1701.95,
-          "net": 1215.91,
-          "tax": 304.0,
-          "super": 182.04
+          "gross": 1628.25,
+          "net": 1175.09,
+          "tax": 280.0,
+          "super": 173.16
         },
         {
           "name": "Jerry Guevarra",
-          "gross": 2510.59,
-          "net": 1700.49,
-          "tax": 568.0,
-          "super": 242.1
+          "gross": 1791.77,
+          "net": 1300.17,
+          "tax": 308.0,
+          "super": 183.6
         },
         {
           "name": "Kyle Abe-Abe",
-          "gross": 1439.43,
-          "net": 1064.58,
-          "tax": 223.0,
-          "super": 151.85
+          "gross": 1061.61,
+          "net": 774.52,
+          "tax": 266.0,
+          "super": 21.09
         },
         {
           "name": "Luca Perrone",
-          "gross": 531.78,
-          "net": 406.5,
-          "tax": 72.0,
-          "super": 53.28
+          "gross": 1356.93,
+          "net": 1044.17,
+          "tax": 184.0,
+          "super": 128.76
         },
         {
           "name": "Michael Dobbs",
-          "gross": 792.2,
-          "net": 631.9,
-          "tax": 81.0,
-          "super": 79.3
+          "gross": 494.56,
+          "net": 451.72,
+          "tax": 0.0,
+          "super": 42.84
         },
         {
           "name": "Michel Medina",
-          "gross": 2224.1,
-          "net": 1518.3,
-          "tax": 488.0,
-          "super": 217.8
+          "gross": 1426.1,
+          "net": 1037.48,
+          "tax": 251.0,
+          "super": 137.62
+        },
+        {
+          "name": "Zaeb Rix",
+          "gross": 601.81,
+          "net": 513.73,
+          "tax": 25.0,
+          "super": 63.08
         }
       ]
     }
   ],
   "totals": {
-    "gross_wages": 69943.57,
-    "tax": 12681.0,
-    "net_pay": 50164.35,
-    "super": 7098.22,
-    "employee_count": 39
+    "gross_wages": 66749.51,
+    "tax": 11463.0,
+    "net_pay": 48525.1,
+    "super": 6761.41,
+    "employee_count": 41
   }
 }
