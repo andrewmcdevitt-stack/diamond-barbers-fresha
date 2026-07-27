@@ -102,6 +102,7 @@ XERO_TO_FRESHA = {
     "daniel carmago":       "daniel camargo",
     "zaeb rix":             "zaeb edward rix",
     "rohit shantaram":      "rohit more",
+    "jack bastock":         "jack william bastock",
 }
 
 # Maps normalised Xero employee name → location(s) whose product sales fund their commission.
