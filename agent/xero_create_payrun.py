@@ -101,6 +101,24 @@ XERO_TO_FRESHA = {
     "dion mataele":         "d mataele",
     "daniel carmago":       "daniel camargo",
     "zaeb rix":             "zaeb edward rix",
+    "rohit shantaram":      "rohit more",
+}
+
+# Maps normalised Xero employee name → location(s) whose product sales fund their commission.
+# "__ALL_NT__" means sum every NT location.
+LOCATION_COMMISSION = {
+    "marianne escobar":     "__ALL_NT__",
+    "jairo espinosa mejia": ["Diamond Barbers - DARWIN CBD"],
+    "vincenzo vanzanella":  ["Diamond Barbers - PARAP"],
+    "avinash borade":       ["Diamond Barbers - CASUARINA"],
+    "wilfred vidal":        ["Diamond Barbers - YARRAWONGA"],
+    "airol basallo":        ["Diamond Barbers - BELLAMACK"],
+    "anthony crispo":       ["Diamond Barbers - COOLALINGA"],
+    "brazil lamsen":        ["Diamond Barbers Wulguru"],
+    "jerry guevarra":       ["Diamond Barbers Showgrounds",
+                             "Diamond Barbers Night Markets",
+                             "Diamond Barbers Northern Beaches"],
+    "alfon amora":          ["Diamond Barbers Rising Sun"],
 }
 
 
@@ -244,7 +262,7 @@ def load_hours():
 
 
 def load_performance():
-    """Load tips and commissions per employee from performance JSONs."""
+    """Load tips per employee from performance JSONs. Commission is location-based — see LOCATION_COMMISSION."""
     perf = {}
     for fname in ("fresha_performance_nt.json", "fresha_performance_qld.json",
                   "performance_summary.json", "cairns_performance_summary.json"):
@@ -259,12 +277,46 @@ def load_performance():
             continue
         for s in record["staff"]:
             key = norm(s["name"])
-            products = s.get("products", 0) or 0
-            perf[key] = {
-                "tips":       s.get("tips", 0) or 0,
-                "commission": round((products / 1.1) * 0.1, 2),
-            }
+            perf[key] = {"tips": s.get("tips", 0) or 0}
     return perf
+
+
+def load_location_products():
+    """Parse the most recent NT and QLD location CSVs and return product sales per location.
+
+    Returns (nt_dict, qld_dict) where each value is {location_name: products_inc_gst}.
+    The CSV uses comma as decimal separator, e.g. "140,95" means $140.95.
+    """
+    import csv as csv_mod
+    import glob as glob_mod
+
+    def parse_csv(path):
+        result = {}
+        with open(path, "r", encoding="utf-8-sig") as f:
+            reader = csv_mod.DictReader(f)
+            for row in reader:
+                name = row.get("Location", "").strip().strip('"')
+                raw  = row.get("Products", "0").strip().strip('"').replace(",", ".")
+                try:
+                    products = float(raw)
+                except ValueError:
+                    products = 0.0
+                if name:
+                    result[name] = products
+        return result
+
+    nt_files  = sorted(glob_mod.glob(str(DATA_DIR / "fresha_location_nt_*.csv")))
+    qld_files = sorted(glob_mod.glob(str(DATA_DIR / "fresha_location_qld_*.csv")))
+
+    nt  = parse_csv(nt_files[-1])  if nt_files  else {}
+    qld = parse_csv(qld_files[-1]) if qld_files else {}
+
+    if not nt_files:
+        print("  WARNING: no fresha_location_nt_*.csv found — NT location commissions will be zero.")
+    if not qld_files:
+        print("  WARNING: no fresha_location_qld_*.csv found — QLD location commissions will be zero.")
+
+    return nt, qld
 
 
 def load_night_markets_bonus():
@@ -278,10 +330,11 @@ def load_night_markets_bonus():
 
 # ── Pay run processing per org ────────────────────────────────────────────────
 
-def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None):
+def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None, loc_nt=None, loc_qld=None):
     """Build payslip entries for all employees with hours data."""
     payslip_list = []
     skipped      = []
+    all_locs     = {**(loc_nt or {}), **(loc_qld or {})}
 
     for xero_nm_norm, emp_id in emp_id_map.items():
         if xero_nm_norm in EXCLUDED_EMPLOYEES:
@@ -306,6 +359,16 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None):
             skipped.append(f"{xero_nm_norm} (no hours)")
             continue
 
+        # Location-based commission: 10% of assigned location(s) product sales ex-GST
+        loc_spec = LOCATION_COMMISSION.get(xero_nm_norm)
+        if loc_spec == "__ALL_NT__":
+            raw_products = sum((loc_nt or {}).values())
+        elif loc_spec:
+            raw_products = sum(all_locs.get(loc, 0) for loc in loc_spec)
+        else:
+            raw_products = 0
+        commission = round((raw_products / 1.1) * 0.1, 2) if raw_products else 0
+
         lines = []
         for day in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"):
             hrs = h.get(day, 0) if h else 0
@@ -314,7 +377,6 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None):
         tips = p.get("tips", 0) or 0
         if tips > 0:
             lines.append({"EarningsRateID": rates["tips"], "NumberOfUnits": 1, "RatePerUnit": round(tips, 2)})
-        commission = p.get("commission", 0) or 0
         if commission > 0:
             lines.append({"EarningsRateID": rates["commission"], "NumberOfUnits": 1, "RatePerUnit": round(commission, 2)})
         if bonus > 0 and "bonus" in rates:
@@ -337,7 +399,7 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None):
     return payslip_list, skipped
 
 
-def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None):
+def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None, loc_nt=None, loc_qld=None):
     print(f"\n{'='*65}")
     print(f"ORG: {tenant_name}")
     print(f"{'='*65}")
@@ -364,28 +426,14 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
         print(f"  ERROR fetching employees: {e}")
         return
 
-    emp_id_map  = {}
-    emp_rate_map = {}  # emp_id -> ordinary RatePerUnit from PayTemplate
+    emp_id_map = {}
     for e in employees:
         full   = f"{e.get('FirstName','')} {e.get('LastName','')}".strip()
         emp_id = e["EmployeeID"]
         emp_id_map[norm(full)] = emp_id
 
-    # Fetch each employee individually to get PayTemplate (not included in list response)
-    for emp_id in emp_id_map.values():
-        try:
-            detail = xero_get(f"/payroll.xro/1.0/Employees/{emp_id}", tenant_id, access_token)
-            emp    = detail.get("Employees", [{}])[0]
-            for line in emp.get("PayTemplate", {}).get("EarningsLines", []):
-                if line.get("RatePerUnit", 0) > 0:
-                    emp_rate_map[emp_id] = line["RatePerUnit"]
-                    break
-        except Exception:
-            pass
-    print(f"  Loaded rates for {len(emp_rate_map)}/{len(emp_id_map)} employees")
-
     # ── Build payslip data from Fresha ────────────────────────────────────────
-    payslip_list, skipped = build_payslip_list(emp_id_map, hours, perf, rates, bonuses)
+    payslip_list, skipped = build_payslip_list(emp_id_map, hours, perf, rates, bonuses, loc_nt=loc_nt, loc_qld=loc_qld)
 
     # Strip internal keys before sending to Xero
     def clean(ps):
@@ -432,14 +480,15 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
             return
         print(f"  Found existing DRAFT pay run: {run_id}")
     else:
-        # ── Create a new pay run WITH payslip data embedded ───────────────────
-        print("  Creating new DRAFT pay run with earnings...")
+        # ── Create a new DRAFT pay run — no embedded payslips so Xero auto-generates
+        # them from each employee's PayTemplate (this stores the correct per-day rates
+        # including Saturday/Sunday penalty rates directly on each payslip).
+        print("  Creating new DRAFT pay run...")
         try:
             body   = [{
                 "PayrollCalendarID":     calendar_id,
                 "PayRunPeriodStartDate": f"{date_from_str}T00:00:00",
                 "PayRunPeriodEndDate":   f"{date_to_str}T00:00:00",
-                "Payslips":              [clean(ps) for ps in payslip_list],
             }]
             result = xero_post("/payroll.xro/1.0/PayRuns", tenant_id, access_token, body)
             runs   = result if isinstance(result, list) else result.get("PayRuns", [{}])
@@ -448,10 +497,6 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
                 print(f"  ERROR: No PayRunID in response: {result}")
                 return
             print(f"  Created: {run_id}")
-            # Print first payslip from creation response to see if IDs are there
-            resp_slips = runs[0].get("Payslips", [])
-            if resp_slips:
-                print(f"  DEBUG creation response payslip keys: {list(resp_slips[0].keys())}")
         except Exception as e:
             print(f"  ERROR creating pay run: {e}")
             return
@@ -465,6 +510,18 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
         emp_to_slip = {s["EmployeeID"]: s["PayslipID"] for s in slips if "PayslipID" in s}
         print(f"  Found {len(emp_to_slip)} PayslipIDs")
 
+        # ── DEBUG: read one payslip to see what Xero stored after auto-generation ──
+        first_slip_id = next(iter(emp_to_slip.values()), None)
+        if first_slip_id:
+            try:
+                dbg = xero_get(f"/payroll.xro/1.0/Payslip/{first_slip_id}", tenant_id, access_token)
+                dbg_lines = dbg.get("Payslips", [{}])[0].get("EarningsLines", [])
+                print(f"  DEBUG payslip {first_slip_id} has {len(dbg_lines)} earnings line(s):")
+                for l in dbg_lines:
+                    print(f"    rate_id={l.get('EarningsRateID')}  units={l.get('NumberOfUnits')}  rate={l.get('RatePerUnit')}")
+            except Exception as dbg_e:
+                print(f"  DEBUG fetch failed: {dbg_e}")
+
         activated = 0
         for ps in payslip_list:
             slip_id = emp_to_slip.get(ps["EmployeeID"])
@@ -472,16 +529,14 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
                 print(f"  No PayslipID for {ps['_name']}")
                 continue
 
-            # Inject the employee's ordinary RatePerUnit for any hourly earnings lines
-            # that don't already have one — some Xero rates are variable-rate and
-            # require the rate to be passed explicitly via the API.
-            ordinary_rate = emp_rate_map.get(ps["EmployeeID"])
-            earnings = []
-            for line in clean(ps)["EarningsLines"]:
-                line = dict(line)
-                if "RatePerUnit" not in line and ordinary_rate:
-                    line["RatePerUnit"] = ordinary_rate
-                earnings.append(line)
+            # Do NOT inject RatePerUnit for hourly (Mon-Sun) lines.
+            # Xero auto-generated the payslip from each employee's PayTemplate when
+            # the pay run was created, so the correct rates (including Saturday/Sunday
+            # penalty rates computed as multiples of ordinary time) are already stored
+            # on the payslip. We only need to update NumberOfUnits; Xero uses its
+            # stored rate. Tips, commission, and bonus lines already carry RatePerUnit
+            # from build_payslip_list and are sent as-is.
+            earnings = [dict(line) for line in clean(ps)["EarningsLines"]]
 
             print(f"  Writing to {ps['_name']} ({slip_id})...")
             try:
@@ -528,15 +583,17 @@ def main():
     tenants      = token.get("tenants", [])
 
     print("Loading Fresha data...")
-    hours   = load_hours()
-    perf    = load_performance()
-    bonuses = load_night_markets_bonus()
+    hours         = load_hours()
+    perf          = load_performance()
+    bonuses       = load_night_markets_bonus()
+    loc_nt, loc_qld = load_location_products()
     print(f"  {len(hours)} employees in hours data")
     print(f"  {len(perf)} employees in performance data")
     print(f"  {len(bonuses)} employees with Night Markets bonus")
+    print(f"  {len(loc_nt)} NT locations / {len(loc_qld)} QLD locations loaded")
 
     for tenant in tenants:
-        process_org(tenant["id"], tenant["name"], access_token, hours, perf, bonuses)
+        process_org(tenant["id"], tenant["name"], access_token, hours, perf, bonuses, loc_nt=loc_nt, loc_qld=loc_qld)
 
     print("\n\nDone. Log in to Xero to review and post the draft pay runs.")
 
