@@ -97,7 +97,6 @@ XERO_TO_FRESHA = {
     "anthony  crispo":      "anthony crispo",
     "jairo espinosa mejia": "jairo espinosa",
     "nikolaos diamantis":   "nico diamantis",
-    "vincenzo vanzanella":  "vince vincenzo",
     "dion mataele":         "d mataele",
     "daniel carmago":       "daniel camargo",
     "zaeb rix":             "zaeb edward rix",
