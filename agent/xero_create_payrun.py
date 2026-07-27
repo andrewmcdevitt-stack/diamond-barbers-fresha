@@ -276,8 +276,12 @@ def load_performance():
         if not record:
             continue
         for s in record["staff"]:
-            key = norm(s["name"])
-            perf[key] = {"tips": s.get("tips", 0) or 0}
+            key      = norm(s["name"])
+            products = s.get("products", 0) or 0
+            perf[key] = {
+                "tips":       s.get("tips", 0) or 0,
+                "commission": round((products / 1.1) * 0.1, 2),
+            }
     return perf
 
 
@@ -359,15 +363,17 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None, loc_nt=None
             skipped.append(f"{xero_nm_norm} (no hours)")
             continue
 
-        # Location-based commission: 10% of assigned location(s) product sales ex-GST
+        # Commission: location managers get 10% of assigned location(s) product sales ex-GST;
+        # all other barbers get 10% of their own personal product sales ex-GST.
         loc_spec = LOCATION_COMMISSION.get(xero_nm_norm)
         if loc_spec == "__ALL_NT__":
             raw_products = sum((loc_nt or {}).values())
+            commission = round((raw_products / 1.1) * 0.1, 2) if raw_products else 0
         elif loc_spec:
             raw_products = sum(all_locs.get(loc, 0) for loc in loc_spec)
+            commission = round((raw_products / 1.1) * 0.1, 2) if raw_products else 0
         else:
-            raw_products = 0
-        commission = round((raw_products / 1.1) * 0.1, 2) if raw_products else 0
+            commission = p.get("commission", 0) or 0
 
         lines = []
         for day in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"):
