@@ -634,6 +634,11 @@ function renderTrendChart() {
 
 // ── Payroll render ─────────────────────────────────────────────────────────────
 
+// Employees to hide from the payroll dashboard (lowercase Xero names)
+const PAYROLL_EXCLUDED = new Set([
+    'luca perrone',
+]);
+
 // Maps Xero full name (lowercase) -> Fresha name (lowercase) for known mismatches
 const FRESHA_NAME_OVERRIDES = {
     'airol basallo':        'erol basallo',
@@ -753,7 +758,7 @@ function renderPayroll(data) {
 
     // Build location sections
     const locationSections = locs.map(loc => {
-        const emps = loc.employees || [];
+        const emps = (loc.employees || []).filter(e => !PAYROLL_EXCLUDED.has(normName(e.name)));
         let locSvcs = 0;
         emps.forEach(e => { const s = matchService(e.name, staffMap); if (s !== null) locSvcs += s; });
         const locDiff = locSvcs - loc.gross_wages;
