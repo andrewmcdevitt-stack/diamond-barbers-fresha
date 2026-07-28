@@ -343,8 +343,9 @@
 const DATA_URL         = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/performance_summary.json?ref=main';
 const CAIRNS_DATA_URL  = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/cairns_performance_summary.json?ref=main';
 const PAYROLL_DATA_URL = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/xero_payroll.json?ref=main';
-const NT_HOURS_URL     = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/fresha_hours_nt.json?ref=main';
-const QLD_HOURS_URL    = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/fresha_hours_qld.json?ref=main';
+const NT_HOURS_URL          = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/fresha_hours_nt.json?ref=main';
+const QLD_HOURS_URL         = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/fresha_hours_qld.json?ref=main';
+const NIGHT_MARKETS_BON_URL = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/night_markets_bonus.json?ref=main';
 
 const C = {
     gold:     '#C9A84C',
@@ -370,8 +371,9 @@ let current = 0;
 let cairnsRecords = [];
 let cairnsCurrent = 0;
 let payrollData = null;
-let ntHoursData  = null;
-let qldHoursData = null;
+let ntHoursData       = null;
+let qldHoursData      = null;
+let nightMarketsBonus = null;
 let activeTab = 'darwin';
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -640,9 +642,7 @@ const PAYROLL_EXCLUDED = new Set([
 ]);
 
 // Locations to hide from the payroll dashboard (exact short_name)
-const PAYROLL_EXCLUDED_LOCS = new Set([
-    'Townsville',
-]);
+const PAYROLL_EXCLUDED_LOCS = new Set([]);
 
 // Maps Xero full name (lowercase) -> Fresha name (lowercase) for known mismatches
 const FRESHA_NAME_OVERRIDES = {
@@ -673,6 +673,18 @@ function buildStaffServiceMap(payPeriodStart) {
     };
     add(records);
     add(cairnsRecords);
+
+    // Subtract Night Markets services so the total matches the hours data,
+    // which already excludes Night Markets shifts.
+    if (nightMarketsBonus) {
+        for (const [name, d] of Object.entries(nightMarketsBonus)) {
+            const key = normName(name);
+            if (map[key] !== undefined) {
+                map[key] = Math.max(0, map[key] - (d.services_ex_gst || 0));
+            }
+        }
+    }
+
     return map;
 }
 
@@ -1022,11 +1034,24 @@ async function loadQLDHours() {
     } catch (err) {}
 }
 
+async function loadNightMarketsBonus() {
+    try {
+        const res = await fetch(NIGHT_MARKETS_BON_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        if (!res.ok) return;
+        const meta = await res.json();
+        const decoded = atob(meta.content.replace(/\n/g, ''));
+        nightMarketsBonus = JSON.parse(decoded);
+        if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+        setTimeout(loadNightMarketsBonus, 24 * 60 * 60 * 1000);
+    } catch (err) {}
+}
+
 loadData();
 loadCairnsData();
 loadPayrollData();
 loadNTHours();
 loadQLDHours();
+loadNightMarketsBonus();
 </script>
 </body>
 </html>
