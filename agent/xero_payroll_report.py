@@ -309,12 +309,29 @@ def merge_locations(locations):
             continue
 
         dst["employees"].extend(src["employees"])
-        dst["employees"].sort(key=lambda e: e["name"])
         dst["employee_count"] += src["employee_count"]
         dst["gross_wages"]    = round(dst["gross_wages"] + src["gross_wages"], 2)
         dst["tax"]            = round(dst["tax"]         + src["tax"], 2)
         dst["net_pay"]        = round(dst["net_pay"]     + src["net_pay"], 2)
         dst["super"]          = round(dst["super"]       + src["super"], 2)
+
+        # Deduplicate: an employee terminated in one org may still appear in that
+        # org's payrun with $0 wages. Keep the highest-earning entry per name.
+        by_name = {}
+        for emp in dst["employees"]:
+            name = emp["name"]
+            if name in by_name:
+                loser = emp if emp["gross"] <= by_name[name]["gross"] else by_name[name]
+                by_name[name] = emp if emp["gross"] > by_name[name]["gross"] else by_name[name]
+                dst["employee_count"] -= 1
+                dst["gross_wages"]    = round(dst["gross_wages"] - loser["gross"],          2)
+                dst["tax"]            = round(dst["tax"]         - loser.get("tax",   0),   2)
+                dst["net_pay"]        = round(dst["net_pay"]     - loser.get("net",   0),   2)
+                dst["super"]          = round(dst["super"]       - loser.get("super", 0),   2)
+                print(f"  Deduped {name}: kept ${by_name[name]['gross']:.2f}, dropped ${loser['gross']:.2f}")
+            else:
+                by_name[name] = emp
+        dst["employees"] = sorted(by_name.values(), key=lambda e: e["name"])
 
         locations = [l for l in locations if l["short_name"] != src_name]
         print(f"  Merged {src_name} into {dst_name}")
