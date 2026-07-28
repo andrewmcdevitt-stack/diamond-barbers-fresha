@@ -437,7 +437,7 @@ def build_report_html(locations, generated_at, period_str):
         <th class="num">Gross Wages</th>
         <th class="num">PAYG Tax</th>
         <th class="num">Net Pay</th>
-        <th class="num">Super (11.5%)</th>
+        <th class="num">Super (12%)</th>
       </tr>
     </thead>
     <tbody>
@@ -452,7 +452,7 @@ def build_report_html(locations, generated_at, period_str):
       </tr>
     </tbody>
   </table>
-  <div class="foot">Generated {generated_at} · Diamond Barbers Payroll · Super rate 11.5% (FY2025-26)</div>
+  <div class="foot">Generated {generated_at} · Diamond Barbers Payroll · Super rate 12% (FY2026-27)</div>
 </body>
 </html>"""
 
