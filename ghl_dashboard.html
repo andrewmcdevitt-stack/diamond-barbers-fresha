@@ -639,6 +639,11 @@ const PAYROLL_EXCLUDED = new Set([
     'luca perrone',
 ]);
 
+// Locations to hide from the payroll dashboard (exact short_name)
+const PAYROLL_EXCLUDED_LOCS = new Set([
+    'Townsville',
+]);
+
 // Maps Xero full name (lowercase) -> Fresha name (lowercase) for known mismatches
 const FRESHA_NAME_OVERRIDES = {
     'airol basallo':        'erol basallo',
@@ -748,16 +753,23 @@ function renderPayroll(data) {
     const hoursMap   = buildHoursMap();
     const hasFresha  = Object.keys(staffMap).length > 0;
 
+    const visibleLocs = locs.filter(loc => !PAYROLL_EXCLUDED_LOCS.has(loc.short_name));
+
     // Totals across all employees where we have Fresha data
     let totalSvcs = 0;
-    locs.forEach(loc => (loc.employees || []).forEach(e => {
+    visibleLocs.forEach(loc => (loc.employees || []).filter(e => !PAYROLL_EXCLUDED.has(normName(e.name))).forEach(e => {
         const s = matchService(e.name, staffMap);
         if (s !== null) totalSvcs += s;
     }));
-    const totalDiff = totalSvcs - (totals.gross_wages || 0);
+    const totalWages = visibleLocs.reduce((sum, loc) => {
+        const excluded = (loc.employees || []).filter(e => PAYROLL_EXCLUDED.has(normName(e.name)));
+        const excludedWages = excluded.reduce((s, e) => s + (e.gross || 0), 0);
+        return sum + (loc.gross_wages || 0) - excludedWages;
+    }, 0);
+    const totalDiff = totalSvcs - totalWages;
 
     // Build location sections
-    const locationSections = locs.map(loc => {
+    const locationSections = visibleLocs.map(loc => {
         const emps = (loc.employees || []).filter(e => !PAYROLL_EXCLUDED.has(normName(e.name)));
         let locSvcs = 0;
         emps.forEach(e => { const s = matchService(e.name, staffMap); if (s !== null) locSvcs += s; });
@@ -838,8 +850,8 @@ function renderPayroll(data) {
             </div>
             <div class="db-card">
                 <div class="card-label">Total Gross Wages</div>
-                <div class="kpi-big" style="color:${C.gold};">${fmt(totals.gross_wages)}</div>
-                <div class="kpi-sub">${totals.employee_count||0} employees · wages + super</div>
+                <div class="kpi-big" style="color:${C.gold};">${fmt(totalWages)}</div>
+                <div class="kpi-sub">${visibleLocs.reduce((n,l)=>n+l.employee_count,0)} employees · wages + super</div>
             </div>
             <div class="db-card">
                 <div class="card-label">Difference</div>
@@ -870,7 +882,7 @@ function renderPayroll(data) {
                             <td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>
                             <td class="r" style="font-weight:700;color:${C.blue};padding-top:0.85rem;">${hasFresha ? fmt(totalSvcs) : '—'}</td>
                             <td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>
-                            <td class="r" style="font-weight:700;color:${C.gold};padding-top:0.85rem;">${fmt(totals.gross_wages)}</td>
+                            <td class="r" style="font-weight:700;color:${C.gold};padding-top:0.85rem;">${fmt(totalWages)}</td>
                             <td class="r" style="font-weight:700;color:${hasFresha ? diffKpiCol : C.muted};padding-top:0.85rem;">${hasFresha ? fmtD(totalDiff) : '—'}</td>
                         </tr>
                     </tbody>
