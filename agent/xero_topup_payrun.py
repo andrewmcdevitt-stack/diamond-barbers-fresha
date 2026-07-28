@@ -124,7 +124,26 @@ def main():
             except Exception as e:
                 print(f"  ERROR: {ps['_name']}: {e}")
 
-        print(f"\n  Done — filled: {filled}  skipped (already had data): {skipped}")
+        # Zero out payslips for employees with no Fresha hours
+        filled_ids = {ps["EmployeeID"] for ps in payslip_list}
+        zeroed = 0
+        for emp_id, slip_id in emp_to_slip.items():
+            if emp_id in filled_ids:
+                continue
+            xero_name = next((n for n, eid in emp_id_map.items() if eid == emp_id), "")
+            if xero_name in EXCLUDED_EMPLOYEES:
+                continue
+            print(f"  Zeroing (no hours): {xero_name} ({slip_id})")
+            try:
+                xero_post(f"/payroll.xro/1.0/Payslip/{slip_id}", tenant_id, access_token, [{
+                    "PayslipID":     slip_id,
+                    "EarningsLines": [],
+                }])
+                zeroed += 1
+            except Exception as e:
+                print(f"  ERROR zeroing {xero_name}: {e}")
+
+        print(f"\n  Done — filled: {filled}  skipped (already had data): {skipped}  zeroed: {zeroed}")
 
     print("\n\nComplete.")
 
