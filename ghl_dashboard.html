@@ -343,6 +343,8 @@
 const DATA_URL         = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/performance_summary.json?ref=main';
 const CAIRNS_DATA_URL  = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/cairns_performance_summary.json?ref=main';
 const PAYROLL_DATA_URL = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/xero_payroll.json?ref=main';
+const NT_HOURS_URL     = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/fresha_hours_nt.json?ref=main';
+const QLD_HOURS_URL    = 'https://api.github.com/repos/andrewmcdevitt-stack/diamond-barbers-fresha/contents/data/fresha_hours_qld.json?ref=main';
 
 const C = {
     gold:     '#C9A84C',
@@ -368,6 +370,8 @@ let current = 0;
 let cairnsRecords = [];
 let cairnsCurrent = 0;
 let payrollData = null;
+let ntHoursData  = null;
+let qldHoursData = null;
 let activeTab = 'darwin';
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -694,6 +698,34 @@ function matchService(empName, staffMap) {
     return null;
 }
 
+function buildHoursMap() {
+    const map = {};
+    const add = (data) => {
+        if (!data || !data.summary) return;
+        for (const [name, h] of Object.entries(data.summary)) {
+            map[normName(name)] = h.total_hrs || 0;
+        }
+    };
+    add(ntHoursData);
+    add(qldHoursData);
+    return map;
+}
+
+function matchHours(empName, hoursMap) {
+    const key = normName(empName);
+    const overrideKey = FRESHA_NAME_OVERRIDES[key];
+    if (overrideKey !== undefined && hoursMap[overrideKey] !== undefined) return hoursMap[overrideKey];
+    if (hoursMap[key] !== undefined) return hoursMap[key];
+    const parts = key.split(' ').filter(p => p.length > 1);
+    for (const [k, v] of Object.entries(hoursMap)) {
+        const kp = k.split(' ').filter(p => p.length > 1);
+        if (parts[0] === kp[0] && parts[parts.length - 1] === kp[kp.length - 1]) return v;
+        if (parts[0] === kp[0] && kp.length === 1) return v;
+        if (key.startsWith(k)) return v;
+    }
+    return null;
+}
+
 function renderPayroll(data) {
     const locs   = data.locations || [];
     const totals = data.totals    || {};
@@ -708,6 +740,7 @@ function renderPayroll(data) {
     const fmtEff  = r => r !== null ? `${r.toFixed(2)}x` : null;
 
     const staffMap   = buildStaffServiceMap(locs[0]?.pay_period_start || '');
+    const hoursMap   = buildHoursMap();
     const hasFresha  = Object.keys(staffMap).length > 0;
 
     // Totals across all employees where we have Fresha data
@@ -727,10 +760,12 @@ function renderPayroll(data) {
         const diffCol = locDiff >= 0 ? C.green : C.red;
 
         const empsWithEff = emps.map(e => {
-            const svcs = matchService(e.name, staffMap);
-            const diff = svcs !== null ? svcs - e.gross : null;
-            const eff  = (svcs !== null && e.gross > 0) ? svcs / e.gross : null;
-            return { ...e, svcs, diff, eff };
+            const svcs  = matchService(e.name, staffMap);
+            const hrs   = matchHours(e.name, hoursMap);
+            const diff  = svcs !== null ? svcs - e.gross : null;
+            const eff   = (svcs !== null && e.gross > 0) ? svcs / e.gross : null;
+            const revhr = (svcs !== null && hrs !== null && hrs > 0) ? svcs / hrs : null;
+            return { ...e, svcs, hrs, diff, eff, revhr };
         });
         empsWithEff.sort((a, b) => {
             if (a.eff === null && b.eff === null) return 0;
@@ -739,13 +774,15 @@ function renderPayroll(data) {
             return b.eff - a.eff;
         });
         const empRows = empsWithEff.map(e => {
-            const dc  = e.diff !== null ? (e.diff >= 0 ? C.green : C.red) : C.muted;
-            const ec  = e.eff  !== null ? effColor(e.eff) : C.muted;
+            const dc  = e.diff  !== null ? (e.diff >= 0 ? C.green : C.red) : C.muted;
+            const ec  = e.eff   !== null ? effColor(e.eff) : C.muted;
+            const rh  = e.revhr !== null ? `$${e.revhr.toFixed(2)}/hr` : `<span style="color:${C.muted}">—</span>`;
             return `
             <tr>
                 <td style="padding-left:1.5rem;color:${C.muted};">${e.name}</td>
                 <td class="r" style="color:${ec};font-weight:600;">${e.eff !== null ? fmtEff(e.eff) : '<span style="color:'+C.muted+'">—</span>'}</td>
                 <td class="r">${e.svcs !== null ? fmt(e.svcs) : '<span style="color:'+C.muted+'">—</span>'}</td>
+                <td class="r" style="color:${C.amber};">${rh}</td>
                 <td class="r">${fmt(e.gross)}</td>
                 <td class="r" style="color:${dc};">${e.diff !== null ? fmtD(e.diff) : '<span style="color:'+C.muted+'">—</span>'}</td>
             </tr>`;
@@ -766,11 +803,12 @@ function renderPayroll(data) {
                 </td>
                 <td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>
                 ${svcCell}
+                <td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>
                 <td class="r" style="font-weight:700;color:${C.gold};padding-top:0.85rem;">${fmt(loc.gross_wages)}</td>
                 ${diffCell}
             </tr>
             ${empRows}
-            <tr><td colspan="5" style="padding:0;border-bottom:2px solid ${C.border};"></td></tr>`;
+            <tr><td colspan="6" style="padding:0;border-bottom:2px solid ${C.border};"></td></tr>`;
     }).join('');
 
     const diffKpiCol = totalDiff >= 0 ? C.green : C.red;
@@ -816,6 +854,7 @@ function renderPayroll(data) {
                         <th>Location / Employee</th>
                         <th class="r">Efficiency</th>
                         <th class="r">Services (ex-GST)</th>
+                        <th class="r">Rev/Hr</th>
                         <th class="r">Gross Wages</th>
                         <th class="r">Difference</th>
                     </tr></thead>
@@ -825,6 +864,7 @@ function renderPayroll(data) {
                             <td style="font-weight:700;color:${C.muted};font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em;padding-top:0.85rem;">Grand Total</td>
                             <td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>
                             <td class="r" style="font-weight:700;color:${C.blue};padding-top:0.85rem;">${hasFresha ? fmt(totalSvcs) : '—'}</td>
+                            <td class="r" style="padding-top:0.85rem;color:${C.muted};">—</td>
                             <td class="r" style="font-weight:700;color:${C.gold};padding-top:0.85rem;">${fmt(totals.gross_wages)}</td>
                             <td class="r" style="font-weight:700;color:${hasFresha ? diffKpiCol : C.muted};padding-top:0.85rem;">${hasFresha ? fmtD(totalDiff) : '—'}</td>
                         </tr>
@@ -940,9 +980,35 @@ async function loadPayrollData() {
     }
 }
 
+async function loadNTHours() {
+    try {
+        const res = await fetch(NT_HOURS_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        if (!res.ok) return;
+        const meta = await res.json();
+        const decoded = atob(meta.content.replace(/\n/g, ''));
+        ntHoursData = JSON.parse(decoded);
+        if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+        setTimeout(loadNTHours, 5 * 60 * 1000);
+    } catch (err) {}
+}
+
+async function loadQLDHours() {
+    try {
+        const res = await fetch(QLD_HOURS_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        if (!res.ok) return;
+        const meta = await res.json();
+        const decoded = atob(meta.content.replace(/\n/g, ''));
+        qldHoursData = JSON.parse(decoded);
+        if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+        setTimeout(loadQLDHours, 5 * 60 * 1000);
+    } catch (err) {}
+}
+
 loadData();
 loadCairnsData();
 loadPayrollData();
+loadNTHours();
+loadQLDHours();
 </script>
 </body>
 </html>
