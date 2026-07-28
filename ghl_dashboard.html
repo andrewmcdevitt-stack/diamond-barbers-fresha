@@ -932,6 +932,7 @@ function onTabChange(tab) {
 async function loadData() {
     try {
         const res = await fetch(DATA_URL, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+        if (!res.ok) { setTimeout(loadData, 115 * 60 * 1000); return; }
         const meta = await res.json();
         const decoded = atob(meta.content.replace(/\n/g, ''));
         const raw = JSON.parse(decoded);
@@ -947,7 +948,7 @@ async function loadData() {
             if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
         }
 
-        setTimeout(loadData, 5 * 60 * 1000);
+        setTimeout(loadData, 15 * 60 * 1000);
 
     } catch (err) {
         if (activeTab === 'darwin') document.getElementById('app').innerHTML =
@@ -972,7 +973,7 @@ async function loadCairnsData() {
             if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
         }
 
-        setTimeout(loadCairnsData, 5 * 60 * 1000);
+        setTimeout(loadCairnsData, 15 * 60 * 1000);
     } catch (err) {
         // Cairns data not yet available — silently ignore
     }
@@ -991,7 +992,7 @@ async function loadPayrollData() {
             if (activeTab === 'payroll') renderPayroll(payrollData);
         }
 
-        setTimeout(loadPayrollData, 5 * 60 * 1000);
+        setTimeout(loadPayrollData, 15 * 60 * 1000);
     } catch (err) {
         // Payroll data not yet available — silently ignore
     }
@@ -1005,7 +1006,7 @@ async function loadNTHours() {
         const decoded = atob(meta.content.replace(/\n/g, ''));
         ntHoursData = JSON.parse(decoded);
         if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
-        setTimeout(loadNTHours, 5 * 60 * 1000);
+        setTimeout(loadNTHours, 15 * 60 * 1000);
     } catch (err) {}
 }
 
@@ -1017,7 +1018,7 @@ async function loadQLDHours() {
         const decoded = atob(meta.content.replace(/\n/g, ''));
         qldHoursData = JSON.parse(decoded);
         if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
-        setTimeout(loadQLDHours, 5 * 60 * 1000);
+        setTimeout(loadQLDHours, 15 * 60 * 1000);
     } catch (err) {}
 }
 
