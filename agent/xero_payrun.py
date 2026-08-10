@@ -205,7 +205,7 @@ def load_performance():
             products = s.get("products", 0) or 0
             perf[key] = {
                 "tips":       s.get("tips", 0) or 0,
-                "commission": round((products / 1.1) * 0.1, 2),
+                "commission": s.get("commissions", round((products / 1.1) * 0.1, 2)),
             }
     return perf
 
@@ -294,10 +294,12 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None)
         h     = hours.get(fname)
         p     = perf.get(fname, {})
 
-        # First-name fallback
+        # First-name fallback — only when exactly one match to avoid wrong-person collisions
         if not h:
             first = fname.split()[0]
-            h = next((v for k, v in hours.items() if k.split()[0] == first), None)
+            matches = [(k, v) for k, v in hours.items() if k.split()[0] == first]
+            if len(matches) == 1:
+                h = matches[0][1]
 
         if not h or h.get("total_hrs", 0) == 0:
             skipped.append(f"{xero_nm_norm} (no hours)")
