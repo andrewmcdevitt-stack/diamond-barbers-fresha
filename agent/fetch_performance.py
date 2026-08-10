@@ -70,7 +70,7 @@ ACCOUNTS = [
 
 
 # ── Manager commission overrides ──────────────────────────────────────────────
-# Each manager's commission = sum of their location(s) product sales * 0.9 * 0.10
+# Each manager's commission = sum of their location(s) product sales / 1.1 * 0.10
 
 MANAGER_LOCATIONS = {
     "Anthony Crispo":      ["Diamond Barbers - COOLALINGA"],
@@ -676,6 +676,15 @@ async def run():
                 except Exception as e:
                     print(f"  ERROR parsing location CSV: {e}")
 
+            # Apply manager commission overrides before saving JSON (so Xero gets correct values)
+            loc_products = {loc["name"]: loc.get("products", 0) or 0 for loc in locations}
+            for s in data.get("staff", []):
+                sname = s.get("name", "").strip()
+                if sname in MANAGER_LOCATIONS:
+                    total_products = sum(loc_products.get(loc, 0) for loc in MANAGER_LOCATIONS[sname])
+                    s["commissions"] = round(total_products / 1.1 * 0.10, 2)
+                    print(f"    MANAGER {sname:28s}  location_products=${total_products:.2f}  comm=${s['commissions']:.2f}")
+
             # ── Save JSON history for dashboard ───────────────────────────────
             data["report_date"] = datetime.now().strftime("%Y-%m-%d")
             data["report_type"] = "performance_summary"
@@ -693,8 +702,6 @@ async def run():
 
             # ── Push staff data to GHL payroll records ─────────────────────────
             if has_ghl:
-                loc_products = {loc["name"]: loc.get("products", 0) or 0 for loc in locations}
-
                 print(f"\n  Pushing performance data to GHL (week {date_from})...")
                 ok = skipped = 0
                 for s in data.get("staff", []):
@@ -705,12 +712,6 @@ async def run():
                     occupancy_rate        = s.get("occupancy_pct", 0) or 0
                     if not name:
                         continue
-
-                    # Override commission for managers based on location product sales
-                    if name in MANAGER_LOCATIONS:
-                        total_products = sum(loc_products.get(loc, 0) for loc in MANAGER_LOCATIONS[name])
-                        commissions    = round(total_products * 0.9 * 0.10, 2)
-                        print(f"    MANAGER {name:28s}  location_products=${total_products:.2f}  comm=${commissions:.2f}")
 
                     try:
                         result = ghl_update_performance(name, date_from, tips, commissions, service_sales_exc_gst, occupancy_rate)
