@@ -298,12 +298,23 @@ def load_location_products():
     import glob as glob_mod
 
     def parse_csv(path):
+        # Use csv.reader + column index to avoid DictReader silently
+        # overwriting the financial "Products" column (col 3) with the
+        # later "Products sold" column that shares the same header name.
         result = {}
         with open(path, "r", encoding="utf-8-sig") as f:
-            reader = csv_mod.DictReader(f)
+            reader = csv_mod.reader(f)
+            headers = next(reader)
+            try:
+                loc_idx  = headers.index("Location")
+                prod_idx = headers.index("Products")  # first occurrence = financial $
+            except ValueError:
+                return result
             for row in reader:
-                name = row.get("Location", "").strip().strip('"')
-                raw  = row.get("Products", "0").strip().strip('"').replace(",", ".")
+                if len(row) <= max(loc_idx, prod_idx):
+                    continue
+                name = row[loc_idx].strip().strip('"')
+                raw  = row[prod_idx].strip().strip('"').replace(",", ".")
                 try:
                     products = float(raw)
                 except ValueError:
