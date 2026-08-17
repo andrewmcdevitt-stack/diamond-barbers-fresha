@@ -1,16 +1,17 @@
 {
   "date_from": "2026-08-10",
   "date_to": "2026-08-16",
-  "generated": "2026-08-17T04:42:10.406040+00:00",
+  "generated": "2026-08-17T06:36:21.591639+00:00",
   "summary": {
     "Marianne Escobar": {
-      "monday": 0.0,
+      "monday": 10.0,
       "tuesday": 8.0,
       "wednesday": 0.0,
       "thursday": 8.0,
       "friday": 8.0,
       "saturday": 6.0,
       "sunday": 0.0,
+      "public_holiday": 0.0,
       "total_hrs": 40.0
     },
     "Daniel Camargo": {
@@ -21,16 +22,18 @@
       "friday": 10.0,
       "saturday": 5.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 50.0
     },
     "Rohit More": {
-      "monday": 0.0,
+      "monday": 6.0,
       "tuesday": 0.0,
       "wednesday": 6.0,
       "thursday": 5.0,
       "friday": 8.0,
       "saturday": 9.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 39.0
     },
     "Avinash Borade": {
@@ -41,16 +44,18 @@
       "friday": 7.0,
       "saturday": 9.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 21.0
     },
     "Luca Marzocchi": {
-      "monday": 0.0,
+      "monday": 9.0,
       "tuesday": 6.0,
       "wednesday": 0.0,
       "thursday": 7.0,
       "friday": 7.0,
       "saturday": 7.5,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 41.5
     },
     "Robert Jugan": {
@@ -61,26 +66,29 @@
       "friday": 9.0,
       "saturday": 8.0,
       "sunday": 0.0,
+      "public_holiday": 0.0,
       "total_hrs": 44.0
     },
     "Mako Miyazaki": {
-      "monday": 0.0,
+      "monday": 6.0,
       "tuesday": 7.5,
       "wednesday": 0.0,
       "thursday": 5.25,
       "friday": 8.0,
       "saturday": 8.75,
       "sunday": 4.0,
+      "public_holiday": 0.0,
       "total_hrs": 39.5
     },
     "Nico Diamantis": {
-      "monday": 0.0,
+      "monday": 8.0,
       "tuesday": 7.0,
       "wednesday": 7.33,
       "thursday": 0.0,
       "friday": 0.0,
       "saturday": 0.0,
       "sunday": 0.0,
+      "public_holiday": 0.0,
       "total_hrs": 22.33
     },
     "JoJo Aligam": {
@@ -91,26 +99,29 @@
       "friday": 9.0,
       "saturday": 9.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 41.0
     },
     "Airol Basallo": {
-      "monday": 0.0,
+      "monday": 9.0,
       "tuesday": 0.0,
       "wednesday": 0.0,
       "thursday": 9.0,
       "friday": 9.0,
       "saturday": 9.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 41.0
     },
     "Icham Mellou": {
-      "monday": 0.0,
+      "monday": 5.0,
       "tuesday": 9.0,
       "wednesday": 5.0,
       "thursday": 9.0,
       "friday": 7.0,
       "saturday": 9.0,
       "sunday": 0.0,
+      "public_holiday": 0.0,
       "total_hrs": 44.0
     },
     "Abuel Basallo": {
@@ -121,36 +132,40 @@
       "friday": 8.0,
       "saturday": 7.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 41.0
     },
     "Jairo Espinosa": {
-      "monday": 0.0,
+      "monday": 8.0,
       "tuesday": 0.0,
       "wednesday": 0.0,
       "thursday": 9.0,
       "friday": 9.0,
       "saturday": 9.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 40.0
     },
     "Tam Nguyen": {
-      "monday": 0.0,
+      "monday": 5.0,
       "tuesday": 0.0,
       "wednesday": 5.0,
       "thursday": 9.0,
       "friday": 8.0,
       "saturday": 8.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 40.0
     },
     "David Garcia": {
-      "monday": 0.0,
+      "monday": 9.0,
       "tuesday": 8.0,
       "wednesday": 9.0,
       "thursday": 0.0,
       "friday": 0.0,
       "saturday": 7.5,
       "sunday": 0.0,
+      "public_holiday": 0.0,
       "total_hrs": 33.5
     },
     "Ahmet Koysu": {
@@ -161,6 +176,7 @@
       "friday": 9.0,
       "saturday": 9.0,
       "sunday": 0.0,
+      "public_holiday": 0.0,
       "total_hrs": 40.0
     },
     "Anthony Crispo": {
@@ -171,36 +187,40 @@
       "friday": 9.0,
       "saturday": 6.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 44.0
     },
     "Liem Nguyen": {
-      "monday": 0.0,
+      "monday": 9.0,
       "tuesday": 0.0,
       "wednesday": 6.0,
       "thursday": 8.0,
       "friday": 7.0,
       "saturday": 9.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 44.0
     },
     "Laura Marshall": {
-      "monday": 0.0,
+      "monday": 6.0,
       "tuesday": 9.0,
       "wednesday": 0.0,
       "thursday": 7.0,
       "friday": 8.0,
       "saturday": 9.0,
       "sunday": 0.0,
+      "public_holiday": 0.0,
       "total_hrs": 39.0
     },
     "Vincenzo Vanzanella": {
-      "monday": 0.0,
+      "monday": 9.5,
       "tuesday": 0.0,
       "wednesday": 0.0,
       "thursday": 9.0,
       "friday": 9.5,
       "saturday": 9.5,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 42.5
     },
     "Eric Kearny": {
@@ -211,6 +231,7 @@
       "friday": 7.0,
       "saturday": 9.0,
       "sunday": 0.0,
+      "public_holiday": 0.0,
       "total_hrs": 41.5
     },
     "Sean Maguire": {
@@ -221,16 +242,18 @@
       "friday": 7.0,
       "saturday": 8.0,
       "sunday": 0.0,
+      "public_holiday": 0.0,
       "total_hrs": 40.0
     },
     "Krish Manocha": {
-      "monday": 0.0,
+      "monday": 9.0,
       "tuesday": 0.0,
       "wednesday": 0.0,
       "thursday": 9.0,
       "friday": 7.0,
       "saturday": 9.0,
       "sunday": 5.0,
+      "public_holiday": 0.0,
       "total_hrs": 39.0
     }
   }
