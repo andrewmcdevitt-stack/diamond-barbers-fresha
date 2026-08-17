@@ -136,7 +136,7 @@ PUBLIC_HOLIDAYS = {
     "2026-04-25",  # ANZAC Day
     "2026-05-04",  # May Day (NT)
     "2026-06-08",  # Queen's Birthday (QLD)
-    "2026-08-10",  # Picnic Day (NT)
+    "2026-08-03",  # Picnic Day (NT) — first Monday of August
     "2026-10-05",  # Labour Day (QLD)
     "2026-12-25",  # Christmas Day
     "2026-12-26",  # Boxing Day
