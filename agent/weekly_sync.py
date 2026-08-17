@@ -1267,14 +1267,15 @@ async def run():
                 hours_summary = {}
                 for _nm, _h in hours_data.items():
                     hours_summary[_nm] = {
-                        "monday":    round(_h.get("monday", 0), 2),
-                        "tuesday":   round(_h.get("tuesday", 0), 2),
-                        "wednesday": round(_h.get("wednesday", 0), 2),
-                        "thursday":  round(_h.get("thursday", 0), 2),
-                        "friday":    round(_h.get("friday", 0), 2),
-                        "saturday":  round(_h.get("saturday", 0), 2),
-                        "sunday":    round(_h.get("sunday", 0), 2),
-                        "total_hrs": round(_h.get("total", 0), 2),
+                        "monday":         round(_h.get("monday", 0), 2),
+                        "tuesday":        round(_h.get("tuesday", 0), 2),
+                        "wednesday":      round(_h.get("wednesday", 0), 2),
+                        "thursday":       round(_h.get("thursday", 0), 2),
+                        "friday":         round(_h.get("friday", 0), 2),
+                        "saturday":       round(_h.get("saturday", 0), 2),
+                        "sunday":         round(_h.get("sunday", 0), 2),
+                        "public_holiday": round(_h.get("public_holiday", 0), 2),
+                        "total_hrs":      round(_h.get("total", 0), 2),
                     }
                 hours_json_path.write_text(json.dumps({
                     "date_from":  date_from,
