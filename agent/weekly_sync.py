@@ -124,24 +124,69 @@ MANAGER_LOCATIONS = {
 
 DAY_NAMES = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
-# Add public holiday dates here (YYYY-MM-DD). Hours worked on these days go into
-# public_holiday_hours instead of the normal day bucket.
-PUBLIC_HOLIDAYS = {
-    "2026-01-01",  # New Year's Day
-    "2026-01-26",  # Australia Day
-    "2026-04-03",  # Good Friday
-    "2026-04-04",  # Easter Saturday
-    "2026-04-05",  # Easter Sunday
-    "2026-04-06",  # Easter Monday
-    "2026-04-25",  # ANZAC Day
-    "2026-05-04",  # May Day (NT)
-    "2026-06-08",  # Queen's Birthday (QLD)
-    "2026-08-03",  # Picnic Day (NT) — first Monday of August
-    "2026-10-05",  # Labour Day (QLD)
-    "2026-12-25",  # Christmas Day
-    "2026-12-26",  # Boxing Day
-    "2026-12-28",  # Boxing Day observed (if 26th is weekend)
-}
+
+def _nth_weekday(year, month, weekday, n):
+    """Return the date of the nth occurrence of weekday (0=Mon) in the given month/year."""
+    from datetime import date as _date
+    first = _date(year, month, 1)
+    delta = (weekday - first.weekday()) % 7
+    first_occurrence = first + timedelta(days=delta)
+    return first_occurrence + timedelta(weeks=n - 1)
+
+
+def _easter(year):
+    """Return Good Friday date for the given year (Anonymous Gregorian algorithm)."""
+    from datetime import date as _date
+    a = year % 19
+    b, c = divmod(year, 100)
+    d, e = divmod(b, 4)
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month, day = divmod(h + l - 7 * m + 114, 31)
+    easter_sunday = _date(year, month, day + 1)
+    return easter_sunday - timedelta(days=2)  # Good Friday
+
+
+def get_public_holidays(year):
+    """Return a set of YYYY-MM-DD strings for all NT+QLD public holidays in the given year."""
+    from datetime import date as _date
+
+    good_friday    = _easter(year)
+    easter_sunday  = good_friday + timedelta(days=2)
+    easter_monday  = good_friday + timedelta(days=3)
+    easter_saturday = good_friday + timedelta(days=1)
+
+    boxing_day = _date(year, 12, 26)
+    # Boxing Day observed: if Dec 26 falls on Sat/Sun, move to next available weekday
+    if boxing_day.weekday() == 5:   # Saturday → Monday
+        boxing_observed = boxing_day + timedelta(days=2)
+    elif boxing_day.weekday() == 6: # Sunday → Monday (Christmas already moved to Mon)
+        boxing_observed = boxing_day + timedelta(days=1)
+    else:
+        boxing_observed = None
+
+    holidays = {
+        f"{year}-01-01",                                      # New Year's Day
+        f"{year}-01-26",                                      # Australia Day
+        good_friday.strftime("%Y-%m-%d"),                     # Good Friday
+        easter_saturday.strftime("%Y-%m-%d"),                 # Easter Saturday
+        easter_sunday.strftime("%Y-%m-%d"),                   # Easter Sunday
+        easter_monday.strftime("%Y-%m-%d"),                   # Easter Monday
+        f"{year}-04-25",                                      # ANZAC Day
+        _nth_weekday(year, 5, 0, 1).strftime("%Y-%m-%d"),    # May Day NT (1st Mon May)
+        _nth_weekday(year, 6, 0, 2).strftime("%Y-%m-%d"),    # Queen's Birthday QLD (2nd Mon Jun)
+        _nth_weekday(year, 8, 0, 1).strftime("%Y-%m-%d"),    # Picnic Day NT (1st Mon Aug)
+        _nth_weekday(year, 10, 0, 1).strftime("%Y-%m-%d"),   # Labour Day QLD (1st Mon Oct)
+        f"{year}-12-25",                                      # Christmas Day
+        boxing_day.strftime("%Y-%m-%d"),                      # Boxing Day
+    }
+    if boxing_observed:
+        holidays.add(boxing_observed.strftime("%Y-%m-%d"))
+    return holidays
 
 GQL_QUERY = """
 query employeeWorkingDays($dateFrom: Date!, $dateTo: Date!, $locationId: IID!, $employeeIds: [IID!]!) {
@@ -173,13 +218,15 @@ def _day_index(date_str):
 
 # ── Hours calculation (per day, not just weekday bucket) ───────────────────────
 
-def _day_bucket(date_str):
+def _day_bucket(date_str, holidays):
     """Return 'public_holiday' if date is a public holiday, else the weekday name."""
-    return "public_holiday" if date_str in PUBLIC_HOLIDAYS else DAY_NAMES[_day_index(date_str)]
+    return "public_holiday" if date_str in holidays else DAY_NAMES[_day_index(date_str)]
 
 
 def calc_hours_per_day(schedule_days, blocked_times, times_off, emp_ids, date_from, date_to):
-    results = {}
+    year     = int(date_from[:4])
+    holidays = get_public_holidays(year)
+    results  = {}
     for emp_id in emp_ids:
         daily = {d: 0 for d in DAY_NAMES}
         daily["public_holiday"] = 0
@@ -189,7 +236,7 @@ def calc_hours_per_day(schedule_days, blocked_times, times_off, emp_ids, date_fr
                 continue
             if not (date_from <= day["date"] <= date_to):
                 continue
-            bucket = _day_bucket(day["date"])
+            bucket = _day_bucket(day["date"], holidays)
             for shift in day.get("shifts", []):
                 daily[bucket] += _mins(shift["endTime"]) - _mins(shift["startTime"])
 
@@ -198,7 +245,7 @@ def calc_hours_per_day(schedule_days, blocked_times, times_off, emp_ids, date_fr
                 continue
             if not (date_from <= block["date"] <= date_to):
                 continue
-            bucket = _day_bucket(block["date"])
+            bucket = _day_bucket(block["date"], holidays)
             daily[bucket] -= _mins(block["endTime"]) - _mins(block["startTime"])
 
         for off in times_off:
@@ -207,7 +254,7 @@ def calc_hours_per_day(schedule_days, blocked_times, times_off, emp_ids, date_fr
             if not (date_from <= off.get("date", "") <= date_to):
                 continue
             if off.get("startTime") and off.get("endTime"):
-                bucket = _day_bucket(off["date"])
+                bucket = _day_bucket(off["date"], holidays)
                 daily[bucket] -= _mins(off["endTime"]) - _mins(off["startTime"])
 
         all_buckets = DAY_NAMES + ["public_holiday"]
