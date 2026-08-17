@@ -110,9 +110,7 @@ MANAGER_LOCATIONS = {
     "Anthony Crispo":      ["Diamond Barbers - COOLALINGA"],
     "Airol Basallo":       ["Diamond Barbers - BELLAMACK"],
     "Wilfred Vidal":       ["Diamond Barbers - YARRAWONGA"],
-    "Marianne Escobar":    ["Diamond Barbers - COOLALINGA", "Diamond Barbers - BELLAMACK",
-                            "Diamond Barbers - YARRAWONGA", "Diamond Barbers - CASUARINA",
-                            "Diamond Barbers - PARAP", "Diamond Barbers - DARWIN CBD"],
+    "Marianne Escobar":    "__ALL_NT__",
     "Avinash Borade":      ["Diamond Barbers - CASUARINA"],
     "Vincenzo Vanzanella": ["Diamond Barbers - PARAP"],
     "Jairo Espinosa":      ["Diamond Barbers - DARWIN CBD"],
@@ -1410,8 +1408,12 @@ async def run():
                         continue
 
                     if name in MANAGER_LOCATIONS:
-                        total_products = sum(loc_products.get(loc, 0) for loc in MANAGER_LOCATIONS[name])
-                        commissions    = round(total_products * 0.9 * 0.10, 2)
+                        spec = MANAGER_LOCATIONS[name]
+                        if spec == "__ALL_NT__":
+                            total_products = sum(loc_products.values())
+                        else:
+                            total_products = sum(loc_products.get(loc, 0) for loc in spec)
+                        commissions    = round(total_products / 1.1 * 0.10, 2)
                         print(f"    MANAGER {name:28s}  products=${total_products:.2f}  comm=${commissions:.2f}")
 
                     try:
