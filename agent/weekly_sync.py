@@ -743,10 +743,11 @@ async def ensure_logged_in(account, page, context, checklist):
 
 async def download_performance_csvs(account, page, context, checklist, date_from_fallback, date_to_fallback):
     label = account["label"]
+    pid   = account["provider_id"]
     print(f"\n  [PERFORMANCE] Navigating to Performance Summary...")
 
     await page.goto(
-        "https://partners.fresha.com/reports/table/performance-summary",
+        f"https://partners.fresha.com/reports/table/performance-summary?__pid={pid}",
         wait_until="networkidle"
     )
     await page.wait_for_timeout(4000)
@@ -990,9 +991,10 @@ async def download_night_markets_csv(account, page, context, checklist, date_fro
     print(f"\n  [NIGHT MARKETS] Downloading filtered team-member CSV ({nm_loc})...")
 
     loc_id = account.get("night_markets_loc_id", "")
+    pid    = account["provider_id"]
     url = (
         f"https://partners.fresha.com/reports/table/performance-summary"
-        f"?groupBy=employee_name&location_id={loc_id}&employee_id=all"
+        f"?__pid={pid}&groupBy=employee_name&location_id={loc_id}&employee_id=all"
         f"&dateFrom={date_from}&dateTo={date_to}"
     )
     try:
@@ -1461,7 +1463,12 @@ async def run():
 
             # Save hours to JSON for xero_create_payrun.py
             if hours_data:
-                suffix = "nt" if "NT" in account["label"] else "qld"
+                if "NT" in account["label"]:
+                    suffix = "nt"
+                elif "Townsville" in account["label"]:
+                    suffix = "townsville"
+                else:
+                    suffix = "qld"
                 hours_json_path = DATA_DIR / f"fresha_hours_{suffix}.json"
                 hours_summary = {}
                 for _nm, _h in hours_data.items():
