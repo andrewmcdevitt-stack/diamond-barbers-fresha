@@ -339,6 +339,24 @@ def load_location_products():
     if not qld_files and not townsville_files:
         print("  WARNING: no fresha_location_qld/townsville_*.csv found — QLD location commissions will be zero.")
 
+    # Fallback: supplement missing locations from performance JSONs
+    for perf_file in ("performance_summary.json", "cairns_performance_summary.json",
+                      "townsville_performance_summary.json"):
+        path = DATA_DIR / perf_file
+        if not path.exists():
+            continue
+        history = json.loads(path.read_text())
+        if not isinstance(history, list):
+            history = [history]
+        record = next((r for r in reversed(history) if r.get("locations")), None)
+        if not record:
+            continue
+        target = nt if "performance_summary" in perf_file and "cairns" not in perf_file and "townsville" not in perf_file else qld
+        for loc in record["locations"]:
+            name = loc.get("name", "")
+            if name and name not in target:
+                target[name] = loc.get("products", 0) or 0
+
     return nt, qld
 
 
@@ -529,10 +547,18 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
     # ── Activate each payslip via PUT ─────────────────────────────────────────
     print("  Activating payslips...")
     try:
-        run_detail = xero_get(f"/payroll.xro/1.0/PayRuns/{run_id}", tenant_id, access_token)
-        run_data   = run_detail.get("PayRuns", [{}])[0]
-        slips      = run_data.get("Payslips", [])
-        emp_to_slip = {s["EmployeeID"]: s["PayslipID"] for s in slips if "PayslipID" in s}
+        # Xero generates payslips asynchronously after pay run creation — retry up to 6x
+        emp_to_slip = {}
+        for _attempt in range(6):
+            run_detail  = xero_get(f"/payroll.xro/1.0/PayRuns/{run_id}", tenant_id, access_token)
+            run_data    = run_detail.get("PayRuns", [{}])[0]
+            slips       = run_data.get("Payslips", [])
+            emp_to_slip = {s["EmployeeID"]: s["PayslipID"] for s in slips if "PayslipID" in s}
+            if emp_to_slip:
+                break
+            if _attempt < 5:
+                print(f"  No payslips yet, waiting 5s... (attempt {_attempt + 1}/6)")
+                import time; time.sleep(5)
         print(f"  Found {len(emp_to_slip)} PayslipIDs")
 
         # ── DEBUG: read one payslip to see what Xero stored after auto-generation ──
