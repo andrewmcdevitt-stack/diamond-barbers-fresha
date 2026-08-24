@@ -754,11 +754,13 @@ async def _click_any(page, name, timeout=5000):
         page.get_by_role("menuitem", name=name, exact=True),
         page.get_by_role("link",     name=name, exact=True),
         page.locator(f'[aria-label="{name}"]'),
-        page.locator(f'text="{name}"').first,
+        page.get_by_text(name, exact=True).first,
+        page.locator("li").filter(has_text=name).first,
+        page.locator("div").filter(has_text=name).last,
     ]:
         try:
             if await loc.count() > 0:
-                await loc.click(timeout=timeout)
+                await loc.click(timeout=timeout, force=True)
                 return True
         except Exception:
             continue
