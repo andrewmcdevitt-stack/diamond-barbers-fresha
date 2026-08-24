@@ -76,7 +76,8 @@ ACCOUNTS = [
         "night_markets_loc":   "Diamond Barbers Night Markets",
         "night_markets_loc_id": "1472834",
         # These locations now live in the Townsville workspace — skip them here
-        "skip_locations":      {"Diamond Barbers Rising Sun", "Diamond Barbers Wulguru"},
+        "skip_locations":      {"Diamond Barbers Rising Sun", "Diamond Barbers Wulguru",
+                               "OLD RISING SUN", "OLD WULGURU"},
     },
     {
         "label":               "QLD (Townsville)",
@@ -124,6 +125,7 @@ LOCATION_TO_ORG = {
     "Diamond Barbers Night Markets":    "Diamond Barbers Cairns",
     "Diamond Barbers Wulguru":          "Diamond Barbers Cairns",
     # Townsville workspace locations
+    "Diamond Barbers Rising Sun":        "Diamond Barbers Townsville",
     "Diamond Barbers Rising Sun New":   "Diamond Barbers Townsville",
     "Diamond Barbers Wulguru New":      "Diamond Barbers Townsville",
     "Diamond Barbers | Garbutt":        "Diamond Barbers Townsville",
@@ -140,7 +142,7 @@ MANAGER_LOCATIONS = {
     "Jairo Espinosa":      ["Diamond Barbers - DARWIN CBD"],
     "Jerry Guevarra":      ["Diamond Barbers Showgrounds", "Diamond Barbers Night Markets",
                             "Diamond Barbers Northern Beaches"],
-    "Alfon Amora":         ["Diamond Barbers Rising Sun New"],
+    "Alfon Amora":         ["Diamond Barbers Rising Sun"],
     "Brazil Lamsen":       ["Diamond Barbers Wulguru New"],
 }
 

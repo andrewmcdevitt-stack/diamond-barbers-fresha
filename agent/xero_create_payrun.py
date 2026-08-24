@@ -122,7 +122,7 @@ LOCATION_COMMISSION = {
     "jerry guevarra":       ["Diamond Barbers Showgrounds",
                              "Diamond Barbers Night Markets",
                              "Diamond Barbers Northern Beaches"],
-    "alfon amora":          ["Diamond Barbers Rising Sun New"],
+    "alfon amora":          ["Diamond Barbers Rising Sun"],
 }
 
 
