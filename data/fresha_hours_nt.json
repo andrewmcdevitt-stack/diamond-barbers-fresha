@@ -1,7 +1,7 @@
 {
   "date_from": "2026-08-17",
   "date_to": "2026-08-23",
-  "generated": "2026-08-24T05:49:10.609832+00:00",
+  "generated": "2026-08-24T23:46:27.089390+00:00",
   "summary": {
     "Nico Diamantis": {
       "monday": 8.0,
@@ -201,6 +201,17 @@
       "public_holiday": 0.0,
       "total_hrs": 38.5
     },
+    "Eric kearney": {
+      "monday": 0.0,
+      "tuesday": 10.0,
+      "wednesday": 10.0,
+      "thursday": 8.0,
+      "friday": 8.0,
+      "saturday": 10.0,
+      "sunday": 0.0,
+      "public_holiday": 0.0,
+      "total_hrs": 46.0
+    },
     "Vincenzo Vanzanella": {
       "monday": 10.0,
       "tuesday": 0.0,
@@ -233,17 +244,6 @@
       "sunday": 5.0,
       "public_holiday": 0.0,
       "total_hrs": 41.0
-    },
-    "Eric Kearny": {
-      "monday": 0.0,
-      "tuesday": 0.0,
-      "wednesday": 0.0,
-      "thursday": 5.0,
-      "friday": 0.0,
-      "saturday": 0.0,
-      "sunday": 0.0,
-      "public_holiday": 0.0,
-      "total_hrs": 5.0
     }
   }
 }
