@@ -10047,7 +10047,7 @@
         "cancelled_appts": 3,
         "no_show_appts": 0,
         "services_sold": 13,
-        "occupancy_pct": 25.96,
+        "occupancy_pct": 25.9554,
         "commissions": 0.0,
         "service_sales_exc_gst": 513.64
       },
@@ -10061,7 +10061,7 @@
         "cancelled_appts": 1,
         "no_show_appts": 0,
         "services_sold": 14,
-        "occupancy_pct": 39.74,
+        "occupancy_pct": 39.7436,
         "commissions": 0.0,
         "service_sales_exc_gst": 481.82
       },
@@ -10089,7 +10089,7 @@
         "cancelled_appts": 1,
         "no_show_appts": 0,
         "services_sold": 17,
-        "occupancy_pct": 17.46,
+        "occupancy_pct": 17.4603,
         "commissions": 5.82,
         "service_sales_exc_gst": 595.91
       },
@@ -10103,7 +10103,7 @@
         "cancelled_appts": 3,
         "no_show_appts": 0,
         "services_sold": 51,
-        "occupancy_pct": 64.58,
+        "occupancy_pct": 64.5833,
         "commissions": 3.09,
         "service_sales_exc_gst": 1801.82
       },
@@ -10117,7 +10117,7 @@
         "cancelled_appts": 5,
         "no_show_appts": 0,
         "services_sold": 88,
-        "occupancy_pct": 93.22,
+        "occupancy_pct": 93.2243,
         "commissions": 6.18,
         "service_sales_exc_gst": 3247.95
       },
@@ -10131,7 +10131,7 @@
         "cancelled_appts": 1,
         "no_show_appts": 0,
         "services_sold": 11,
-        "occupancy_pct": 33.33,
+        "occupancy_pct": 33.3333,
         "commissions": 0.0,
         "service_sales_exc_gst": 403.64
       },
@@ -10145,7 +10145,7 @@
         "cancelled_appts": 5,
         "no_show_appts": 0,
         "services_sold": 120,
-        "occupancy_pct": 86.67,
+        "occupancy_pct": 86.6667,
         "commissions": 24.72,
         "service_sales_exc_gst": 4485.45
       },
@@ -10159,7 +10159,7 @@
         "cancelled_appts": 3,
         "no_show_appts": 0,
         "services_sold": 89,
-        "occupancy_pct": 69.5,
+        "occupancy_pct": 69.5009,
         "commissions": 7.82,
         "service_sales_exc_gst": 3202.73
       },
@@ -10173,7 +10173,7 @@
         "cancelled_appts": 7,
         "no_show_appts": 2,
         "services_sold": 58,
-        "occupancy_pct": 61.9,
+        "occupancy_pct": 61.9048,
         "commissions": 12.55,
         "service_sales_exc_gst": 1903.18
       },
@@ -10187,7 +10187,7 @@
         "cancelled_appts": 3,
         "no_show_appts": 0,
         "services_sold": 23,
-        "occupancy_pct": 26.22,
+        "occupancy_pct": 26.2195,
         "commissions": 3.09,
         "service_sales_exc_gst": 856.82
       },
@@ -10201,7 +10201,7 @@
         "cancelled_appts": 4,
         "no_show_appts": 1,
         "services_sold": 25,
-        "occupancy_pct": 44.44,
+        "occupancy_pct": 44.4444,
         "commissions": 0.0,
         "service_sales_exc_gst": 937.27
       },
@@ -10215,7 +10215,7 @@
         "cancelled_appts": 6,
         "no_show_appts": 0,
         "services_sold": 70,
-        "occupancy_pct": 65.7,
+        "occupancy_pct": 65.7025,
         "commissions": 14.73,
         "service_sales_exc_gst": 2591.82
       },
@@ -10229,7 +10229,7 @@
         "cancelled_appts": 1,
         "no_show_appts": 0,
         "services_sold": 18,
-        "occupancy_pct": 40.74,
+        "occupancy_pct": 40.7407,
         "commissions": 3.09,
         "service_sales_exc_gst": 545.0
       }
