@@ -254,7 +254,7 @@ def xero_post(path, tenant_id, access_token, body):
 def load_hours():
     """Merge NT + QLD hours into one dict keyed by normalised Fresha name."""
     combined = {}
-    for fname in ("fresha_hours_nt.json", "fresha_hours_qld.json"):
+    for fname in ("fresha_hours_nt.json", "fresha_hours_qld.json", "fresha_hours_townsville.json"):
         path = DATA_DIR / fname
         if not path.exists():
             print(f"  WARNING: {fname} not found.")
@@ -269,7 +269,8 @@ def load_performance():
     """Load tips per employee from performance JSONs. Commission is location-based — see LOCATION_COMMISSION."""
     perf = {}
     for fname in ("fresha_performance_nt.json", "fresha_performance_qld.json",
-                  "performance_summary.json", "cairns_performance_summary.json"):
+                  "performance_summary.json", "cairns_performance_summary.json",
+                  "townsville_performance_summary.json"):
         path = DATA_DIR / fname
         if not path.exists():
             continue
@@ -324,16 +325,19 @@ def load_location_products():
                     result[name] = products
         return result
 
-    nt_files  = sorted(glob_mod.glob(str(DATA_DIR / "fresha_location_nt_*.csv")))
-    qld_files = sorted(glob_mod.glob(str(DATA_DIR / "fresha_location_qld_*.csv")))
+    nt_files         = sorted(glob_mod.glob(str(DATA_DIR / "fresha_location_nt_*.csv")))
+    qld_files        = sorted(glob_mod.glob(str(DATA_DIR / "fresha_location_qld_*.csv")))
+    townsville_files = sorted(glob_mod.glob(str(DATA_DIR / "fresha_location_townsville_*.csv")))
 
-    nt  = parse_csv(nt_files[-1])  if nt_files  else {}
-    qld = parse_csv(qld_files[-1]) if qld_files else {}
+    nt  = parse_csv(nt_files[-1])         if nt_files         else {}
+    qld = parse_csv(qld_files[-1])        if qld_files        else {}
+    tsv = parse_csv(townsville_files[-1]) if townsville_files  else {}
+    qld = {**qld, **tsv}  # merge Townsville locations into QLD dict
 
     if not nt_files:
         print("  WARNING: no fresha_location_nt_*.csv found — NT location commissions will be zero.")
-    if not qld_files:
-        print("  WARNING: no fresha_location_qld_*.csv found — QLD location commissions will be zero.")
+    if not qld_files and not townsville_files:
+        print("  WARNING: no fresha_location_qld/townsville_*.csv found — QLD location commissions will be zero.")
 
     return nt, qld
 

@@ -897,7 +897,8 @@ async def download_performance_csvs(account, page, context, checklist, date_from
         raise
 
     download  = await dl_info.value
-    csv_path  = DATA_DIR / f"fresha_report_{label.split()[0].lower()}_{datetime.now().strftime('%Y%m%d')}.csv"
+    _suffix   = "townsville" if "Townsville" in label else label.split()[0].lower()
+    csv_path  = DATA_DIR / f"fresha_report_{_suffix}_{datetime.now().strftime('%Y%m%d')}.csv"
     await download.save_as(str(csv_path))
     checklist.append({"check": "Team member CSV downloaded", "status": "OK", "detail": csv_path.name})
     print(f"  Team member CSV saved: {csv_path.name}")
@@ -923,7 +924,7 @@ async def download_performance_csvs(account, page, context, checklist, date_from
             await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
 
         dl2 = await dl_info2.value
-        loc_csv_path = DATA_DIR / f"fresha_location_{label.split()[0].lower()}_{datetime.now().strftime('%Y%m%d')}.csv"
+        loc_csv_path = DATA_DIR / f"fresha_location_{_suffix}_{datetime.now().strftime('%Y%m%d')}.csv"
         await dl2.save_as(str(loc_csv_path))
         checklist.append({"check": "Location CSV downloaded", "status": "OK", "detail": loc_csv_path.name})
         print(f"  Location CSV saved: {loc_csv_path.name}")
