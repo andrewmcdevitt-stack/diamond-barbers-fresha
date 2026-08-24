@@ -52,26 +52,42 @@ GHL_HEADERS     = {
 ACCOUNTS = [
     {
         "label":               "NT (Darwin)",
-        "session":             DATA_DIR / "session.json",
-        "email_env":           "FRESHA_EMAIL",
-        "pass_env":            "FRESHA_PASSWORD",
+        "session":             DATA_DIR / "session_admin.json",
+        "email_env":           "TOWNSVILLE_FRESHA_EMAIL",
+        "pass_env":            "TOWNSVILLE_FRESHA_PASSWORD",
         "timezone":            timezone(timedelta(hours=9, minutes=30)),
         "provider_id":         "1371504",
         "default_org":         "Diamond Barbers Darwin",
         "output":              DATA_DIR / "performance_summary.json",
         "night_markets_loc":   None,
+        "skip_locations":      set(),
     },
     {
         "label":               "QLD (Cairns)",
-        "session":             DATA_DIR / "session_cairns.json",
-        "email_env":           "CAIRNS_FRESHA_EMAIL",
-        "pass_env":            "CAIRNS_FRESHA_PASSWORD",
+        "session":             DATA_DIR / "session_admin.json",
+        "email_env":           "TOWNSVILLE_FRESHA_EMAIL",
+        "pass_env":            "TOWNSVILLE_FRESHA_PASSWORD",
         "timezone":            timezone(timedelta(hours=10)),
         "provider_id":         "1390965",
         "default_org":         "Diamond Barbers Cairns",
         "output":              DATA_DIR / "cairns_performance_summary.json",
         "night_markets_loc":   "Diamond Barbers Night Markets",
         "night_markets_loc_id": "1472834",
+        # These locations now live in the Townsville workspace — skip them here
+        "skip_locations":      {"Diamond Barbers Rising Sun", "Diamond Barbers Wulguru"},
+    },
+    {
+        "label":               "QLD (Townsville)",
+        "session":             DATA_DIR / "session_admin.json",
+        "email_env":           "TOWNSVILLE_FRESHA_EMAIL",
+        "pass_env":            "TOWNSVILLE_FRESHA_PASSWORD",
+        "timezone":            timezone(timedelta(hours=10)),
+        "provider_id":         "3049268",
+        "default_org":         "Diamond Barbers Townsville",
+        "output":              DATA_DIR / "townsville_performance_summary.json",
+        "night_markets_loc":   None,
+        # Garbutt is not open yet
+        "skip_locations":      {"Diamond Barbers | Garbutt"},
     },
 ]
 
@@ -79,9 +95,10 @@ ACCOUNTS = [
 # (ex-GST) as a bonus instead of hourly rates for that location.
 NIGHT_MARKETS_COMMISSION_RATE = 0.50
 
-# Static employee → Xero org mapping.
-# This is the source of truth — never derived from which location they work at.
-# Default if not listed: NT staff → "Diamond Barbers Darwin", QLD staff → "Diamond Barbers Cairns"
+# Employee → GHL dashboard org label override.
+# Only needed when an employee's label should differ from their account's default_org.
+# Defaults: NT staff → "Diamond Barbers Darwin", Cairns staff → "Diamond Barbers Cairns",
+#           Townsville staff → "Diamond Barbers Townsville"
 EMPLOYEE_XERO_ORG = {
     "Vincenzo Vanzanella": "Diamond Barbers Parap",
     "Krish Manocha":       "Diamond Barbers Parap",
@@ -103,9 +120,13 @@ LOCATION_TO_ORG = {
     "Diamond Barbers Northern Beaches": "Diamond Barbers Cairns",
     "Diamond Barbers Night Markets":    "Diamond Barbers Cairns",
     "Diamond Barbers Wulguru":          "Diamond Barbers Cairns",
+    # Townsville workspace locations
+    "Diamond Barbers Rising Sun New":   "Diamond Barbers Townsville",
+    "Diamond Barbers Wulguru New":      "Diamond Barbers Townsville",
+    "Diamond Barbers | Garbutt":        "Diamond Barbers Townsville",
 }
 
-# Manager commission overrides — commission = sum of location product sales * 0.9 * 0.10
+# Manager commission overrides — commission = sum of location product sales / 1.1 * 0.10
 MANAGER_LOCATIONS = {
     "Anthony Crispo":      ["Diamond Barbers - COOLALINGA"],
     "Airol Basallo":       ["Diamond Barbers - BELLAMACK"],
@@ -116,8 +137,8 @@ MANAGER_LOCATIONS = {
     "Jairo Espinosa":      ["Diamond Barbers - DARWIN CBD"],
     "Jerry Guevarra":      ["Diamond Barbers Showgrounds", "Diamond Barbers Night Markets",
                             "Diamond Barbers Northern Beaches"],
-    "Alfon Amora":         ["Diamond Barbers Rising Sun"],
-    "Brazil Lamsen":       ["Diamond Barbers Wulguru"],
+    "Alfon Amora":         ["Diamond Barbers Rising Sun New"],
+    "Brazil Lamsen":       ["Diamond Barbers Wulguru New"],
 }
 
 DAY_NAMES = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
@@ -287,10 +308,16 @@ async def fetch_hours(account, context, date_from, date_to):
     combined = {}
 
     night_markets_loc_id = account.get("night_markets_loc_id")
+    skip_locations       = account.get("skip_locations", set())
 
     for loc in locations:
         loc_id   = loc["id"]
         loc_name = loc["name"]
+
+        # Skip locations that have moved to another workspace or are not yet open
+        if loc_name in skip_locations:
+            print(f"  Skipping {loc_name} (moved to separate workspace or not open)")
+            continue
 
         # Night Markets hours are paid as a 50/50 bonus, not regular hours — skip
         if night_markets_loc_id and loc_id == night_markets_loc_id:
@@ -1044,8 +1071,8 @@ CSV DATA:
 
 # ── Email report ──────────────────────────────────────────────────────────────
 
-def build_sync_email(week_start, week_end, sync_results):
-    has_issues = any(r.get("issues") for r in sync_results)
+def build_sync_email(week_start, week_end, sync_results, new_barbers=None):
+    has_issues = any(r.get("issues") for r in sync_results) or bool(new_barbers)
 
     alert_banner = ""
     if has_issues:
@@ -1053,6 +1080,23 @@ def build_sync_email(week_start, week_end, sync_results):
             '<div style="background:#ffebee;border:1px solid #ef9a9a;padding:10px 16px;'
             'margin-bottom:16px;border-radius:4px;color:#c62828;font-size:12px">'
             '<strong>&#9888; Issues detected during this sync — see details below.</strong>'
+            '</div>'
+        )
+
+    new_barbers_html = ""
+    if new_barbers:
+        items = "".join(
+            f'<li style="margin:4px 0;font-weight:600">{n}</li>' for n in sorted(new_barbers)
+        )
+        new_barbers_html = (
+            '<div style="margin-bottom:24px;padding:14px 16px;background:#fff3e0;'
+            'border:1px solid #ffb74d;border-radius:6px">'
+            '<h3 style="margin:0 0 8px;font-size:13px;color:#e65100">'
+            '&#128994; New barbers detected — not yet in Xero</h3>'
+            '<p style="margin:0 0 8px;font-size:11px;color:#555">'
+            'These names appeared in Fresha this week but have no matching employee '
+            'in any Xero payroll org. Please add them to Xero before next payrun.</p>'
+            f'<ul style="margin:0;padding-left:18px;font-size:12px">{items}</ul>'
             '</div>'
         )
 
@@ -1156,7 +1200,7 @@ def build_sync_email(week_start, week_end, sync_results):
         '<body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:20px;max-width:900px">'
         '<h2 style="color:#1a1a2e;margin-bottom:2px;font-size:16px">Diamond Barbers — Weekly Sync Report</h2>'
         f'<p style="color:#888;margin-top:0;margin-bottom:16px;font-size:11px">Week: {week_start} to {week_end}</p>'
-        f'{alert_banner}{sections}'
+        f'{alert_banner}{new_barbers_html}{sections}'
         '</body></html>'
     )
 
@@ -1196,12 +1240,121 @@ def send_sync_email(html, week_start, week_end, has_issues, csv_files=None):
         print(f"  WARNING: Email failed: {e}")
 
 
+# ── New barber detection ───────────────────────────────────────────────────────
+
+# Names that appear in Fresha but are NOT barbers — never flag these
+_FRESHA_NON_STAFF = {
+    "andrew mcdevitt", "andrew  mcdevitt",
+    "nicole diamantis", "nicole  diamantis",
+}
+
+# Known Fresha→Xero name differences (Fresha name → normalised Xero name)
+_FRESHA_TO_XERO = {
+    "anthony crispo":    "anthony  crispo",
+    "jairo espinosa":    "jairo espinosa mejia",
+    "nico diamantis":    "nikolaos diamantis",
+    "d mataele":         "dion mataele",
+    "daniel camargo":    "daniel carmago",
+    "zaeb edward rix":   "zaeb rix",
+    "rohit more":        "rohit shantaram",
+    "jack william bastock": "jack bastock",
+    "eric kearny":       "eric kearney",
+}
+
+
+def _norm(name: str) -> str:
+    return " ".join(name.lower().split())
+
+
+def detect_new_barbers(all_fresha_names: set[str]) -> list[str]:
+    """Return list of Fresha names that have no matching employee in any Xero org."""
+    import base64, urllib.request, urllib.parse as _urlparse
+
+    token_file = DATA_DIR / "xero_token.json"
+    if not token_file.exists():
+        print("  [NEW BARBER CHECK] No xero_token.json — skipping.")
+        return []
+
+    token = json.loads(token_file.read_text())
+
+    # Refresh access token
+    client_id     = os.environ.get("XERO_CLIENT_ID", "")
+    client_secret = os.environ.get("XERO_CLIENT_SECRET", "")
+    if not client_id:
+        print("  [NEW BARBER CHECK] No XERO_CLIENT_ID — skipping.")
+        return []
+
+    try:
+        creds = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
+        data  = _urlparse.urlencode({
+            "grant_type":    "refresh_token",
+            "refresh_token": token["refresh_token"],
+        }).encode()
+        req = urllib.request.Request(
+            "https://identity.xero.com/connect/token", data=data,
+            headers={"Authorization": f"Basic {creds}",
+                     "Content-Type":  "application/x-www-form-urlencoded"},
+        )
+        with urllib.request.urlopen(req) as r:
+            new_token = json.loads(r.read())
+        new_token["tenants"] = token.get("tenants", [])
+        token_file.write_text(json.dumps(new_token, indent=2))
+        access_token = new_token["access_token"]
+    except Exception as e:
+        print(f"  [NEW BARBER CHECK] Token refresh failed: {e}")
+        return []
+
+    # Fetch employees from all Xero orgs
+    xero_names: set[str] = set()
+    for tenant in token.get("tenants", []):
+        tid  = tenant.get("id") or tenant.get("tenantId")
+        tname = tenant.get("name") or tenant.get("tenantName", "")
+        if not tid:
+            continue
+        try:
+            req = urllib.request.Request(
+                "https://api.xero.com/payroll.xro/1.0/Employees",
+                headers={"Authorization": f"Bearer {access_token}",
+                         "Xero-Tenant-Id": tid, "Accept": "application/json"},
+            )
+            with urllib.request.urlopen(req) as r:
+                data = json.loads(r.read())
+            for emp in data.get("Employees", []):
+                full = f"{emp.get('FirstName','')} {emp.get('LastName','')}".strip()
+                xero_names.add(_norm(full))
+        except Exception as e:
+            print(f"  [NEW BARBER CHECK] Could not fetch {tname}: {e}")
+
+    # Build the set of normalised Xero names (including known aliases)
+    xero_lookup = set(xero_names)
+    # Also add the Fresha-side names for people with known mismatches
+    for fresha_norm, xero_norm in _FRESHA_TO_XERO.items():
+        if xero_norm in xero_lookup:
+            xero_lookup.add(fresha_norm)
+
+    # Find Fresha names with no Xero match
+    new_barbers = []
+    for name in sorted(all_fresha_names):
+        n = _norm(name)
+        if n in _FRESHA_NON_STAFF:
+            continue
+        if n not in xero_lookup:
+            new_barbers.append(name)
+            print(f"  *** NEW BARBER (not in Xero): {name} ***")
+
+    if not new_barbers:
+        print("  [NEW BARBER CHECK] All Fresha staff matched to Xero employees.")
+
+    return new_barbers
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 async def run():
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     has_ghl = bool(GHL_API_KEY)
-    sync_results = []
+    sync_results     = []
+    all_fresha_names = set()  # accumulated across all accounts for new-barber detection
 
     async with async_playwright() as p:
         for account in ACCOUNTS:
@@ -1265,6 +1418,7 @@ async def run():
 
             try:
                 hours_data = await fetch_hours(account, context, date_from, date_to)
+                all_fresha_names.update(hours_data.keys())
             except Exception as e:
                 msg = f"Hours fetch failed: {e}"
                 print(f"  ERROR {msg}")
@@ -1373,6 +1527,14 @@ async def run():
                     acct["issues"].append(msg)
                     if acct["status"] == "ok":
                         acct["status"] = "partial"
+
+            # Filter out locations that have moved to another workspace or aren't open
+            skip_locs = account.get("skip_locations", set())
+            if skip_locs and locations:
+                before = len(locations)
+                locations = [l for l in locations if l.get("name", "") not in skip_locs]
+                if len(locations) < before:
+                    print(f"  Skipped {before - len(locations)} location(s) from performance data: {skip_locs}")
 
             flag_zero_value_issues(perf_data, locations, checklist)
 
@@ -1547,9 +1709,13 @@ async def run():
     w_start  = last_mon.strftime("%Y-%m-%d")
     w_end    = last_sun.strftime("%Y-%m-%d")
 
+    # ── Detect new barbers (in Fresha but not yet in Xero) ────────────────────
+    print("\n[NEW BARBER CHECK] Comparing Fresha names against all Xero orgs...")
+    new_barbers = detect_new_barbers(all_fresha_names)
+
     if sync_results:
-        has_issues = any(r.get("issues") for r in sync_results)
-        email_html = build_sync_email(w_start, w_end, sync_results)
+        has_issues = any(r.get("issues") for r in sync_results) or bool(new_barbers)
+        email_html = build_sync_email(w_start, w_end, sync_results, new_barbers)
         csv_files  = [f for r in sync_results for f in r.get("csv_files", [])]
         send_sync_email(email_html, w_start, w_end, has_issues, csv_files)
 
@@ -1559,7 +1725,8 @@ async def run():
     push_status = None
     if os.environ.get("CI", "false").lower() != "true":
         push_status = git_commit_and_push(
-            ["data/performance_summary.json", "data/cairns_performance_summary.json"],
+            ["data/performance_summary.json", "data/cairns_performance_summary.json",
+             "data/townsville_performance_summary.json"],
             f"chore: manual weekly sync {datetime.now().strftime('%Y-%m-%d')}",
         )
 

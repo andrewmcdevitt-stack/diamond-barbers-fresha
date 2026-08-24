@@ -13,17 +13,15 @@ jobs:
       contents: write
 
     env:
-      GHL_API_KEY:            ${{ secrets.GHL_API_KEY }}
-      GHL_LOCATION_ID:        ${{ secrets.GHL_LOCATION_ID }}
-      ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
-      FRESHA_EMAIL:           ${{ secrets.FRESHA_EMAIL }}
-      FRESHA_PASSWORD:        ${{ secrets.FRESHA_PASSWORD }}
-      CAIRNS_FRESHA_EMAIL:    ${{ secrets.CAIRNS_FRESHA_EMAIL }}
-      CAIRNS_FRESHA_PASSWORD: ${{ secrets.CAIRNS_FRESHA_PASSWORD }}
-      EMAIL_HOST:             ${{ secrets.EMAIL_HOST }}
-      EMAIL_PASSWORD:         ${{ secrets.EMAIL_PASSWORD }}
-      XERO_CLIENT_ID:         ${{ secrets.XERO_CLIENT_ID }}
-      XERO_CLIENT_SECRET:     ${{ secrets.XERO_CLIENT_SECRET }}
+      GHL_API_KEY:                ${{ secrets.GHL_API_KEY }}
+      GHL_LOCATION_ID:            ${{ secrets.GHL_LOCATION_ID }}
+      ANTHROPIC_API_KEY:          ${{ secrets.ANTHROPIC_API_KEY }}
+      TOWNSVILLE_FRESHA_EMAIL:    ${{ secrets.TOWNSVILLE_FRESHA_EMAIL }}
+      TOWNSVILLE_FRESHA_PASSWORD: ${{ secrets.TOWNSVILLE_FRESHA_PASSWORD }}
+      EMAIL_HOST:                 ${{ secrets.EMAIL_HOST }}
+      EMAIL_PASSWORD:             ${{ secrets.EMAIL_PASSWORD }}
+      XERO_CLIENT_ID:             ${{ secrets.XERO_CLIENT_ID }}
+      XERO_CLIENT_SECRET:         ${{ secrets.XERO_CLIENT_SECRET }}
       CI: "true"
 
     steps:
@@ -43,8 +41,7 @@ jobs:
       - name: Write session files from secrets
         run: |
           mkdir -p data
-          echo "${{ secrets.NT_SESSION_JSON }}" | base64 --decode > data/session.json
-          echo "${{ secrets.CAIRNS_SESSION_JSON }}" | base64 --decode > data/session_cairns.json
+          echo "${{ secrets.ADMIN_SESSION_JSON }}" | base64 --decode > data/session_admin.json
           echo "${{ secrets.XERO_TOKEN_B64 }}" | base64 --decode > data/xero_token.json
 
       - name: Run weekly sync (hours + performance -> GHL + hours/bonus JSON)
@@ -68,7 +65,9 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "GitHub Actions"
           git add data/performance_summary.json data/cairns_performance_summary.json \
+                  data/townsville_performance_summary.json \
                   data/fresha_hours_nt.json data/fresha_hours_qld.json \
+                  data/fresha_hours_townsville.json \
                   data/night_markets_bonus.json
           git diff --staged --quiet && echo "No changes." || (
             git commit -m "chore: weekly sync $(date -u +'%Y-%m-%d')" &&
@@ -76,16 +75,12 @@ jobs:
             git push
           )
 
-      - name: Save refreshed sessions back to secrets
+      - name: Save refreshed session back to secret
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          if [ -f data/session.json ]; then
-            jq '{cookies: .cookies}' data/session.json > /tmp/session_slim.json
-            base64 -w 0 /tmp/session_slim.json | gh secret set NT_SESSION_JSON --repo ${{ github.repository }}
-          fi
-          if [ -f data/session_cairns.json ]; then
-            jq '{cookies: .cookies}' data/session_cairns.json > /tmp/session_cairns_slim.json
-            base64 -w 0 /tmp/session_cairns_slim.json | gh secret set CAIRNS_SESSION_JSON --repo ${{ github.repository }}
+          if [ -f data/session_admin.json ]; then
+            jq '{cookies: .cookies}' data/session_admin.json > /tmp/session_admin_slim.json
+            base64 -w 0 /tmp/session_admin_slim.json | gh secret set ADMIN_SESSION_JSON --repo ${{ github.repository }}
           fi

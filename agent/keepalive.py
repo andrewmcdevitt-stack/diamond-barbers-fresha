@@ -19,18 +19,11 @@ DATA_DIR = Path(__file__).parent.parent / "data"
 
 ACCOUNTS = [
     {
-        "label":     "NT (Darwin)",
-        "session":   DATA_DIR / "session.json",
-        "email_env": "FRESHA_EMAIL",
-        "pass_env":  "FRESHA_PASSWORD",
+        "label":     "Admin (all workspaces)",
+        "session":   DATA_DIR / "session_admin.json",
+        "email_env": "TOWNSVILLE_FRESHA_EMAIL",
+        "pass_env":  "TOWNSVILLE_FRESHA_PASSWORD",
         "timezone":  timezone(timedelta(hours=9, minutes=30)),
-    },
-    {
-        "label":     "QLD (Cairns)",
-        "session":   DATA_DIR / "session_cairns.json",
-        "email_env": "CAIRNS_FRESHA_EMAIL",
-        "pass_env":  "CAIRNS_FRESHA_PASSWORD",
-        "timezone":  timezone(timedelta(hours=10)),
     },
 ]
 
@@ -58,35 +51,12 @@ async def keepalive(account, playwright):
         await page.goto("https://partners.fresha.com/reports", wait_until="networkidle", timeout=60000)
         await page.wait_for_timeout(3000)
 
-        if "/users/sign-in" in page.url:
-            print(f"  Session expired — attempting login...")
-            email    = os.environ.get(account["email_env"], "")
-            password = os.environ.get(account["pass_env"], "")
-
-            try:
-                await page.get_by_role("button", name="Accept all").click(timeout=5000)
-            except Exception:
-                pass
-
-            email_field = page.locator('input[placeholder="Enter your email address"]')
-            await email_field.wait_for(timeout=10000)
-            await email_field.fill(email)
-            await page.click('[data-qa="continue"]', force=True)
-            await page.wait_for_selector('input[type="password"]:not([tabindex="-1"])', timeout=15000)
-            await page.locator('input[type="password"]:not([tabindex="-1"])').fill(password)
-
-            try:
-                await page.locator('button[type="submit"]').click(force=True, timeout=5000)
-            except Exception:
-                await page.keyboard.press("Enter")
-
-            await page.wait_for_url(lambda url: "/users/sign-in" not in url, timeout=60000)
-
-            if "/users/sign-in" in page.url:
-                print(f"  Login failed.")
-                return False
-
-            print(f"  Logged in successfully.")
+        if "/users/sign-in" in page.url or "/users/login" in page.url:
+            # Session expired — cannot auto-login (Fresha now uses OTP via email).
+            # Run agent/login_townsville.py manually to refresh the session.
+            print(f"  Session expired — manual re-login required.")
+            print(f"  Run:  python agent/login_townsville.py")
+            return False
 
         await context.storage_state(path=str(session_file))
         print(f"  Session refreshed OK.")

@@ -105,6 +105,7 @@ XERO_TO_FRESHA = {
     "zaeb rix":             "zaeb edward rix",
     "rohit shantaram":      "rohit more",
     "jack bastock":         "jack william bastock",
+    "eric kearney":         "eric kearny",
 }
 
 # Maps normalised Xero employee name → location(s) whose product sales fund their commission.
@@ -117,11 +118,11 @@ LOCATION_COMMISSION = {
     "wilfred vidal":        ["Diamond Barbers - YARRAWONGA"],
     "airol basallo":        ["Diamond Barbers - BELLAMACK"],
     "anthony crispo":       ["Diamond Barbers - COOLALINGA"],
-    "brazil lamsen":        ["Diamond Barbers Wulguru"],
+    "brazil lamsen":        ["Diamond Barbers Wulguru New"],
     "jerry guevarra":       ["Diamond Barbers Showgrounds",
                              "Diamond Barbers Night Markets",
                              "Diamond Barbers Northern Beaches"],
-    "alfon amora":          ["Diamond Barbers Rising Sun"],
+    "alfon amora":          ["Diamond Barbers Rising Sun New"],
 }
 
 
