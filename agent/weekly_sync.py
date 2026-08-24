@@ -52,6 +52,7 @@ GHL_HEADERS     = {
 ACCOUNTS = [
     {
         "label":               "NT (Darwin)",
+        "workspace_name":      "Darwin",
         "session":             DATA_DIR / "session_admin.json",
         "email_env":           "TOWNSVILLE_FRESHA_EMAIL",
         "pass_env":            "TOWNSVILLE_FRESHA_PASSWORD",
@@ -64,6 +65,7 @@ ACCOUNTS = [
     },
     {
         "label":               "QLD (Cairns)",
+        "workspace_name":      "Cairns",
         "session":             DATA_DIR / "session_admin.json",
         "email_env":           "TOWNSVILLE_FRESHA_EMAIL",
         "pass_env":            "TOWNSVILLE_FRESHA_PASSWORD",
@@ -78,6 +80,7 @@ ACCOUNTS = [
     },
     {
         "label":               "QLD (Townsville)",
+        "workspace_name":      "Townsville",
         "session":             DATA_DIR / "session_admin.json",
         "email_env":           "TOWNSVILLE_FRESHA_EMAIL",
         "pass_env":            "TOWNSVILLE_FRESHA_PASSWORD",
@@ -739,6 +742,39 @@ async def ensure_logged_in(account, page, context, checklist):
     print("  Session saved.")
 
 
+# ── Workspace switcher ────────────────────────────────────────────────────────
+
+_KNOWN_WORKSPACES = ["Darwin", "Townsville", "Cairns"]
+
+async def switch_workspace(account, page):
+    target = account.get("workspace_name")
+    if not target:
+        return
+    print(f"  [WORKSPACE] Switching to '{target}'...")
+    try:
+        # Find the workspace switcher button — it shows the current workspace name
+        switcher = None
+        for name in _KNOWN_WORKSPACES:
+            btn = page.get_by_role("button", name=name, exact=True)
+            if await btn.count() > 0:
+                if name == target:
+                    print(f"  [WORKSPACE] Already on '{target}' — no switch needed.")
+                    return
+                switcher = btn
+                break
+        if switcher is None:
+            print(f"  [WORKSPACE] Warning: workspace switcher button not found.")
+            return
+        await switcher.click(timeout=5000)
+        await page.wait_for_timeout(1500)
+        # Click the target workspace in the dropdown panel
+        await page.get_by_role("button", name=target, exact=True).click(timeout=5000)
+        await page.wait_for_timeout(3000)
+        print(f"  [WORKSPACE] Switched to '{target}' OK.")
+    except Exception as e:
+        print(f"  [WORKSPACE] Warning: switch to '{target}' failed: {e}")
+
+
 # ── Fresha performance CSV download ───────────────────────────────────────────
 
 async def download_performance_csvs(account, page, context, checklist, date_from_fallback, date_to_fallback):
@@ -746,8 +782,11 @@ async def download_performance_csvs(account, page, context, checklist, date_from
     pid   = account["provider_id"]
     print(f"\n  [PERFORMANCE] Navigating to Performance Summary...")
 
+    # Switch to the correct Fresha workspace before loading reports
+    await switch_workspace(account, page)
+
     await page.goto(
-        f"https://partners.fresha.com/reports/table/performance-summary?__pid={pid}",
+        "https://partners.fresha.com/reports/table/performance-summary",
         wait_until="networkidle"
     )
     await page.wait_for_timeout(4000)
