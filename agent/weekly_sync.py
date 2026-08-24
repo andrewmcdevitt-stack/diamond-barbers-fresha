@@ -746,31 +746,70 @@ async def ensure_logged_in(account, page, context, checklist):
 
 _KNOWN_WORKSPACES = ["Darwin", "Townsville", "Cairns"]
 
+async def _click_any(page, name, timeout=5000):
+    """Try to click an element matching `name` text across several element types."""
+    for loc in [
+        page.get_by_role("button",   name=name, exact=True),
+        page.get_by_role("option",   name=name, exact=True),
+        page.get_by_role("menuitem", name=name, exact=True),
+        page.get_by_role("link",     name=name, exact=True),
+        page.locator(f'[aria-label="{name}"]'),
+        page.locator(f'text="{name}"').first,
+    ]:
+        try:
+            if await loc.count() > 0:
+                await loc.click(timeout=timeout)
+                return True
+        except Exception:
+            continue
+    return False
+
+
 async def switch_workspace(account, page):
     target = account.get("workspace_name")
     if not target:
         return
     print(f"  [WORKSPACE] Switching to '{target}'...")
     try:
-        # Find the workspace switcher button — it shows the current workspace name
-        switcher = None
+        # Step 1: find the switcher by detecting which workspace is currently shown
+        current = None
         for name in _KNOWN_WORKSPACES:
-            btn = page.get_by_role("button", name=name, exact=True)
-            if await btn.count() > 0:
-                if name == target:
-                    print(f"  [WORKSPACE] Already on '{target}' — no switch needed.")
-                    return
-                switcher = btn
+            for loc in [
+                page.get_by_role("button", name=name, exact=True),
+                page.locator(f'text="{name}"').first,
+            ]:
+                try:
+                    if await loc.count() > 0:
+                        current = name
+                        break
+                except Exception:
+                    continue
+            if current:
                 break
-        if switcher is None:
-            print(f"  [WORKSPACE] Warning: workspace switcher button not found.")
+
+        if current == target:
+            print(f"  [WORKSPACE] Already on '{target}' — no switch needed.")
             return
-        await switcher.click(timeout=5000)
+
+        # Step 2: click the switcher to open the workspace panel
+        if current:
+            opened = await _click_any(page, current, timeout=5000)
+        else:
+            opened = False
+
+        if not opened:
+            print(f"  [WORKSPACE] Warning: workspace switcher not found.")
+            return
+
         await page.wait_for_timeout(1500)
-        # Click the target workspace in the dropdown panel
-        await page.get_by_role("button", name=target, exact=True).click(timeout=5000)
-        await page.wait_for_timeout(3000)
-        print(f"  [WORKSPACE] Switched to '{target}' OK.")
+
+        # Step 3: click the target workspace in the panel
+        clicked = await _click_any(page, target, timeout=5000)
+        if clicked:
+            await page.wait_for_timeout(3000)
+            print(f"  [WORKSPACE] Switched to '{target}' OK.")
+        else:
+            print(f"  [WORKSPACE] Warning: '{target}' not found in workspace panel.")
     except Exception as e:
         print(f"  [WORKSPACE] Warning: switch to '{target}' failed: {e}")
 
