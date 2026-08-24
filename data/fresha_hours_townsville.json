@@ -1,0 +1,73 @@
+{
+  "date_from": "2026-08-17",
+  "date_to": "2026-08-23",
+  "generated": "2026-08-24T02:58:09.531202+00:00",
+  "summary": {
+    "Michel Medina": {
+      "monday": 9.0,
+      "tuesday": 9.0,
+      "wednesday": 6.0,
+      "thursday": 9.0,
+      "friday": 4.0,
+      "saturday": 0.0,
+      "sunday": 5.0,
+      "public_holiday": 0.0,
+      "total_hrs": 42.0
+    },
+    "Jack William Bastock": {
+      "monday": 0.0,
+      "tuesday": 8.0,
+      "wednesday": 8.0,
+      "thursday": 6.0,
+      "friday": 7.0,
+      "saturday": 9.0,
+      "sunday": 0.0,
+      "public_holiday": 0.0,
+      "total_hrs": 38.0
+    },
+    "D Mataele": {
+      "monday": 9.0,
+      "tuesday": 6.5,
+      "wednesday": 0.0,
+      "thursday": 7.5,
+      "friday": 5.0,
+      "saturday": 9.0,
+      "sunday": 5.0,
+      "public_holiday": 0.0,
+      "total_hrs": 42.0
+    },
+    "Alfon Amora": {
+      "monday": 10.0,
+      "tuesday": 0.0,
+      "wednesday": 9.0,
+      "thursday": 9.0,
+      "friday": 9.0,
+      "saturday": 9.0,
+      "sunday": 5.0,
+      "public_holiday": 0.0,
+      "total_hrs": 51.0
+    },
+    "Nelson Diwa": {
+      "monday": 0.0,
+      "tuesday": 9.0,
+      "wednesday": 9.0,
+      "thursday": 9.0,
+      "friday": 8.5,
+      "saturday": 9.0,
+      "sunday": 5.0,
+      "public_holiday": 0.0,
+      "total_hrs": 49.5
+    },
+    "Andrew Mcdevitt": {
+      "monday": 9.0,
+      "tuesday": 19.0,
+      "wednesday": 19.0,
+      "thursday": 21.0,
+      "friday": 19.0,
+      "saturday": 18.0,
+      "sunday": 5.0,
+      "public_holiday": 0.0,
+      "total_hrs": 110.0
+    }
+  }
+}
