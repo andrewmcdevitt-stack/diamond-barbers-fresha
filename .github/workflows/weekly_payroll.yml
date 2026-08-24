@@ -64,11 +64,13 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "GitHub Actions"
-          git add data/performance_summary.json data/cairns_performance_summary.json \
-                  data/townsville_performance_summary.json \
-                  data/fresha_hours_nt.json data/fresha_hours_qld.json \
-                  data/fresha_hours_townsville.json \
-                  data/night_markets_bonus.json
+          for f in data/performance_summary.json data/cairns_performance_summary.json \
+                   data/townsville_performance_summary.json \
+                   data/fresha_hours_nt.json data/fresha_hours_qld.json \
+                   data/fresha_hours_townsville.json \
+                   data/night_markets_bonus.json; do
+            [ -f "$f" ] && git add "$f"
+          done
           git diff --staged --quiet && echo "No changes." || (
             git commit -m "chore: weekly sync $(date -u +'%Y-%m-%d')" &&
             git pull --rebase --autostash origin main &&
