@@ -1572,16 +1572,25 @@ async def run():
                 print(f"  Saved {hours_json_path.name} ({len(hours_summary)} staff)")
 
             # ── Step 2: Download performance CSVs (browser navigation) ────────
-            try:
-                csv_path, loc_csv_path, date_from, date_to = await download_performance_csvs(
-                    account, page, context, checklist, date_from, date_to
-                )
-                acct["csv_files"].append(csv_path)
-                if loc_csv_path:
-                    acct["csv_files"].append(loc_csv_path)
-            except Exception as e:
-                msg = f"Performance CSV download failed: {e}"
-                print(f"  ERROR {msg}")
+            csv_path = loc_csv_path = None
+            perf_error = None
+            for _attempt in range(1, 4):
+                try:
+                    csv_path, loc_csv_path, date_from, date_to = await download_performance_csvs(
+                        account, page, context, checklist, date_from, date_to
+                    )
+                    perf_error = None
+                    break
+                except Exception as e:
+                    perf_error = e
+                    if _attempt < 3:
+                        print(f"  RETRY {_attempt}/3 — performance CSV failed ({e.__class__.__name__}), retrying in 10s...")
+                        await page.wait_for_timeout(10000)
+                    else:
+                        print(f"  ERROR Performance CSV download failed after 3 attempts: {e}")
+
+            if perf_error is not None:
+                msg = f"Performance CSV download failed: {perf_error}"
                 acct["issues"].append(msg)
                 acct["status"] = "partial" if acct["hours_pushed"] > 0 else "error"
                 screenshot = str(DATA_DIR / f"error_{label.split()[0].lower()}.png")
@@ -1590,6 +1599,11 @@ async def run():
                 await browser.close()
                 sync_results.append(acct)
                 continue
+
+            if csv_path:
+                acct["csv_files"].append(csv_path)
+            if loc_csv_path:
+                acct["csv_files"].append(loc_csv_path)
 
             # Parse staff CSV
             try:
