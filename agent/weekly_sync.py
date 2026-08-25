@@ -1622,6 +1622,8 @@ async def run():
             # Parse staff CSV
             try:
                 perf_data = parse_staff_csv(csv_path, api_key, date_from, date_to)
+                for s in perf_data.get("staff", []):
+                    s["name"] = FRESHA_NAME_MAP.get(s["name"].lower(), s["name"])
             except Exception as e:
                 msg = f"Staff CSV parsing failed: {e}"
                 print(f"  ERROR {msg}")
