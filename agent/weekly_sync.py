@@ -147,6 +147,13 @@ MANAGER_LOCATIONS = {
     "Brazil Lamsen":       ["Diamond Barbers Wulguru"],
 }
 
+# Normalise Fresha name variants → canonical GHL name before any lookup/create.
+# Keyed lowercase for case-insensitive matching.
+FRESHA_NAME_MAP = {
+    "eric kearney": "Eric Kearney",
+    "eric kearny":  "Eric Kearney",
+}
+
 DAY_NAMES = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
 
@@ -396,6 +403,7 @@ async def fetch_hours(account, context, date_from, date_to):
 # ── GHL payroll record upsert ──────────────────────────────────────────────────
 
 def ghl_upsert_payroll(employee_name, week_start, week_end, xero_org, hours):
+    employee_name = FRESHA_NAME_MAP.get(employee_name.lower(), employee_name)
     if not GHL_API_KEY:
         return "no_key"
 
@@ -455,6 +463,7 @@ def ghl_upsert_payroll(employee_name, week_start, week_end, xero_org, hours):
 
 
 def ghl_update_performance(employee_name, week_start, tips, commissions, service_sales_exc_gst, occupancy_rate):
+    employee_name = FRESHA_NAME_MAP.get(employee_name.lower(), employee_name)
     if not GHL_API_KEY:
         return "no_key"
 
@@ -549,6 +558,7 @@ def ghl_upsert_location(location_name, week_start, week_end, location_label, ser
 
 def ghl_update_bonus(employee_name, week_start, bonus):
     """Push Night Markets 50-50 service bonus to the GHL payroll record's bonus field."""
+    employee_name = FRESHA_NAME_MAP.get(employee_name.lower(), employee_name)
     if not GHL_API_KEY:
         return "no_key"
 
