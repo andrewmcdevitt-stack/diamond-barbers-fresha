@@ -23,9 +23,11 @@
             background: #000000;
             color: #FFFFFF;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            box-sizing: border-box;
             width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
             padding: 2rem 2.5rem;
-            th
         }
 
         /* ── Header ── */
@@ -45,7 +47,7 @@
 
         #db-root .db-subtitle {
             font-size: 0.82rem;
-            color: #888888;
+            color: #FFFFFF;
             margin-top: 0.25rem;
         }
 
@@ -62,7 +64,7 @@
             outline: none;
             appearance: none;
             -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23888888' d='M5 7L0 2h10z'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23CCCCCC' d='M5 7L0 2h10z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 0.85rem center;
         }
@@ -83,7 +85,7 @@
         #db-root .card-label {
             font-size: 0.72rem;
             font-weight: 600;
-            color: #888888;
+            color: #FFFFFF;
             text-transform: uppercase;
             letter-spacing: 0.07em;
             margin-bottom: 0.6rem;
@@ -104,7 +106,7 @@
 
         #db-root .card-period {
             font-size: 0.75rem;
-            color: #888888;
+            color: #FFFFFF;
         }
 
         /* ── KPI row ── */
@@ -130,7 +132,7 @@
 
         #db-root .kpi-sub {
             font-size: 0.75rem;
-            color: #888888;
+            color: #FFFFFF;
         }
 
         /* ── Pill badge ── */
@@ -180,7 +182,7 @@
         }
 
         #db-root .bd-label {
-            color: #888888;
+            color: #FFFFFF;
         }
 
         #db-root .bd-value {
@@ -214,7 +216,7 @@
         }
 
         #db-root .staff-table thead th {
-            color: #888888;
+            color: #FFFFFF;
             font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -257,7 +259,7 @@
             padding: 0.12rem 0.45rem;
             font-size: 0.7rem;
             font-weight: 700;
-            color: #888888;
+            color: #FFFFFF;
             min-width: 2rem;
         }
 
@@ -305,7 +307,7 @@
 
         #db-root .loc-sub {
             font-size: 0.72rem;
-            color: #888888;
+            color: #FFFFFF;
             margin-bottom: 0.6rem;
         }
 
@@ -315,7 +317,7 @@
             align-items: center;
             justify-content: center;
             height: 300px;
-            color: #888888;
+            color: #FFFFFF;
             font-size: 0.9rem;
         }
 
@@ -330,6 +332,7 @@
         /* ── Tabs ── */
         #db-root .tab-bar {
             display: flex;
+            flex-wrap: wrap;
             gap: 0.5rem;
             margin-bottom: 1.75rem;
         }
@@ -338,7 +341,7 @@
             background: #1A1A1A;
             border: 1px solid #2A2A2A;
             border-radius: 20px;
-            color: #888888;
+            color: #FFFFFF;
             padding: 0.45rem 1.4rem;
             font-size: 0.88rem;
             font-family: 'Inter', sans-serif;
@@ -356,13 +359,55 @@
 
         #db-root .tab-btn:hover:not(.active) {
             border-color: #444444;
-            color: #CCCCCC;
+            color: #FFFFFF;
         }
+
+        /* ── Share-view toggle ── */
+        #db-root .share-btn {
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 20px;
+            color: #FFFFFF;
+            padding: 0.45rem 1.1rem;
+            font-size: 0.82rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            margin-left: auto;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        #db-root .share-btn.active {
+            background: #0D2E1A;
+            border-color: #34D399;
+            color: #34D399;
+        }
+        #db-root .share-btn:hover:not(.active) {
+            border-color: #444444;
+            color: #FFFFFF;
+        }
+
+        /* Share-mode column visibility */
+        #db-root .sh-show { display: none; }
+        #db-root.share-mode .sh-show { display: table-cell; }
+        #db-root.share-mode .sh-hide { display: none; }
+        #db-root.share-mode .kpi-row { display: none; }
+        #db-root.share-mode .occ-chart-card { display: none; }
+        #db-root.share-mode .loc-perf-card { display: none; }
+        #db-root.share-mode .staff-table thead th { color: #FFFFFF; }
+        #db-root.share-mode .card-period { color: #FFFFFF; }
+        #db-root.share-mode .db-subtitle { color: #FFFFFF; }
 
         /* ── Responsive ── */
         @media (max-width: 900px) {
             #db-root {
                 padding: 1rem;
+            }
+
+            #db-root .share-btn {
+                margin-left: 0;
+                width: 100%;
+                text-align: center;
             }
 
             #db-root .kpi-row {
@@ -410,7 +455,7 @@
         <div
             style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:16px;padding:2.5rem;width:100%;max-width:360px;text-align:center;font-family:Inter,sans-serif;">
             <div style="font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:0.4rem;">Diamond Barbers</div>
-            <div style="font-size:0.8rem;color:#888;margin-bottom:1.75rem;">Enter your password to continue</div>
+            <div style="font-size:0.8rem;color:#FFFFFF;margin-bottom:1.75rem;">Enter your password to continue</div>
             <input id="pw-input" type="password" placeholder="Password"
                 style="width:100%;background:#000;border:1px solid #2A2A2A;border-radius:8px;color:#fff;padding:0.75rem 1rem;font-size:0.95rem;outline:none;margin-bottom:0.75rem;"
                 onkeydown="if(event.key==='Enter')checkPw()">
@@ -451,6 +496,7 @@
             <button class="tab-btn" data-tab="cairns" onclick="onTabChange('cairns')">Cairns</button>
             <button class="tab-btn" data-tab="townsville" onclick="onTabChange('townsville')">Townsville</button>
             <button class="tab-btn" data-tab="payroll" onclick="onTabChange('payroll')">Payroll</button>
+            <button id="share-toggle-btn" class="share-btn" onclick="toggleShareMode()">Share View</button>
         </div>
         <div id="app">
             <div class="loading">Loading dashboard…</div>
@@ -474,7 +520,7 @@
             red: '#FF3333',
             green: '#34D399',
             blue: '#3B82F6',
-            muted: '#888888',
+            muted: '#FFFFFF',
             card: '#1A1A1A',
             border: '#2A2A2A',
             text: '#FFFFFF',
@@ -499,6 +545,7 @@
         let townsvilleHoursData = null;
         let nightMarketsBonus = null;
         let activeTab = 'darwin';
+        let shareMode = false;
 
         // ── Formatters ────────────────────────────────────────────────────────────────
         const fc = v => `A$ ${(parseFloat(v) || 0).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -517,6 +564,49 @@
         function occLabel(v) {
             v = parseFloat(v) || 0;
             return v >= 80 ? 'On target ≥ 80%' : v >= 60 ? 'Needs attention 60–79%' : 'Below target < 60%';
+        }
+
+        // ── Share-view helpers ────────────────────────────────────────────────────────
+        function toggleShareMode() {
+            shareMode = !shareMode;
+            document.getElementById('db-root').classList.toggle('share-mode', shareMode);
+            const btn = document.getElementById('share-toggle-btn');
+            if (btn) btn.classList.toggle('active', shareMode);
+        }
+
+        function buildXeroHoursMap() {
+            // Build name → total_hours from Xero payroll data (all earnings line types summed)
+            const map = {};
+            if (!payrollData) return map;
+            for (const loc of (payrollData.locations || [])) {
+                for (const emp of (loc.employees || [])) {
+                    if (emp.total_hours != null) {
+                        map[normName(emp.name)] = emp.total_hours;
+                    }
+                }
+            }
+            return map;
+        }
+
+        function buildTabHoursMap() {
+            // Prefer Xero hours (includes leave + public holidays); fall back to Fresha scheduled hours
+            const xeroMap = buildXeroHoursMap();
+            if (Object.keys(xeroMap).length > 0) return xeroMap;
+            const data = activeTab === 'darwin' ? ntHoursData : activeTab === 'cairns' ? qldHoursData : townsvilleHoursData;
+            const map = {};
+            if (!data || !data.summary) return map;
+            for (const [name, h] of Object.entries(data.summary)) {
+                map[normName(name)] = typeof h === 'object' ? (h.total_hrs || 0) : h;
+            }
+            return map;
+        }
+
+        function calcBonusTier(revPerHour, servicesExGst) {
+            if (revPerHour === null || servicesExGst <= 0) return null;
+            if (revPerHour >= 90) return { pct: 6, amount: servicesExGst * 0.06, color: C.green, label: '6% Bonus' };
+            if (revPerHour >= 80) return { pct: 4, amount: servicesExGst * 0.04, color: C.amber, label: '4% Bonus' };
+            if (revPerHour >= 75) return { pct: 2, amount: servicesExGst * 0.02, color: C.gold,  label: '2% Bonus' };
+            return null;
         }
 
         // ── Main render ───────────────────────────────────────────────────────────────
@@ -571,6 +661,7 @@
         </div>`;
             }).join('');
 
+            const tabHoursMap = buildTabHoursMap();
             const staffRows = sortedStaff.map((s, i) => {
                 const rank = i + 1;
                 const cls = rank <= 3 ? `r${rank}` : '';
@@ -581,17 +672,26 @@
                         ? `<td class="r"><span class="pill" style="background:${bg};color:${col};">${fp(s.occupancy_pct)}</span></td>`
                         : `<td class="r">—</td>`)
                     : '';
+                const svcExGst = (parseFloat(s.services) || 0) / 1.1;
+                const hrs = matchHours(s.name, tabHoursMap);
+                const revPerHr = (hrs !== null && hrs > 0) ? svcExGst / hrs : null;
+                const bonus = calcBonusTier(revPerHr, svcExGst);
+                const revHrCell = `<td class="r sh-show" style="font-weight:700;font-variant-numeric:tabular-nums;">${revPerHr !== null ? `$${revPerHr.toFixed(0)}/hr` : `<span style="color:${C.muted}">—</span>`}</td>`;
+                const bonusCell = bonus
+                    ? `<td class="r sh-show"><div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.1rem;"><span style="font-weight:800;color:${bonus.color};font-variant-numeric:tabular-nums;">${fc(bonus.amount)}</span><span style="font-size:0.65rem;font-weight:700;color:${bonus.color};text-transform:uppercase;letter-spacing:0.06em;">${bonus.label}</span></div></td>`
+                    : `<td class="r sh-show"><span style="color:${C.muted}">—</span></td>`;
                 return `
         <tr>
-            <td><span class="rank ${cls}">#${rank}</span></td>
+            <td class="sh-hide"><span class="rank ${cls}">#${rank}</span></td>
             <td style="font-weight:600;">${s.name || '—'}</td>
-            <td class="r" style="color:${C.gold};font-weight:700;">${fc((parseFloat(s.services) || 0) / 1.1 + (parseFloat(s.products) || 0) / 1.1 + (parseFloat(s.tips) || 0))}</td>
-            <td class="r">${fc((parseFloat(s.services) || 0) / 1.1)}</td>
-            <td class="r">${fc((parseFloat(s.products) || 0) / 1.1)}</td>
-            <td class="r">${fc(s.tips)}</td>
-            <td class="r">${fi(s.total_appts)}</td>
-            <td class="r" style="color:${C.red};">${fi(s.cancelled_appts)}</td>
+            <td class="r sh-hide" style="color:${C.gold};font-weight:700;">${fc((parseFloat(s.services) || 0) / 1.1 + (parseFloat(s.products) || 0) / 1.1 + (parseFloat(s.tips) || 0))}</td>
+            <td class="r sh-hide">${fc((parseFloat(s.services) || 0) / 1.1)}</td>
+            <td class="r sh-hide">${fc((parseFloat(s.products) || 0) / 1.1)}</td>
+            <td class="r sh-hide">${fc(s.tips)}</td>
+            <td class="r sh-hide" style="font-variant-numeric:tabular-nums;">${hrs !== null ? `${hrs.toFixed(1)} hrs` : `<span style="color:${C.muted}">—</span>`}</td>
             ${occCell}
+            ${revHrCell}
+            ${bonusCell}
         </tr>`;
             }).join('');
 
@@ -625,7 +725,7 @@
             </div>
         </div>
 
-        <div class="db-card">
+        <div class="db-card occ-chart-card">
             <div class="card-title" style="margin-bottom:1rem;">Occupancy Rate</div>
             <div id="occChart"></div>
         </div>
@@ -640,15 +740,16 @@
                 <div class="table-wrap">
                     <table class="staff-table">
                         <thead><tr>
-                            <th>Rank</th>
+                            <th class="sh-hide">Rank</th>
                             <th>Name</th>
-                            <th class="r">Total</th>
-                            <th class="r">Services</th>
-                            <th class="r">Products</th>
-                            <th class="r">Tips</th>
-                            <th class="r">Appts</th>
-                            <th class="r">Cancelled</th>
+                            <th class="r sh-hide">Total</th>
+                            <th class="r sh-hide">Services</th>
+                            <th class="r sh-hide">Products</th>
+                            <th class="r sh-hide">Tips</th>
+                            <th class="r sh-hide">Hours</th>
                             ${hasOccCol ? '<th class="r">Occupancy</th>' : ''}
+                            <th class="r sh-show">$/hr</th>
+                            <th class="r sh-show">Bonus</th>
                         </tr></thead>
                         <tbody>${staffRows}</tbody>
                     </table>
@@ -657,7 +758,7 @@
         </div>
 
         ${locations.length ? `
-        <div class="db-card" style="margin-bottom:1rem;">
+        <div class="db-card loc-perf-card" style="margin-bottom:1rem;">
             <div class="card-header">
                 <div class="card-title">Location Performance</div>
                 <div class="card-period">${period}</div>
@@ -665,7 +766,7 @@
             <div class="location-row">${locationCards}</div>
         </div>` : ''}
 
-        <div class="footer">Diamond Barbers &nbsp;·&nbsp; Updated every Monday 6:00 AM Darwin time</div>
+        <div class="footer">Diamond Barbers &nbsp;·&nbsp; Performance updated every Monday 6:00 AM Darwin time</div>
     `;
 
             renderOccChart(staff);
@@ -781,6 +882,7 @@
             'ashleigh campbell': 'ashleigh campbell alexis',
             'ethan byrne': 'ethan 🇮🇪',
             'eric kearny': 'eric kearney',
+            'eric kearney': 'eric kearny',
         };
 
         function buildStaffServiceMap(payPeriodStart) {
@@ -1029,7 +1131,7 @@
             </div>
         </div>
 
-        <div class="footer">Diamond Barbers &nbsp;·&nbsp; Payroll from Xero · Services from Fresha &nbsp;·&nbsp; Updated every Monday 6:00 AM Darwin time</div>
+        <div class="footer">Diamond Barbers &nbsp;·&nbsp; Payroll from Xero · Services from Fresha &nbsp;·&nbsp; Payroll updated every Tuesday 12:00 PM Darwin time</div>
     `;
         }
 

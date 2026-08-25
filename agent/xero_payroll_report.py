@@ -64,6 +64,7 @@ TOWNSVILLE_EMPLOYEES = [
     "Brazil Lamsen",
     "Dion Mataele",
     "Jack Bastock",
+    "Michel Medina",
     "Nelson Diwa",
 ]
 
@@ -221,6 +222,7 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
 
     # Per-employee: read Wages, Tax, Super, NetPay directly from payslip stubs
     # These fields are always present in the PayRun detail response.
+    # Also fetch individual payslip EarningsLines to sum total paid hours.
     employees = []
     for stub in payslip_stubs:
         first     = stub.get("FirstName", "")
@@ -235,12 +237,28 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
         if " ".join(name.lower().split()) in EXCLUDED_EMPLOYEES:
             continue
 
+        # Fetch payslip detail to sum hours across all earnings line types
+        # (Mon–Sun ordinary, annual leave, personal leave, public holiday worked/not worked)
+        total_hours = None
+        payslip_id  = stub.get("PayslipID")
+        if payslip_id:
+            try:
+                ps_detail = xero_get(
+                    f"/payroll.xro/1.0/Payslips/{payslip_id}",
+                    tenant_id, access_token,
+                )
+                earnings = ps_detail.get("Payslips", [{}])[0].get("EarningsLines", [])
+                total_hours = round(sum(float(l.get("NumberOfUnits", 0) or 0) for l in earnings), 2)
+            except Exception as e:
+                print(f"    WARN: could not fetch payslip {payslip_id} for {name}: {e}")
+
         employees.append({
-            "name":  name,
-            "gross": emp_total,
-            "net":   round(emp_net, 2),
-            "tax":   round(emp_tax, 2),
-            "super": round(emp_super, 2),
+            "name":         name,
+            "gross":        emp_total,
+            "net":          round(emp_net, 2),
+            "tax":          round(emp_tax, 2),
+            "super":        round(emp_super, 2),
+            "total_hours":  total_hours,
         })
 
     # Location totals summed from included employees only

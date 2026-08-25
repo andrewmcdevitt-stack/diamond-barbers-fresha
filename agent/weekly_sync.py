@@ -78,6 +78,12 @@ ACCOUNTS = [
         # These locations now live in the Townsville workspace — skip them here
         "skip_locations":      {"Diamond Barbers Rising Sun", "Diamond Barbers Wulguru",
                                "OLD RISING SUN", "OLD WULGURU"},
+        # These staff are registered in both workspaces; exclude from Cairns so they
+        # only appear under Townsville in the dashboard.
+        "skip_staff":          {"Alfon Amora", "Bailey Wosomo", "Brazil Lamsen",
+                               "D Mataele", "Dion Mataele",
+                               "Jack Bastock", "Jack William Bastock",
+                               "Michel Medina", "Nelson Diwa"},
     },
     {
         "label":               "QLD (Townsville)",
@@ -1624,6 +1630,12 @@ async def run():
                 perf_data = parse_staff_csv(csv_path, api_key, date_from, date_to)
                 for s in perf_data.get("staff", []):
                     s["name"] = FRESHA_NAME_MAP.get(s["name"].lower(), s["name"])
+                skip_staff_lower = {n.lower() for n in acct.get("skip_staff", set())}
+                if skip_staff_lower:
+                    perf_data["staff"] = [
+                        s for s in perf_data.get("staff", [])
+                        if s["name"].lower() not in skip_staff_lower
+                    ]
             except Exception as e:
                 msg = f"Staff CSV parsing failed: {e}"
                 print(f"  ERROR {msg}")
