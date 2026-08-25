@@ -118,7 +118,7 @@ LOCATION_COMMISSION = {
     "wilfred vidal":        ["Diamond Barbers - YARRAWONGA"],
     "airol basallo":        ["Diamond Barbers - BELLAMACK"],
     "anthony crispo":       ["Diamond Barbers - COOLALINGA"],
-    "brazil lamsen":        ["Diamond Barbers Wulguru New"],
+    "brazil lamsen":        ["Diamond Barbers Wulguru"],
     "jerry guevarra":       ["Diamond Barbers Showgrounds",
                              "Diamond Barbers Night Markets",
                              "Diamond Barbers Northern Beaches"],

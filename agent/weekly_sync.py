@@ -127,6 +127,7 @@ LOCATION_TO_ORG = {
     # Townsville workspace locations
     "Diamond Barbers Rising Sun":        "Diamond Barbers Townsville",
     "Diamond Barbers Rising Sun New":   "Diamond Barbers Townsville",
+    "Diamond Barbers Wulguru":          "Diamond Barbers Townsville",
     "Diamond Barbers Wulguru New":      "Diamond Barbers Townsville",
     "Diamond Barbers | Garbutt":        "Diamond Barbers Townsville",
 }
@@ -143,7 +144,7 @@ MANAGER_LOCATIONS = {
     "Jerry Guevarra":      ["Diamond Barbers Showgrounds", "Diamond Barbers Night Markets",
                             "Diamond Barbers Northern Beaches"],
     "Alfon Amora":         ["Diamond Barbers Rising Sun"],
-    "Brazil Lamsen":       ["Diamond Barbers Wulguru New"],
+    "Brazil Lamsen":       ["Diamond Barbers Wulguru"],
 }
 
 DAY_NAMES = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
