@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diamond Barbers — Performance Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -398,6 +399,29 @@
         #db-root.share-mode .card-period { color: #FFFFFF; }
         #db-root.share-mode .db-subtitle { color: #FFFFFF; }
 
+        /* Download PNG button — only visible in share mode */
+        #db-root .dl-png-btn { display: none; }
+        #db-root.share-mode .dl-png-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 20px;
+            color: #FFFFFF;
+            padding: 0.45rem 1.1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            cursor: pointer;
+            outline: none;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        #db-root.share-mode .dl-png-btn:hover {
+            background: #242424;
+            border-color: #444444;
+        }
+
         /* ── Responsive ── */
         @media (max-width: 900px) {
             #db-root {
@@ -574,6 +598,24 @@
             if (btn) btn.classList.toggle('active', shareMode);
         }
 
+        function downloadTablePng() {
+            const card = document.querySelector('#db-root .bottom-row .db-card');
+            if (!card) return;
+            const today = new Date().toISOString().slice(0, 10);
+            const filename = `diamond-barbers-${activeTab}-${today}.png`;
+            html2canvas(card, {
+                backgroundColor: '#000000',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
         function buildXeroHoursMap() {
             // Build name → total_hours from Xero payroll data (all earnings line types summed)
             const map = {};
@@ -733,11 +775,12 @@
 
         <div class="bottom-row">
             <div class="db-card">
-                <div class="card-header">
+                <div class="card-header" id="staff-perf-card-header">
                     <div class="card-title">Staff Performance</div>
                     <div class="card-period">${period} · ranked by sales</div>
+                    <button class="dl-png-btn" onclick="downloadTablePng()">&#8681; Download PNG</button>
                 </div>
-                <div class="table-wrap">
+                <div class="table-wrap" id="staff-perf-table-wrap">
                     <table class="staff-table">
                         <thead><tr>
                             <th class="sh-hide">Rank</th>
