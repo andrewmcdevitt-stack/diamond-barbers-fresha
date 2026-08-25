@@ -449,6 +449,7 @@
         <div class="tab-bar" id="tab-bar">
             <button class="tab-btn active" data-tab="darwin" onclick="onTabChange('darwin')">Darwin</button>
             <button class="tab-btn" data-tab="cairns" onclick="onTabChange('cairns')">Cairns</button>
+            <button class="tab-btn" data-tab="townsville" onclick="onTabChange('townsville')">Townsville</button>
             <button class="tab-btn" data-tab="payroll" onclick="onTabChange('payroll')">Payroll</button>
         </div>
         <div id="app">
@@ -458,12 +459,14 @@
 
     <script>
         // ── Config ────────────────────────────────────────────────────────────────────
-        const DATA_URL              = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/performance_summary.json';
-        const CAIRNS_DATA_URL       = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/cairns_performance_summary.json';
-        const PAYROLL_DATA_URL      = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/xero_payroll.json';
-        const NT_HOURS_URL          = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/fresha_hours_nt.json';
-        const QLD_HOURS_URL         = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/fresha_hours_qld.json';
-        const NIGHT_MARKETS_BON_URL = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/night_markets_bonus.json';
+        const DATA_URL                = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/performance_summary.json';
+        const CAIRNS_DATA_URL         = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/cairns_performance_summary.json';
+        const TOWNSVILLE_DATA_URL     = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/townsville_performance_summary.json';
+        const PAYROLL_DATA_URL        = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/xero_payroll.json';
+        const NT_HOURS_URL            = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/fresha_hours_nt.json';
+        const QLD_HOURS_URL           = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/fresha_hours_qld.json';
+        const TOWNSVILLE_HOURS_URL    = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/fresha_hours_townsville.json';
+        const NIGHT_MARKETS_BON_URL   = 'https://raw.githubusercontent.com/andrewmcdevitt-stack/diamond-barbers-fresha/main/data/night_markets_bonus.json';
 
         const C = {
             gold: '#C9A84C',
@@ -488,9 +491,12 @@
         let current = 0;
         let cairnsRecords = [];
         let cairnsCurrent = 0;
+        let townsvilleRecords = [];
+        let townsvilleCurrent = 0;
         let payrollData = null;
         let ntHoursData = null;
         let qldHoursData = null;
+        let townsvilleHoursData = null;
         let nightMarketsBonus = null;
         let activeTab = 'darwin';
 
@@ -542,8 +548,8 @@
 
             const period = `${fd(rec.period_start)} → ${fd(rec.period_end)}`;
 
-            const recs = activeTab === 'darwin' ? records : cairnsRecords;
-            const cur = activeTab === 'darwin' ? current : cairnsCurrent;
+            const recs = activeTab === 'darwin' ? records : activeTab === 'cairns' ? cairnsRecords : townsvilleRecords;
+            const cur = activeTab === 'darwin' ? current : activeTab === 'cairns' ? cairnsCurrent : townsvilleCurrent;
             const weekOptions = recs.map((r, i) =>
                 `<option value="${i}" ${i === cur ? 'selected' : ''}>${fd(r.period_start)} → ${fd(r.period_end)}</option>`
             ).join('');
@@ -594,7 +600,7 @@
         <div class="db-header">
             <div>
                 <div class="db-title">Performance Dashboard</div>
-                <div class="db-subtitle">Diamond Barbers · ${activeTab === 'darwin' ? 'Darwin' : 'Cairns'} weekly performance report</div>
+                <div class="db-subtitle">Diamond Barbers · ${activeTab === 'darwin' ? 'Darwin' : activeTab === 'cairns' ? 'Cairns' : 'Townsville'} weekly performance report</div>
             </div>
             <select class="week-select" onchange="onWeekChange(this.value)">${weekOptions}</select>
         </div>
@@ -791,6 +797,7 @@
             };
             add(records);
             add(cairnsRecords);
+            add(townsvilleRecords);
 
             // Subtract Night Markets services so the total matches the hours data,
             // which already excludes Night Markets shifts.
@@ -848,6 +855,7 @@
             };
             add(ntHoursData);
             add(qldHoursData);
+            add(townsvilleHoursData);
             return map;
         }
 
@@ -1029,9 +1037,12 @@
             if (activeTab === 'darwin') {
                 current = parseInt(val);
                 render(records[current]);
-            } else {
+            } else if (activeTab === 'cairns') {
                 cairnsCurrent = parseInt(val);
                 render(cairnsRecords[cairnsCurrent]);
+            } else {
+                townsvilleCurrent = parseInt(val);
+                render(townsvilleRecords[townsvilleCurrent]);
             }
         }
 
@@ -1050,6 +1061,11 @@
             } else if (tab === 'cairns') {
                 document.getElementById('app').innerHTML =
                     `<div class="loading">No Cairns data available yet — will appear once the Cairns report has run.</div>`;
+            } else if (tab === 'townsville' && townsvilleRecords.length) {
+                render(townsvilleRecords[townsvilleCurrent]);
+            } else if (tab === 'townsville') {
+                document.getElementById('app').innerHTML =
+                    `<div class="loading">No Townsville data available yet — will appear once the Townsville report has run.</div>`;
             } else if (tab === 'payroll' && payrollData) {
                 renderPayroll(payrollData);
             } else if (tab === 'payroll') {
@@ -1142,6 +1158,34 @@
             } catch (err) { }
         }
 
+        async function loadTownsvilleData() {
+            try {
+                const res = await fetch(TOWNSVILLE_DATA_URL);
+                if (!res.ok) return;
+                const raw = await res.json();
+                const all = (Array.isArray(raw) ? raw : [raw]).filter(r => r.sales_summary);
+
+                if (all.length) {
+                    townsvilleRecords = all.reverse();
+                    townsvilleCurrent = 0;
+                    if (activeTab === 'townsville') render(townsvilleRecords[0]);
+                    if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+                }
+
+                setTimeout(loadTownsvilleData, 24 * 60 * 60 * 1000);
+            } catch (err) { }
+        }
+
+        async function loadTownsvilleHours() {
+            try {
+                const res = await fetch(TOWNSVILLE_HOURS_URL);
+                if (!res.ok) return;
+                townsvilleHoursData = await res.json();
+                if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+                setTimeout(loadTownsvilleHours, 24 * 60 * 60 * 1000);
+            } catch (err) { }
+        }
+
         async function loadNightMarketsBonus() {
             try {
                 const res = await fetch(NIGHT_MARKETS_BON_URL);
@@ -1154,9 +1198,11 @@
 
         loadData();
         loadCairnsData();
+        loadTownsvilleData();
         loadPayrollData();
         loadNTHours();
         loadQLDHours();
+        loadTownsvilleHours();
         loadNightMarketsBonus();
     </script>
 </body>
