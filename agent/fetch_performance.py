@@ -566,6 +566,7 @@ def build_report_html(week_start, week_end, records):
 
 async def send_weekly_report(week_start, week_end, playwright_instance):
     """Generate PDF from GHL data and email it."""
+    return  # emails disabled
     if not GHL_API_KEY:
         print("  Skipping report -- GHL_API_KEY not set.")
         return

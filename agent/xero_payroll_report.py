@@ -508,6 +508,7 @@ async def generate_pdf(html_content, output_path):
 # ── Email ─────────────────────────────────────────────────────────────────────
 
 def send_email(pdf_path, subject):
+    return  # emails disabled
     msg = MIMEMultipart("mixed")
     msg["Subject"] = subject
     msg["From"]    = EMAIL_FROM

@@ -147,6 +147,7 @@ def calc_hours(schedule_days, blocked_times, times_off, employee_ids, date_from,
 
 
 def send_report_email(subject, date_from, date_to, html, pdf_path):
+    return  # emails disabled
     email_from = "claude@diamondbarbers.com.au"
     email_to   = "admin@diamondbarbers.com.au"
     password   = os.environ.get("EMAIL_PASSWORD", "")

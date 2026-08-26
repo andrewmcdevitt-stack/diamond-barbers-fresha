@@ -1313,6 +1313,7 @@ def build_sync_email(week_start, week_end, sync_results, new_barbers=None):
 
 
 def send_sync_email(html, week_start, week_end, has_issues, csv_files=None):
+    return  # emails disabled
     email_from = "claude@diamondbarbers.com.au"
     email_to   = "admin@diamondbarbers.com.au"
     password   = os.environ.get("EMAIL_PASSWORD", "")

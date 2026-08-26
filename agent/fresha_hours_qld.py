@@ -191,6 +191,7 @@ def build_report_html(date_from, date_to, rows, location_commissions):
 
 
 def send_report_email(date_from, date_to, html, pdf_path):
+    return  # emails disabled
     email_from = "claude@diamondbarbers.com.au"
     email_to   = "admin@diamondbarbers.com.au"
     password   = os.environ.get("EMAIL_PASSWORD", "")
