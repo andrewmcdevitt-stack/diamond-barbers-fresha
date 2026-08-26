@@ -1,5 +1,5 @@
 {
-  "generated_at": "26 Aug 2026 11:25",
+  "generated_at": "26 Aug 2026 11:33",
   "pay_period": "17 Aug \u2013 23 Aug 2026",
   "locations": [
     {
@@ -20,7 +20,8 @@
           "net": 1391.89,
           "tax": 388.0,
           "super": 207.95,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Ahmet Koysu",
@@ -28,7 +29,8 @@
           "net": 1359.21,
           "tax": 383.0,
           "super": 192.05,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Airol Basallo",
@@ -36,7 +38,8 @@
           "net": 1478.55,
           "tax": 414.0,
           "super": 219.0,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": 14.0
         },
         {
           "name": "Anthony  Crispo",
@@ -44,7 +47,8 @@
           "net": 1582.92,
           "tax": 431.0,
           "super": 228.6,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Avinash Borade",
@@ -52,7 +56,8 @@
           "net": 1431.05,
           "tax": 415.0,
           "super": 216.9,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Cheyenne Cox",
@@ -60,7 +65,8 @@
           "net": 527.74,
           "tax": 32.0,
           "super": 67.17,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Daniel Carmago",
@@ -68,7 +74,8 @@
           "net": 741.78,
           "tax": 75.0,
           "super": 91.24,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "David Garcia",
@@ -76,7 +83,8 @@
           "net": 1358.52,
           "tax": 374.0,
           "super": 130.35,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Eric Kearney",
@@ -84,7 +92,8 @@
           "net": 1572.7,
           "tax": 278.0,
           "super": 213.16,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Icham Mellou",
@@ -92,7 +101,8 @@
           "net": 1461.24,
           "tax": 258.0,
           "super": 195.79,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Jairo Espinosa Mejia",
@@ -100,7 +110,8 @@
           "net": 1293.86,
           "tax": 507.0,
           "super": 214.2,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "JoJo Aligam",
@@ -108,7 +119,8 @@
           "net": 1577.65,
           "tax": 484.0,
           "super": 230.25,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "John Zagorianos",
@@ -116,7 +128,8 @@
           "net": 1137.0,
           "tax": 269.0,
           "super": 168.72,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": 38.0
         },
         {
           "name": "Josh Mailloux",
@@ -124,7 +137,8 @@
           "net": 0.0,
           "tax": 0.0,
           "super": 0.0,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Krish Manocha",
@@ -132,7 +146,8 @@
           "net": 1069.99,
           "tax": 255.0,
           "super": 159.0,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Laura Marshall",
@@ -140,7 +155,8 @@
           "net": 1227.91,
           "tax": 277.0,
           "super": 171.86,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Liem Nguyen",
@@ -148,7 +164,8 @@
           "net": 1572.16,
           "tax": 433.0,
           "super": 207.95,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Marianne Escobar",
@@ -156,7 +173,8 @@
           "net": 1438.5,
           "tax": 389.0,
           "super": 194.4,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Nikolaos Diamantis",
@@ -164,7 +182,8 @@
           "net": 1358.77,
           "tax": 372.0,
           "super": 207.69,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Robert Jugan",
@@ -172,7 +191,8 @@
           "net": 1272.79,
           "tax": 333.0,
           "super": 192.02,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Rohit Shantaram",
@@ -180,7 +200,8 @@
           "net": 1383.01,
           "tax": 384.0,
           "super": 212.04,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Sean Maguire",
@@ -188,7 +209,8 @@
           "net": 1345.87,
           "tax": 238.0,
           "super": 190.06,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Tam Nguyen",
@@ -196,7 +218,8 @@
           "net": 1116.52,
           "tax": 375.0,
           "super": 114.89,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Vincenzo Vanzanella",
@@ -204,7 +227,8 @@
           "net": 1705.67,
           "tax": 507.0,
           "super": 265.52,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Wilfred Vidal",
@@ -212,7 +236,8 @@
           "net": 1215.0,
           "tax": 305.0,
           "super": 182.4,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": 38.0
         }
       ]
     },
@@ -234,7 +259,8 @@
           "net": 1663.59,
           "tax": 521.0,
           "super": 257.4,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Brazil Lamsen",
@@ -242,7 +268,8 @@
           "net": 0.0,
           "tax": 0.0,
           "super": 0.0,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Dion Mataele",
@@ -250,7 +277,8 @@
           "net": 1317.29,
           "tax": 353.0,
           "super": 200.06,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Jack Bastock",
@@ -258,7 +286,8 @@
           "net": 1199.13,
           "tax": 303.0,
           "super": 176.74,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Michel Medina",
@@ -266,7 +295,8 @@
           "net": 1435.98,
           "tax": 427.0,
           "super": 208.8,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Nelson Diwa",
@@ -274,7 +304,8 @@
           "net": 1651.63,
           "tax": 499.0,
           "super": 255.0,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         }
       ]
     },
@@ -296,7 +327,8 @@
           "net": 762.91,
           "tax": 92.0,
           "super": 102.59,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": 23.0
         },
         {
           "name": "Ashleigh Campbell",
@@ -304,7 +336,8 @@
           "net": 289.92,
           "tax": 14.0,
           "super": 32.76,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Dipen Magar",
@@ -312,7 +345,8 @@
           "net": 990.09,
           "tax": 193.0,
           "super": 140.54,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Ethan Byrne",
@@ -320,7 +354,8 @@
           "net": 1161.44,
           "tax": 279.0,
           "super": 172.11,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": 3.0
         },
         {
           "name": "Jerry Guevarra",
@@ -328,7 +363,8 @@
           "net": 1798.37,
           "tax": 616.0,
           "super": 269.4,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Kyle Abe-Abe",
@@ -336,7 +372,8 @@
           "net": 1486.53,
           "tax": 250.0,
           "super": 71.94,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Michael Dobbs",
@@ -344,7 +381,8 @@
           "net": 739.3,
           "tax": 77.0,
           "super": 92.4,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Yong Yansah",
@@ -352,7 +390,8 @@
           "net": 1470.65,
           "tax": 392.0,
           "super": 195.61,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         },
         {
           "name": "Zaeb Rix",
@@ -360,7 +399,8 @@
           "net": 511.85,
           "tax": 91.0,
           "super": 37.47,
-          "total_hours": null
+          "total_hours": null,
+          "leave_hours": null
         }
       ]
     }
