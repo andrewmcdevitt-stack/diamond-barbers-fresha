@@ -603,6 +603,23 @@
             if (!card) return;
             const today = new Date().toISOString().slice(0, 10);
             const filename = `diamond-barbers-${activeTab}-${today}.png`;
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            // Open the window NOW while still inside the tap event so Safari doesn't
+            // block it. We'll replace its content once html2canvas finishes.
+            let mobileWindow = null;
+            if (isMobile) {
+                mobileWindow = window.open('', '_blank');
+                if (mobileWindow) {
+                    mobileWindow.document.write(
+                        '<html><body style="margin:0;background:#111;display:flex;align-items:center;' +
+                        'justify-content:center;min-height:100vh;">' +
+                        '<p style="color:#fff;font-family:sans-serif;font-size:1rem;">Generating image…</p>' +
+                        '</body></html>'
+                    );
+                }
+            }
+
             html2canvas(card, {
                 backgroundColor: '#111111',
                 scale: 2,
@@ -611,21 +628,17 @@
                 onclone: (clonedDoc) => {
                     const clonedCard = clonedDoc.querySelector('#db-root .bottom-row .db-card');
                     if (!clonedCard) return;
-                    // Shrink card to content width
                     clonedCard.style.display = 'inline-block';
                     clonedCard.style.width = 'auto';
                     clonedCard.style.minWidth = '0';
                     clonedCard.style.padding = '1.5rem';
-                    // Hide the download button itself
                     const dlBtn = clonedCard.querySelector('.dl-png-btn');
                     if (dlBtn) dlBtn.style.display = 'none';
-                    // Compact table
                     const table = clonedCard.querySelector('.staff-table');
                     if (table) {
                         table.style.width = 'auto';
                         table.style.tableLayout = 'auto';
                     }
-                    // Constrain name column so it doesn't swallow whitespace
                     clonedCard.querySelectorAll('.staff-table th:nth-child(2), .staff-table td:nth-child(2)').forEach(el => {
                         el.style.maxWidth = '180px';
                         el.style.overflow = 'hidden';
@@ -634,14 +647,9 @@
                 },
             }).then(canvas => {
                 const dataUrl = canvas.toDataURL('image/png');
-                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                if (isMobile) {
-                    // iOS Safari ignores <a download> — open in new tab so user can long-press → Save Image
-                    const w = window.open();
-                    if (w) {
-                        w.document.write(`<html><body style="margin:0;background:#111;"><img src="${dataUrl}" style="max-width:100%;display:block;"></body></html>`);
-                        w.document.close();
-                    }
+                if (isMobile && mobileWindow) {
+                    mobileWindow.document.body.innerHTML =
+                        `<img src="${dataUrl}" style="max-width:100%;display:block;">`;
                 } else {
                     const link = document.createElement('a');
                     link.download = filename;
