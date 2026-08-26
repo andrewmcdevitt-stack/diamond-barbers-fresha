@@ -219,6 +219,12 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
     payment_date  = parse_xero_date(run.get("PaymentDate", ""))
 
     print(f"    Period: {start_date} – {end_date}  |  Payslips: {len(payslip_stubs)}")
+    if payslip_stubs:
+        _s = payslip_stubs[0]
+        print(f"    DEBUG stub keys: {list(_s.keys())}")
+        print(f"    DEBUG PayslipID: {_s.get('PayslipID')}")
+        print(f"    DEBUG EarningsLines: {_s.get('EarningsLines')}")
+        print(f"    DEBUG LeaveLines: {_s.get('LeaveLines')}")
 
     # Per-employee: read Wages, Tax, Super, NetPay directly from payslip stubs
     # These fields are always present in the PayRun detail response.
