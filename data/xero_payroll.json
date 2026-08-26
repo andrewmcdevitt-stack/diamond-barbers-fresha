@@ -1,5 +1,5 @@
 {
-  "generated_at": "25 Aug 2026 17:48",
+  "generated_at": "26 Aug 2026 11:17",
   "pay_period": "17 Aug \u2013 23 Aug 2026",
   "locations": [
     {
@@ -19,175 +19,200 @@
           "gross": 1987.84,
           "net": 1391.89,
           "tax": 388.0,
-          "super": 207.95
+          "super": 207.95,
+          "total_hours": null
         },
         {
           "name": "Ahmet Koysu",
           "gross": 1934.26,
           "net": 1359.21,
           "tax": 383.0,
-          "super": 192.05
+          "super": 192.05,
+          "total_hours": null
         },
         {
           "name": "Airol Basallo",
           "gross": 2111.55,
           "net": 1478.55,
           "tax": 414.0,
-          "super": 219.0
+          "super": 219.0,
+          "total_hours": null
         },
         {
           "name": "Anthony  Crispo",
           "gross": 2242.52,
           "net": 1582.92,
           "tax": 431.0,
-          "super": 228.6
+          "super": 228.6,
+          "total_hours": null
         },
         {
           "name": "Avinash Borade",
           "gross": 2062.95,
           "net": 1431.05,
           "tax": 415.0,
-          "super": 216.9
+          "super": 216.9,
+          "total_hours": null
         },
         {
           "name": "Cheyenne Cox",
           "gross": 626.91,
           "net": 527.74,
           "tax": 32.0,
-          "super": 67.17
+          "super": 67.17,
+          "total_hours": null
         },
         {
           "name": "Daniel Carmago",
           "gross": 908.02,
           "net": 741.78,
           "tax": 75.0,
-          "super": 91.24
+          "super": 91.24,
+          "total_hours": null
         },
         {
           "name": "David Garcia",
           "gross": 1862.87,
           "net": 1358.52,
           "tax": 374.0,
-          "super": 130.35
+          "super": 130.35,
+          "total_hours": null
         },
         {
           "name": "Eric Kearney",
           "gross": 2063.86,
           "net": 1572.7,
           "tax": 278.0,
-          "super": 213.16
+          "super": 213.16,
+          "total_hours": null
         },
         {
           "name": "Icham Mellou",
           "gross": 1915.03,
           "net": 1461.24,
           "tax": 258.0,
-          "super": 195.79
+          "super": 195.79,
+          "total_hours": null
         },
         {
           "name": "Jairo Espinosa Mejia",
           "gross": 2015.06,
           "net": 1293.86,
           "tax": 507.0,
-          "super": 214.2
+          "super": 214.2,
+          "total_hours": null
         },
         {
           "name": "JoJo Aligam",
           "gross": 2291.9,
           "net": 1577.65,
           "tax": 484.0,
-          "super": 230.25
+          "super": 230.25,
+          "total_hours": null
         },
         {
           "name": "John Zagorianos",
           "gross": 1574.72,
           "net": 1137.0,
           "tax": 269.0,
-          "super": 168.72
+          "super": 168.72,
+          "total_hours": null
         },
         {
           "name": "Josh Mailloux",
           "gross": 0.0,
           "net": 0.0,
           "tax": 0.0,
-          "super": 0.0
+          "super": 0.0,
+          "total_hours": null
         },
         {
           "name": "Krish Manocha",
           "gross": 1483.99,
           "net": 1069.99,
           "tax": 255.0,
-          "super": 159.0
+          "super": 159.0,
+          "total_hours": null
         },
         {
           "name": "Laura Marshall",
           "gross": 1676.77,
           "net": 1227.91,
           "tax": 277.0,
-          "super": 171.86
+          "super": 171.86,
+          "total_hours": null
         },
         {
           "name": "Liem Nguyen",
           "gross": 2213.11,
           "net": 1572.16,
           "tax": 433.0,
-          "super": 207.95
+          "super": 207.95,
+          "total_hours": null
         },
         {
           "name": "Marianne Escobar",
           "gross": 2021.9,
           "net": 1438.5,
           "tax": 389.0,
-          "super": 194.4
+          "super": 194.4,
+          "total_hours": null
         },
         {
           "name": "Nikolaos Diamantis",
           "gross": 1938.46,
           "net": 1358.77,
           "tax": 372.0,
-          "super": 207.69
+          "super": 207.69,
+          "total_hours": null
         },
         {
           "name": "Robert Jugan",
           "gross": 1797.81,
           "net": 1272.79,
           "tax": 333.0,
-          "super": 192.02
+          "super": 192.02,
+          "total_hours": null
         },
         {
           "name": "Rohit Shantaram",
           "gross": 1979.05,
           "net": 1383.01,
           "tax": 384.0,
-          "super": 212.04
+          "super": 212.04,
+          "total_hours": null
         },
         {
           "name": "Sean Maguire",
           "gross": 1773.93,
           "net": 1345.87,
           "tax": 238.0,
-          "super": 190.06
+          "super": 190.06,
+          "total_hours": null
         },
         {
           "name": "Tam Nguyen",
           "gross": 1606.41,
           "net": 1116.52,
           "tax": 375.0,
-          "super": 114.89
+          "super": 114.89,
+          "total_hours": null
         },
         {
           "name": "Vincenzo Vanzanella",
           "gross": 2478.19,
           "net": 1705.67,
           "tax": 507.0,
-          "super": 265.52
+          "super": 265.52,
+          "total_hours": null
         },
         {
           "name": "Wilfred Vidal",
           "gross": 1702.4,
           "net": 1215.0,
           "tax": 305.0,
-          "super": 182.4
+          "super": 182.4,
+          "total_hours": null
         }
       ]
     },
@@ -197,46 +222,59 @@
       "pay_period_start": "2026-08-17",
       "pay_period_end": "2026-08-23",
       "payment_date": "2026-08-24",
-      "gross_wages": 8396.84,
-      "tax": 1676.0,
-      "net_pay": 5831.64,
-      "super": 889.2,
-      "employee_count": 5,
+      "gross_wages": 10468.62,
+      "tax": 2103.0,
+      "net_pay": 7267.62,
+      "super": 1098.0,
+      "employee_count": 6,
       "employees": [
         {
           "name": "Alfon Amora",
           "gross": 2441.99,
           "net": 1663.59,
           "tax": 521.0,
-          "super": 257.4
+          "super": 257.4,
+          "total_hours": null
         },
         {
           "name": "Brazil Lamsen",
           "gross": 0.0,
           "net": 0.0,
           "tax": 0.0,
-          "super": 0.0
+          "super": 0.0,
+          "total_hours": null
         },
         {
           "name": "Dion Mataele",
           "gross": 1870.35,
           "net": 1317.29,
           "tax": 353.0,
-          "super": 200.06
+          "super": 200.06,
+          "total_hours": null
         },
         {
           "name": "Jack Bastock",
           "gross": 1678.87,
           "net": 1199.13,
           "tax": 303.0,
-          "super": 176.74
+          "super": 176.74,
+          "total_hours": null
+        },
+        {
+          "name": "Michel Medina",
+          "gross": 2071.78,
+          "net": 1435.98,
+          "tax": 427.0,
+          "super": 208.8,
+          "total_hours": null
         },
         {
           "name": "Nelson Diwa",
           "gross": 2405.63,
           "net": 1651.63,
           "tax": 499.0,
-          "super": 255.0
+          "super": 255.0,
+          "total_hours": null
         }
       ]
     },
@@ -246,81 +284,83 @@
       "pay_period_start": "2026-08-17",
       "pay_period_end": "2026-08-23",
       "payment_date": "2026-08-24",
-      "gross_wages": 14401.66,
-      "tax": 2431.0,
-      "net_pay": 10647.04,
-      "super": 1323.62,
-      "employee_count": 10,
+      "gross_wages": 12329.88,
+      "tax": 2004.0,
+      "net_pay": 9211.06,
+      "super": 1114.82,
+      "employee_count": 9,
       "employees": [
         {
           "name": "Andrea Palma",
           "gross": 957.5,
           "net": 762.91,
           "tax": 92.0,
-          "super": 102.59
+          "super": 102.59,
+          "total_hours": null
         },
         {
           "name": "Ashleigh Campbell",
           "gross": 336.68,
           "net": 289.92,
           "tax": 14.0,
-          "super": 32.76
+          "super": 32.76,
+          "total_hours": null
         },
         {
           "name": "Dipen Magar",
           "gross": 1323.63,
           "net": 990.09,
           "tax": 193.0,
-          "super": 140.54
+          "super": 140.54,
+          "total_hours": null
         },
         {
           "name": "Ethan Byrne",
           "gross": 1612.55,
           "net": 1161.44,
           "tax": 279.0,
-          "super": 172.11
+          "super": 172.11,
+          "total_hours": null
         },
         {
           "name": "Jerry Guevarra",
           "gross": 2683.77,
           "net": 1798.37,
           "tax": 616.0,
-          "super": 269.4
+          "super": 269.4,
+          "total_hours": null
         },
         {
           "name": "Kyle Abe-Abe",
           "gross": 1808.47,
           "net": 1486.53,
           "tax": 250.0,
-          "super": 71.94
+          "super": 71.94,
+          "total_hours": null
         },
         {
           "name": "Michael Dobbs",
           "gross": 908.7,
           "net": 739.3,
           "tax": 77.0,
-          "super": 92.4
-        },
-        {
-          "name": "Michel Medina",
-          "gross": 2071.78,
-          "net": 1435.98,
-          "tax": 427.0,
-          "super": 208.8
+          "super": 92.4,
+          "total_hours": null
         },
         {
           "name": "Yong Yansah",
           "gross": 2058.26,
           "net": 1470.65,
           "tax": 392.0,
-          "super": 195.61
+          "super": 195.61,
+          "total_hours": null
         },
         {
           "name": "Zaeb Rix",
           "gross": 640.32,
           "net": 511.85,
           "tax": 91.0,
-          "super": 37.47
+          "super": 37.47,
+          "total_hours": null
         }
       ]
     }
