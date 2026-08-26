@@ -633,10 +633,21 @@
                     });
                 },
             }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = filename;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+                const dataUrl = canvas.toDataURL('image/png');
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (isMobile) {
+                    // iOS Safari ignores <a download> — open in new tab so user can long-press → Save Image
+                    const w = window.open();
+                    if (w) {
+                        w.document.write(`<html><body style="margin:0;background:#111;"><img src="${dataUrl}" style="max-width:100%;display:block;"></body></html>`);
+                        w.document.close();
+                    }
+                } else {
+                    const link = document.createElement('a');
+                    link.download = filename;
+                    link.href = dataUrl;
+                    link.click();
+                }
             });
         }
 
