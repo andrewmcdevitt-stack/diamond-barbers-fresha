@@ -604,10 +604,34 @@
             const today = new Date().toISOString().slice(0, 10);
             const filename = `diamond-barbers-${activeTab}-${today}.png`;
             html2canvas(card, {
-                backgroundColor: '#000000',
+                backgroundColor: '#111111',
                 scale: 2,
                 useCORS: true,
                 logging: false,
+                onclone: (clonedDoc) => {
+                    const clonedCard = clonedDoc.querySelector('#db-root .bottom-row .db-card');
+                    if (!clonedCard) return;
+                    // Shrink card to content width
+                    clonedCard.style.display = 'inline-block';
+                    clonedCard.style.width = 'auto';
+                    clonedCard.style.minWidth = '0';
+                    clonedCard.style.padding = '1.5rem';
+                    // Hide the download button itself
+                    const dlBtn = clonedCard.querySelector('.dl-png-btn');
+                    if (dlBtn) dlBtn.style.display = 'none';
+                    // Compact table
+                    const table = clonedCard.querySelector('.staff-table');
+                    if (table) {
+                        table.style.width = 'auto';
+                        table.style.tableLayout = 'auto';
+                    }
+                    // Constrain name column so it doesn't swallow whitespace
+                    clonedCard.querySelectorAll('.staff-table th:nth-child(2), .staff-table td:nth-child(2)').forEach(el => {
+                        el.style.maxWidth = '180px';
+                        el.style.overflow = 'hidden';
+                        el.style.textOverflow = 'ellipsis';
+                    });
+                },
             }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = filename;
