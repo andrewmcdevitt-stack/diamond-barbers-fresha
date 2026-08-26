@@ -219,16 +219,34 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
     payment_date  = parse_xero_date(run.get("PaymentDate", ""))
 
     print(f"    Period: {start_date} – {end_date}  |  Payslips: {len(payslip_stubs)}")
-    if payslip_stubs:
-        _s = payslip_stubs[0]
-        print(f"    DEBUG stub keys: {list(_s.keys())}")
-        print(f"    DEBUG PayslipID: {_s.get('PayslipID')}")
-        print(f"    DEBUG EarningsLines: {_s.get('EarningsLines')}")
-        print(f"    DEBUG LeaveLines: {_s.get('LeaveLines')}")
 
-    # Per-employee: read Wages, Tax, Super, NetPay directly from payslip stubs
-    # These fields are always present in the PayRun detail response.
-    # Also fetch individual payslip EarningsLines to sum total paid hours.
+    # Fetch approved leave applications for this pay period and sum hours per employee.
+    # The PayRun stubs only contain dollar totals (no EarningsLines/LeaveLines),
+    # and the individual Payslips endpoint returns 404, so LeaveApplications is
+    # our only source for leave hours (sick leave, annual leave, etc.).
+    leave_hrs_by_emp_id = {}
+    if start_date and end_date:
+        try:
+            leave_data = xero_get(
+                f"/payroll.xro/1.0/LeaveApplications?startDate={start_date}&endDate={end_date}",
+                tenant_id, access_token,
+            )
+            for la in leave_data.get("LeaveApplications", []):
+                if la.get("Status", "") == "CANCELLED":
+                    continue
+                emp_id = la.get("EmployeeID", "")
+                for period in la.get("LeavePeriods", []):
+                    p_start = parse_xero_date(period.get("PayPeriodStartDate", ""))
+                    p_end   = parse_xero_date(period.get("PayPeriodEndDate", ""))
+                    if p_start and p_end and p_start <= end_date and p_end >= start_date:
+                        units = float(period.get("NumberOfUnits", 0) or 0)
+                        leave_hrs_by_emp_id[emp_id] = leave_hrs_by_emp_id.get(emp_id, 0.0) + units
+            if leave_hrs_by_emp_id:
+                print(f"    Leave applications found for {len(leave_hrs_by_emp_id)} employee(s)")
+        except Exception as e:
+            print(f"    WARN: could not fetch leave applications: {e}")
+
+    # Per-employee: read Wages, Tax, Super, NetPay directly from payslip stubs.
     employees = []
     for stub in payslip_stubs:
         first     = stub.get("FirstName", "")
@@ -243,24 +261,8 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
         if " ".join(name.lower().split()) in EXCLUDED_EMPLOYEES:
             continue
 
-        # Sum hours from EarningsLines — all earnings types count
-        # (Mon–Sun ordinary, annual leave, personal leave, public holiday worked/not worked)
-        # EarningsLines are embedded in the PayRun detail stub; fall back to individual payslip fetch.
-        total_hours = None
-        earnings = stub.get("EarningsLines", [])
-        if not earnings:
-            payslip_id = stub.get("PayslipID")
-            if payslip_id:
-                try:
-                    ps_detail = xero_get(
-                        f"/payroll.xro/1.0/Payslips/{payslip_id}",
-                        tenant_id, access_token,
-                    )
-                    earnings = ps_detail.get("Payslips", [{}])[0].get("EarningsLines", [])
-                except Exception as e:
-                    print(f"    WARN: could not fetch payslip {payslip_id} for {name}: {e}")
-        if earnings:
-            total_hours = round(sum(float(l.get("NumberOfUnits", 0) or 0) for l in earnings), 2)
+        emp_id    = stub.get("EmployeeID", "")
+        leave_hrs = leave_hrs_by_emp_id.get(emp_id, 0.0)
 
         employees.append({
             "name":         name,
@@ -268,7 +270,8 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
             "net":          round(emp_net, 2),
             "tax":          round(emp_tax, 2),
             "super":        round(emp_super, 2),
-            "total_hours":  total_hours,
+            "total_hours":  None,
+            "leave_hours":  round(leave_hrs, 2) if leave_hrs > 0 else None,
         })
 
     # Location totals summed from included employees only

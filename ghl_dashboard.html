@@ -655,14 +655,31 @@
         }
 
         function buildTabHoursMap() {
-            // Prefer Xero hours (includes leave + public holidays); fall back to Fresha scheduled hours
+            // Prefer Xero total_hours (includes leave + public holidays) if available
             const xeroMap = buildXeroHoursMap();
-            if (Object.keys(xeroMap).length > 0) return xeroMap;
             const data = activeTab === 'darwin' ? ntHoursData : activeTab === 'cairns' ? qldHoursData : townsvilleHoursData;
+
+            // Base: Xero total_hours if populated, otherwise Fresha scheduled hours
             const map = {};
-            if (!data || !data.summary) return map;
-            for (const [name, h] of Object.entries(data.summary)) {
-                map[normName(name)] = typeof h === 'object' ? (h.total_hrs || 0) : h;
+            if (Object.keys(xeroMap).length > 0) {
+                Object.assign(map, xeroMap);
+            } else if (data && data.summary) {
+                for (const [name, h] of Object.entries(data.summary)) {
+                    map[normName(name)] = typeof h === 'object' ? (h.total_hrs || 0) : h;
+                }
+            }
+
+            // When total_hours is unavailable, layer Xero leave_hours on top of Fresha hours.
+            // leave_hours captures sick leave, annual leave, etc. that aren't in Fresha.
+            if (Object.keys(xeroMap).length === 0 && payrollData) {
+                for (const loc of (payrollData.locations || [])) {
+                    for (const emp of (loc.employees || [])) {
+                        if (emp.leave_hours) {
+                            const key = normName(emp.name);
+                            map[key] = (map[key] || 0) + emp.leave_hours;
+                        }
+                    }
+                }
             }
             return map;
         }
