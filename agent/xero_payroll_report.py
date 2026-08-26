@@ -237,20 +237,24 @@ def fetch_org_payroll(tenant_id, tenant_name, access_token):
         if " ".join(name.lower().split()) in EXCLUDED_EMPLOYEES:
             continue
 
-        # Fetch payslip detail to sum hours across all earnings line types
+        # Sum hours from EarningsLines — all earnings types count
         # (Mon–Sun ordinary, annual leave, personal leave, public holiday worked/not worked)
+        # EarningsLines are embedded in the PayRun detail stub; fall back to individual payslip fetch.
         total_hours = None
-        payslip_id  = stub.get("PayslipID")
-        if payslip_id:
-            try:
-                ps_detail = xero_get(
-                    f"/payroll.xro/1.0/Payslips/{payslip_id}",
-                    tenant_id, access_token,
-                )
-                earnings = ps_detail.get("Payslips", [{}])[0].get("EarningsLines", [])
-                total_hours = round(sum(float(l.get("NumberOfUnits", 0) or 0) for l in earnings), 2)
-            except Exception as e:
-                print(f"    WARN: could not fetch payslip {payslip_id} for {name}: {e}")
+        earnings = stub.get("EarningsLines", [])
+        if not earnings:
+            payslip_id = stub.get("PayslipID")
+            if payslip_id:
+                try:
+                    ps_detail = xero_get(
+                        f"/payroll.xro/1.0/Payslips/{payslip_id}",
+                        tenant_id, access_token,
+                    )
+                    earnings = ps_detail.get("Payslips", [{}])[0].get("EarningsLines", [])
+                except Exception as e:
+                    print(f"    WARN: could not fetch payslip {payslip_id} for {name}: {e}")
+        if earnings:
+            total_hours = round(sum(float(l.get("NumberOfUnits", 0) or 0) for l in earnings), 2)
 
         employees.append({
             "name":         name,
