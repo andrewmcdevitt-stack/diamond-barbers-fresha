@@ -1,7 +1,7 @@
 {
   "date_from": "2026-08-17",
   "date_to": "2026-08-23",
-  "generated": "2026-08-25T08:28:01.721932+00:00",
+  "generated": "2026-08-26T02:19:45.070729+00:00",
   "summary": {
     "Yong Yansah": {
       "monday": 7.0,
@@ -23,7 +23,7 @@
       "saturday": 4.0,
       "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 16.0
+      "total_hrs": 44.0
     },
     "Michael Dobbs": {
       "monday": 0.0,
