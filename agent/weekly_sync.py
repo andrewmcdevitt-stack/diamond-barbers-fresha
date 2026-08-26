@@ -325,6 +325,10 @@ async def fetch_hours(account, context, date_from, date_to):
 
     # combined[emp_name] = {monday: 0, ..., total: 0, xero_org: "..."}
     combined = {}
+    # night_markets_hours[emp_name] = {monday: 0, ..., total: 0}
+    # Collected separately so they can be added to the hours JSON (for $/hr in
+    # the dashboard) without being pushed to GHL (Night Markets is bonus-only pay).
+    night_markets_hours = {}
 
     night_markets_loc_id = account.get("night_markets_loc_id")
     skip_locations       = account.get("skip_locations", set())
@@ -338,10 +342,7 @@ async def fetch_hours(account, context, date_from, date_to):
             print(f"  Skipping {loc_name} (moved to separate workspace or not open)")
             continue
 
-        # Night Markets hours are paid as a 50/50 bonus, not regular hours — skip
-        if night_markets_loc_id and loc_id == night_markets_loc_id:
-            print(f"  Skipping {loc_name} (Night Markets — bonus only)")
-            continue
+        is_night_markets = bool(night_markets_loc_id and loc_id == night_markets_loc_id)
 
         emp_resp = await context.request.get(
             f"https://partners-api.fresha.com/v2/employees"
@@ -384,26 +385,30 @@ async def fetch_hours(account, context, date_from, date_to):
         )
 
         emp_map = {e["id"]: e["name"] for e in employees}
+        target  = night_markets_hours if is_night_markets else combined
         for emp_id, h in hours.items():
             name = emp_map.get(emp_id, emp_id)
             if h["total"] == 0:
                 continue
-            if name not in combined:
-                combined[name] = {d: 0.0 for d in DAY_NAMES}
-                combined[name]["public_holiday"] = 0.0
-                combined[name]["total"]    = 0.0
-                combined[name]["xero_org"] = EMPLOYEE_XERO_ORG.get(name, default)
+            if name not in target:
+                target[name] = {d: 0.0 for d in DAY_NAMES}
+                target[name]["public_holiday"] = 0.0
+                target[name]["total"]    = 0.0
+                if not is_night_markets:
+                    target[name]["xero_org"] = EMPLOYEE_XERO_ORG.get(name, default)
             for d in DAY_NAMES:
-                combined[name][d] += h[d]
-            combined[name]["public_holiday"] += h.get("public_holiday", 0)
-            combined[name]["total"] += h["total"]
+                target[name][d] += h[d]
+            target[name]["public_holiday"] += h.get("public_holiday", 0)
+            target[name]["total"] += h["total"]
 
+    if night_markets_hours:
+        print(f"  Night Markets hours collected for: {', '.join(sorted(night_markets_hours))}")
     print(f"  Hours fetched for {len(combined)} staff members.")
     for name, h in sorted(combined.items()):
         days_str = "  ".join(f"{d[:3]}={h[d]:.1f}h" for d in DAY_NAMES if h[d] > 0)
         print(f"    {name:30s}  total={h['total']:.1f}h  [{days_str}]  org={h['xero_org']}")
 
-    return combined
+    return combined, night_markets_hours
 
 
 # ── GHL payroll record upsert ──────────────────────────────────────────────────
@@ -1519,7 +1524,7 @@ async def run():
                 continue
 
             try:
-                hours_data = await fetch_hours(account, context, date_from, date_to)
+                hours_data, night_markets_hours = await fetch_hours(account, context, date_from, date_to)
                 all_fresha_names.update(hours_data.keys())
             except Exception as e:
                 msg = f"Hours fetch failed: {e}"
@@ -1527,6 +1532,7 @@ async def run():
                 acct["issues"].append(msg)
                 acct["status"] = "partial"
                 hours_data = {}
+                night_markets_hours = {}
 
             # Push hours to GHL payroll records
             if has_ghl and hours_data:
@@ -1583,6 +1589,21 @@ async def run():
                         "public_holiday": round(_h.get("public_holiday", 0), 2),
                         "total_hrs":      round(_h.get("total", 0), 2),
                     }
+                # Add Night Markets hours to each staff member's total so that
+                # the dashboard $/hr calculation uses their full hours worked.
+                # These hours are NOT pushed to GHL (Night Markets is bonus-only pay).
+                for _nm, _nh in night_markets_hours.items():
+                    if _nm in hours_summary:
+                        hours_summary[_nm]["total_hrs"] = round(
+                            hours_summary[_nm]["total_hrs"] + _nh.get("total", 0), 2
+                        )
+                    else:
+                        hours_summary[_nm] = {
+                            "monday": 0.0, "tuesday": 0.0, "wednesday": 0.0,
+                            "thursday": 0.0, "friday": 0.0, "saturday": 0.0,
+                            "sunday": 0.0, "public_holiday": 0.0,
+                            "total_hrs": round(_nh.get("total", 0), 2),
+                        }
                 hours_json_path.write_text(json.dumps({
                     "date_from":  date_from,
                     "date_to":    date_to,
