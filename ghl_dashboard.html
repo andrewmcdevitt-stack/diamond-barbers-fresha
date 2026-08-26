@@ -596,6 +596,10 @@
             document.getElementById('db-root').classList.toggle('share-mode', shareMode);
             const btn = document.getElementById('share-toggle-btn');
             if (btn) btn.classList.toggle('active', shareMode);
+            // Re-render so the sort order updates ($/hr in share mode, sales otherwise)
+            if (activeTab === 'darwin' && records.length) render(records[current]);
+            else if (activeTab === 'cairns' && cairnsRecords.length) render(cairnsRecords[cairnsCurrent]);
+            else if (activeTab === 'townsville' && townsvilleRecords.length) render(townsvilleRecords[townsvilleCurrent]);
         }
 
         function downloadTablePng() {
