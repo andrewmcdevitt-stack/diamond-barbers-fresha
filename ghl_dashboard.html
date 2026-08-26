@@ -1347,6 +1347,11 @@
                 if (data && data.locations && data.locations.length) {
                     payrollData = data;
                     if (activeTab === 'payroll') renderPayroll(payrollData);
+                    // Re-render the current performance tab so leave_hours from
+                    // payroll data are included in the $/hr calculation.
+                    else if (activeTab === 'darwin' && records.length) render(records[current]);
+                    else if (activeTab === 'cairns' && cairnsRecords.length) render(cairnsRecords[cairnsCurrent]);
+                    else if (activeTab === 'townsville' && townsvilleRecords.length) render(townsvilleRecords[townsvilleCurrent]);
                 }
 
                 setTimeout(loadPayrollData, 24 * 60 * 60 * 1000);
