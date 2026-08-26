@@ -699,7 +699,6 @@
             const overallOcc = occVals.length ? occVals.reduce((a, b) => a + b, 0) / occVals.length : null;
             const hasOcc = overallOcc !== null;
 
-            const sortedStaff = [...staff].sort((a, b) => (parseFloat(b.total_sales) || 0) - (parseFloat(a.total_sales) || 0));
             const hasOccCol = staff.some(s => s.occupancy_pct !== undefined && s.occupancy_pct !== null);
 
             const period = `${fd(rec.period_start)} → ${fd(rec.period_end)}`;
@@ -728,6 +727,26 @@
             }).join('');
 
             const tabHoursMap = buildTabHoursMap();
+
+            // Pre-compute revPerHr so we can sort by it in share mode
+            const enrichedStaff = staff.map(s => {
+                const svcExGst = (parseFloat(s.services) || 0) / 1.1;
+                const hrs = matchHours(s.name, tabHoursMap);
+                const revPerHr = (hrs !== null && hrs > 0) ? svcExGst / hrs : null;
+                return { ...s, _svcExGst: svcExGst, _hrs: hrs, _revPerHr: revPerHr };
+            });
+
+            const sortedStaff = shareMode
+                ? [...enrichedStaff].sort((a, b) => {
+                    if (b._revPerHr === null && a._revPerHr === null) return 0;
+                    if (b._revPerHr === null) return -1;
+                    if (a._revPerHr === null) return 1;
+                    return b._revPerHr - a._revPerHr;
+                })
+                : [...enrichedStaff].sort((a, b) => (parseFloat(b.total_sales) || 0) - (parseFloat(a.total_sales) || 0));
+
+            const rankLabel = shareMode ? 'ranked by $/hr' : 'ranked by sales';
+
             const staffRows = sortedStaff.map((s, i) => {
                 const rank = i + 1;
                 const cls = rank <= 3 ? `r${rank}` : '';
@@ -738,9 +757,9 @@
                         ? `<td class="r"><span class="pill" style="background:${bg};color:${col};">${fp(s.occupancy_pct)}</span></td>`
                         : `<td class="r">—</td>`)
                     : '';
-                const svcExGst = (parseFloat(s.services) || 0) / 1.1;
-                const hrs = matchHours(s.name, tabHoursMap);
-                const revPerHr = (hrs !== null && hrs > 0) ? svcExGst / hrs : null;
+                const svcExGst = s._svcExGst;
+                const hrs = s._hrs;
+                const revPerHr = s._revPerHr;
                 const bonus = calcBonusTier(revPerHr, svcExGst);
                 const revHrCell = `<td class="r sh-show" style="font-weight:700;font-variant-numeric:tabular-nums;">${revPerHr !== null ? `$${revPerHr.toFixed(0)}/hr` : `<span style="color:${C.muted}">—</span>`}</td>`;
                 const bonusCell = bonus
@@ -801,7 +820,7 @@
             <div class="db-card">
                 <div class="card-header" id="staff-perf-card-header">
                     <div class="card-title">Staff Performance</div>
-                    <div class="card-period">${period} · ranked by sales</div>
+                    <div class="card-period">${period} · ${rankLabel}</div>
                     <button class="dl-png-btn" onclick="downloadTablePng()">&#8681; Download PNG</button>
                 </div>
                 <div class="table-wrap" id="staff-perf-table-wrap">
