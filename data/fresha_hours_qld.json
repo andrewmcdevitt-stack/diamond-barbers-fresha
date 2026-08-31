@@ -1,95 +1,95 @@
 {
-  "date_from": "2026-08-17",
-  "date_to": "2026-08-23",
-  "generated": "2026-08-26T02:19:45.070729+00:00",
+  "date_from": "2026-08-24",
+  "date_to": "2026-08-30",
+  "generated": "2026-08-31T01:25:08.006761+00:00",
   "summary": {
     "Yong Yansah": {
       "monday": 7.0,
-      "tuesday": 7.0,
-      "wednesday": 0.0,
+      "tuesday": 0.0,
+      "wednesday": 6.0,
       "thursday": 6.0,
       "friday": 6.0,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 40.0
+      "total_hrs": 45.0
     },
     "Kyle Abe-Abe": {
       "monday": 0.0,
-      "tuesday": 4.0,
+      "tuesday": 0.0,
       "wednesday": 0.0,
       "thursday": 4.0,
       "friday": 4.0,
       "saturday": 4.0,
-      "sunday": 0.0,
+      "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 44.0
+      "total_hrs": 37.0
     },
     "Michael Dobbs": {
       "monday": 0.0,
-      "tuesday": 6.0,
-      "wednesday": 7.0,
+      "tuesday": 7.0,
+      "wednesday": 0.0,
       "thursday": 9.0,
-      "friday": 6.0,
-      "saturday": 7.0,
+      "friday": 5.5,
+      "saturday": 0.0,
       "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 35.0
+      "total_hrs": 25.5
     },
     "Ashleigh Campbell": {
       "monday": 0.0,
       "tuesday": 0.0,
-      "wednesday": 0.0,
+      "wednesday": 6.0,
       "thursday": 7.0,
-      "friday": 6.0,
-      "saturday": 0.0,
+      "friday": 5.0,
+      "saturday": 9.0,
       "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 13.0
+      "total_hrs": 27.0
     },
     "Ethan Byrne": {
       "monday": 0.0,
-      "tuesday": 0.0,
+      "tuesday": 9.0,
       "wednesday": 9.0,
       "thursday": 9.0,
       "friday": 9.0,
-      "saturday": 8.67,
+      "saturday": 9.0,
       "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 35.67
+      "total_hrs": 45.0
     },
     "Jerry Guevarra": {
       "monday": 9.0,
       "tuesday": 0.0,
       "wednesday": 9.0,
       "thursday": 11.0,
+      "friday": 0.0,
+      "saturday": 0.0,
+      "sunday": 0.0,
+      "public_holiday": 0.0,
+      "total_hrs": 29.0
+    },
+    "Alex Khaq": {
+      "monday": 9.0,
+      "tuesday": 9.0,
+      "wednesday": 0.0,
+      "thursday": 7.0,
       "friday": 9.5,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 52.5
-    },
-    "Zaeb Edward Rix": {
-      "monday": 5.0,
-      "tuesday": 5.0,
-      "wednesday": 0.0,
-      "thursday": 7.0,
-      "friday": 3.25,
-      "saturday": 0.0,
-      "sunday": 0.0,
-      "public_holiday": 0.0,
-      "total_hrs": 20.25
+      "total_hrs": 48.5
     },
     "Dipen Magar": {
-      "monday": 9.0,
-      "tuesday": 9.0,
-      "wednesday": 0.0,
+      "monday": 5.0,
+      "tuesday": 5.0,
+      "wednesday": 4.75,
       "thursday": 0.0,
-      "friday": 0.0,
-      "saturday": 5.0,
-      "sunday": 5.0,
+      "friday": 4.92,
+      "saturday": 6.0,
+      "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 28.0
+      "total_hrs": 25.67
     }
   }
 }
