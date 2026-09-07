@@ -696,8 +696,9 @@ async def _try_click(checklist, name, click_coro, required=False):
         return False
 
 
-def flag_zero_value_issues(perf_data, locations, checklist):
+def flag_zero_value_issues(perf_data, locations, checklist, skip_names=None):
     """Flag suspicious zero totals so a silently-broken scrape doesn't get pushed unnoticed."""
+    skip = {n.lower() for n in (skip_names or set())}
     summary = perf_data.get("sales_summary", {})
     if summary.get("total_sales", 0) == 0:
         checklist.append({
@@ -706,6 +707,8 @@ def flag_zero_value_issues(perf_data, locations, checklist):
             "detail": "Total sales = $0 for the week — verify the CSV covered the correct date range",
         })
     for s in perf_data.get("staff", []):
+        if (s.get("name") or "").lower() in skip:
+            continue
         if (s.get("total_sales", 0) or 0) == 0 and (s.get("total_appts", 0) or 0) == 0:
             checklist.append({
                 "check": f"Staff '{s.get('name')}' totals",
@@ -1755,7 +1758,8 @@ async def run():
                 if len(locations) < before:
                     print(f"  Skipped {before - len(locations)} location(s) from performance data: {skip_locs}")
 
-            flag_zero_value_issues(perf_data, locations, checklist)
+            flag_zero_value_issues(perf_data, locations, checklist,
+                                   skip_names=account.get("skip_staff", set()))
 
             # ── Step 3: Save JSON history for dashboard ───────────────────────
             perf_data["report_date"] = datetime.now().strftime("%Y-%m-%d")
