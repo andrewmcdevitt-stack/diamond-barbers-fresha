@@ -1,7 +1,7 @@
 {
   "date_from": "2026-08-31",
   "date_to": "2026-09-06",
-  "generated": "2026-09-07T02:25:03.609509+00:00",
+  "generated": "2026-09-07T02:49:43.696337+00:00",
   "summary": {
     "Michel Medina": {
       "monday": 7.0,
@@ -37,37 +37,37 @@
       "total_hrs": 8.0
     },
     "Alfon Amora": {
-      "monday": 0.0,
+      "monday": 9.0,
       "tuesday": 0.0,
       "wednesday": 9.0,
-      "thursday": 0.0,
-      "friday": 0.0,
+      "thursday": 9.0,
+      "friday": 9.0,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 23.0
+      "total_hrs": 50.0
     },
     "Nelson Diwa": {
       "monday": 0.0,
-      "tuesday": 0.0,
-      "wednesday": 0.0,
+      "tuesday": 9.0,
+      "wednesday": 9.0,
       "thursday": 9.0,
       "friday": 8.5,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 31.5
+      "total_hrs": 49.5
     },
     "Andrew Mcdevitt": {
-      "monday": 10.0,
-      "tuesday": 10.0,
-      "wednesday": 10.0,
-      "thursday": 12.0,
-      "friday": 10.0,
-      "saturday": 10.0,
+      "monday": 19.0,
+      "tuesday": 19.0,
+      "wednesday": 19.0,
+      "thursday": 21.0,
+      "friday": 19.0,
+      "saturday": 18.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 67.0
+      "total_hrs": 120.0
     },
     "Brazil Lamsen": {
       "monday": 0.0,
