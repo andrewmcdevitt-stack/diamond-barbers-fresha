@@ -1783,6 +1783,7 @@ async def run():
                 print(f"\n  Updating GHL payroll records with tips/commissions...")
                 ok = skipped = 0
                 staff_for_email = []
+                _perf_skip = {n.lower() for n in account.get("skip_staff", set())}
                 for s in perf_data.get("staff", []):
                     name                  = s.get("name", "").strip()
                     tips                  = s.get("tips", 0) or 0
@@ -1790,6 +1791,8 @@ async def run():
                     service_sales_exc_gst = s.get("service_sales_exc_gst", 0) or 0
                     occupancy_rate        = s.get("occupancy_pct", 0) or 0
                     if not name:
+                        continue
+                    if name.lower() in _perf_skip:
                         continue
 
                     if name in MANAGER_LOCATIONS:
