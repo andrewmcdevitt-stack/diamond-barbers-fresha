@@ -114,6 +114,8 @@ EMPLOYEE_XERO_ORG = {
     "Krish Manocha":       "Diamond Barbers Parap",
     "Sean Maguire":        "Diamond Barbers Parap",
     "Josh Mailloux":       "Diamond Barbers Parap",
+    "Dion Mataele":        "Diamond Barbers Wulguru",
+    "D Mataele":           "Diamond Barbers Wulguru",
 }
 
 # Fresha location name → GHL location_performance label
@@ -329,6 +331,9 @@ async def fetch_hours(account, context, date_from, date_to):
     # Collected separately so they can be added to the hours JSON (for $/hr in
     # the dashboard) without being pushed to GHL (Night Markets is bonus-only pay).
     night_markets_hours = {}
+    # Track employee IDs already counted to avoid double-counting staff who
+    # appear in multiple locations (the API returns all their shifts per query).
+    processed_emp_ids = set()
 
     night_markets_loc_id = account.get("night_markets_loc_id")
     skip_locations       = account.get("skip_locations", set())
@@ -387,9 +392,15 @@ async def fetch_hours(account, context, date_from, date_to):
         emp_map = {e["id"]: e["name"] for e in employees}
         target  = night_markets_hours if is_night_markets else combined
         for emp_id, h in hours.items():
+            # Skip employees already counted from a previous location to avoid
+            # double-counting (the API returns all shifts per employee per query).
+            if not is_night_markets and emp_id in processed_emp_ids:
+                continue
             name = emp_map.get(emp_id, emp_id)
             if h["total"] == 0:
                 continue
+            if not is_night_markets:
+                processed_emp_ids.add(emp_id)
             if name not in target:
                 target[name] = {d: 0.0 for d in DAY_NAMES}
                 target[name]["public_holiday"] = 0.0
@@ -1354,6 +1365,7 @@ def send_sync_email(html, week_start, week_end, has_issues, csv_files=None):
 _FRESHA_NON_STAFF = {
     "andrew mcdevitt", "andrew  mcdevitt",
     "nicole diamantis", "nicole  diamantis",
+    "mako miyazaki",   # invoiced contractor, not a Xero employee
 }
 
 # Known Fresha→Xero name differences (Fresha name → normalised Xero name)

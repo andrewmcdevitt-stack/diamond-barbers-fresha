@@ -81,10 +81,23 @@ ORG_RATES = {
         "tips":            "f9261b3a-0659-48e4-990c-40d770cef73c",
         "commission":      "9b40d911-89b7-401b-82c1-662fa9e2c782",
     },
+    "DB WULGURU PTY LTD": {
+        "monday":          "eb63cf89-3c03-465c-a6f1-7cd6ac94698c",
+        "tuesday":         "663ff1c6-7fcc-42fc-9bb2-93315ea4e2f1",
+        "wednesday":       "182adaa7-e4de-48b0-9772-ad9a16cbb233",
+        "thursday":        "b9f72e75-24f0-49bc-ba26-b1ac9b7ddfd2",
+        "friday":          "e844bac4-7e93-47da-9760-f6924058888b",
+        "saturday":        "b7165c5e-8903-4f70-bb85-d83485a864e0",
+        "sunday":          "f34846a1-a924-4594-bd62-ddaef4415837",
+        "public_holiday":  "6303d069-0f91-4889-80e4-2c9c51225f3e",
+        "tips":            "eb100ee5-c305-4748-956a-2e867426bc98",
+        "commission":      "8f556f19-66ef-4643-8924-1a80da84037e",
+        "bonus":           "337a8497-7b24-4964-967e-38b3f0c5eccc",
+    },
 }
 
 # Orgs with no employees or no suitable rates — skip entirely
-SKIP_ORGS = {"DB WULGURU PTY LTD"}
+SKIP_ORGS = set()
 
 # Employees to exclude from all pay runs (owners, managers)
 EXCLUDED_EMPLOYEES = {
