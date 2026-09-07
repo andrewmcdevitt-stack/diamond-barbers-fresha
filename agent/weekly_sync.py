@@ -98,6 +98,8 @@ ACCOUNTS = [
         "night_markets_loc":   None,
         # Garbutt is not open yet
         "skip_locations":      {"Diamond Barbers | Garbutt"},
+        # Owner — no payroll hours
+        "skip_staff":          {"Andrew Mcdevitt", "Andrew McDevitt"},
     },
 ]
 
@@ -340,6 +342,7 @@ async def fetch_hours(account, context, date_from, date_to):
 
     night_markets_loc_id = account.get("night_markets_loc_id")
     skip_locations       = account.get("skip_locations", set())
+    skip_staff           = {n.lower() for n in account.get("skip_staff", set())}
 
     for loc in locations:
         loc_id   = loc["id"]
@@ -393,6 +396,8 @@ async def fetch_hours(account, context, date_from, date_to):
             all_blocked_times.extend(wh.get("blockedTimeOccurrences", []))
             all_times_off.extend(wh.get("timesOffOccurrences", []))
             for e in employees:
+                if e["name"].lower() in skip_staff:
+                    continue
                 if e["id"] not in all_employees:
                     all_employees[e["id"]] = {
                         "name":     e["name"],
