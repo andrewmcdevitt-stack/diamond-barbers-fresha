@@ -1,18 +1,18 @@
 {
   "date_from": "2026-08-31",
   "date_to": "2026-09-06",
-  "generated": "2026-09-07T01:57:36.006450+00:00",
+  "generated": "2026-09-07T02:20:18.322137+00:00",
   "summary": {
     "Marianne Escobar": {
       "monday": 10.0,
-      "tuesday": 8.0,
+      "tuesday": 0.0,
       "wednesday": 0.0,
-      "thursday": 8.0,
-      "friday": 8.0,
+      "thursday": 0.0,
+      "friday": 0.0,
       "saturday": 6.0,
       "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 40.0
+      "total_hrs": 16.0
     },
     "Daniel Camargo": {
       "monday": 0.0,
@@ -29,12 +29,12 @@
       "monday": 9.0,
       "tuesday": 7.0,
       "wednesday": 0.0,
-      "thursday": 5.0,
+      "thursday": 0.0,
       "friday": 8.0,
       "saturday": 8.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 42.0
+      "total_hrs": 37.0
     },
     "Avinash Borade": {
       "monday": 0.0,
@@ -93,14 +93,14 @@
     },
     "Nico Diamantis": {
       "monday": 0.0,
-      "tuesday": 10.0,
+      "tuesday": 0.0,
       "wednesday": 7.0,
-      "thursday": 5.0,
-      "friday": 6.0,
-      "saturday": 8.0,
-      "sunday": 5.0,
+      "thursday": 0.0,
+      "friday": 0.0,
+      "saturday": 0.0,
+      "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 41.0
+      "total_hrs": 7.0
     },
     "Laura Marshall": {
       "monday": 6.0,
@@ -125,7 +125,7 @@
       "total_hrs": 47.0
     },
     "Krish Manocha": {
-      "monday": 9.0,
+      "monday": 0.0,
       "tuesday": 0.0,
       "wednesday": 7.0,
       "thursday": 7.0,
@@ -133,7 +133,7 @@
       "saturday": 7.0,
       "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 37.0
+      "total_hrs": 28.0
     },
     "Jairo Espinosa": {
       "monday": 8.0,

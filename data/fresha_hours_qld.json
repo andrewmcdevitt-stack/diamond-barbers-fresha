@@ -1,7 +1,7 @@
 {
   "date_from": "2026-08-31",
   "date_to": "2026-09-06",
-  "generated": "2026-09-07T02:00:22.333381+00:00",
+  "generated": "2026-09-07T02:22:53.748950+00:00",
   "summary": {
     "Yong Yansah": {
       "monday": 7.0,
@@ -61,13 +61,13 @@
     "Jerry Guevarra": {
       "monday": 0.0,
       "tuesday": 0.0,
-      "wednesday": 8.33,
-      "thursday": 11.0,
-      "friday": 9.0,
-      "saturday": 9.0,
+      "wednesday": 0.0,
+      "thursday": 0.0,
+      "friday": 0.0,
+      "saturday": 0.0,
       "sunday": 7.17,
       "public_holiday": 0.0,
-      "total_hrs": 44.5
+      "total_hrs": 7.17
     },
     "Alex Khaq": {
       "monday": 9.0,
