@@ -325,15 +325,18 @@ async def fetch_hours(account, context, date_from, date_to):
     ]
     print(f"  Found {len(locations)} locations: {[l['name'] for l in locations]}")
 
-    # combined[emp_name] = {monday: 0, ..., total: 0, xero_org: "..."}
-    combined = {}
-    # night_markets_hours[emp_name] = {monday: 0, ..., total: 0}
-    # Collected separately so they can be added to the hours JSON (for $/hr in
-    # the dashboard) without being pushed to GHL (Night Markets is bonus-only pay).
-    night_markets_hours = {}
-    # Track employee IDs already counted to avoid double-counting staff who
-    # appear in multiple locations (the API returns all their shifts per query).
-    processed_emp_ids = set()
+    # Collect raw shift data across all locations, then deduplicate at shift level.
+    # This correctly handles staff who work at multiple locations (e.g. Marianne at
+    # BERRIMAH and DELUXE) — their shifts at each location are distinct and both get
+    # counted, while genuine duplicates (same emp + date + startTime + endTime from
+    # multiple location queries) are dropped.
+    all_schedule_days = []
+    all_blocked_times = []
+    all_times_off     = []
+    all_employees     = {}  # emp_id -> {"name": str, "xero_org": str}
+
+    nm_schedule_days = []
+    nm_employees     = {}   # emp_id -> name
 
     night_markets_loc_id = account.get("night_markets_loc_id")
     skip_locations       = account.get("skip_locations", set())
@@ -342,7 +345,6 @@ async def fetch_hours(account, context, date_from, date_to):
         loc_id   = loc["id"]
         loc_name = loc["name"]
 
-        # Skip locations that have moved to another workspace or are not yet open
         if loc_name in skip_locations:
             print(f"  Skipping {loc_name} (moved to separate workspace or not open)")
             continue
@@ -382,38 +384,87 @@ async def fetch_hours(account, context, date_from, date_to):
         gql_data = await gql_resp.json()
         wh       = gql_data.get("data", {})
 
-        hours = calc_hours_per_day(
-            wh.get("employeeScheduleDays", []),
-            wh.get("blockedTimeOccurrences", []),
-            wh.get("timesOffOccurrences", []),
-            emp_ids, date_from, date_to,
-        )
+        if is_night_markets:
+            nm_schedule_days.extend(wh.get("employeeScheduleDays", []))
+            for e in employees:
+                nm_employees[e["id"]] = e["name"]
+        else:
+            all_schedule_days.extend(wh.get("employeeScheduleDays", []))
+            all_blocked_times.extend(wh.get("blockedTimeOccurrences", []))
+            all_times_off.extend(wh.get("timesOffOccurrences", []))
+            for e in employees:
+                if e["id"] not in all_employees:
+                    all_employees[e["id"]] = {
+                        "name":     e["name"],
+                        "xero_org": EMPLOYEE_XERO_ORG.get(e["name"], default),
+                    }
 
-        emp_map = {e["id"]: e["name"] for e in employees}
-        target  = night_markets_hours if is_night_markets else combined
-        for emp_id, h in hours.items():
-            # Skip employees already counted from a previous location to avoid
-            # double-counting (the API returns all shifts per employee per query).
-            if not is_night_markets and emp_id in processed_emp_ids:
-                continue
-            name = emp_map.get(emp_id, emp_id)
+    # Deduplicate at shift level so identical shifts from overlapping location
+    # queries are only counted once, while distinct shifts at different locations
+    # for the same employee are both included.
+    seen_shifts: set = set()
+    deduped_schedule_days = []
+    for day in all_schedule_days:
+        emp_id = day["employeeId"]
+        date   = day["date"]
+        new_shifts = []
+        for shift in day.get("shifts", []):
+            key = (emp_id, date, shift["startTime"], shift["endTime"])
+            if key not in seen_shifts:
+                seen_shifts.add(key)
+                new_shifts.append(shift)
+        if new_shifts:
+            deduped_schedule_days.append({**day, "shifts": new_shifts})
+
+    seen_blocks: set = set()
+    deduped_blocked = []
+    for block in all_blocked_times:
+        key = (block["employeeId"], block["date"], block["startTime"], block["endTime"])
+        if key not in seen_blocks:
+            seen_blocks.add(key)
+            deduped_blocked.append(block)
+
+    seen_offs: set = set()
+    deduped_offs = []
+    for off in all_times_off:
+        key = (off["employeeId"], off.get("date", ""), off.get("startTime", ""), off.get("endTime", ""))
+        if key not in seen_offs:
+            seen_offs.add(key)
+            deduped_offs.append(off)
+
+    # Calculate hours for all employees in one pass over the deduplicated data.
+    all_emp_ids = list(all_employees.keys())
+    hours_map   = calc_hours_per_day(deduped_schedule_days, deduped_blocked, deduped_offs,
+                                     all_emp_ids, date_from, date_to)
+
+    combined = {}
+    for emp_id, h in hours_map.items():
+        if h["total"] == 0:
+            continue
+        info = all_employees[emp_id]
+        name = info["name"]
+        combined[name] = {d: h[d] for d in DAY_NAMES}
+        combined[name]["public_holiday"] = h.get("public_holiday", 0)
+        combined[name]["total"]    = h["total"]
+        combined[name]["xero_org"] = info["xero_org"]
+
+    # Night Markets hours (separate — not pushed to GHL; bonus-only pay)
+    night_markets_hours = {}
+    if nm_employees:
+        nm_emp_ids = list(nm_employees.keys())
+        nm_hours_map = calc_hours_per_day(nm_schedule_days, [], [], nm_emp_ids, date_from, date_to)
+        nm_names_with_hours = []
+        for emp_id, h in nm_hours_map.items():
             if h["total"] == 0:
                 continue
-            if not is_night_markets:
-                processed_emp_ids.add(emp_id)
-            if name not in target:
-                target[name] = {d: 0.0 for d in DAY_NAMES}
-                target[name]["public_holiday"] = 0.0
-                target[name]["total"]    = 0.0
-                if not is_night_markets:
-                    target[name]["xero_org"] = EMPLOYEE_XERO_ORG.get(name, default)
-            for d in DAY_NAMES:
-                target[name][d] += h[d]
-            target[name]["public_holiday"] += h.get("public_holiday", 0)
-            target[name]["total"] += h["total"]
+            name = nm_employees[emp_id]
+            nm_names_with_hours.append(name)
+            night_markets_hours[name] = {d: h[d] for d in DAY_NAMES}
+            night_markets_hours[name]["public_holiday"] = h.get("public_holiday", 0)
+            night_markets_hours[name]["total"] = h["total"]
+        if nm_names_with_hours:
+            print(f"  Night Markets hours collected for: {', '.join(sorted(nm_names_with_hours))}")
 
-    if night_markets_hours:
-        print(f"  Night Markets hours collected for: {', '.join(sorted(night_markets_hours))}")
     print(f"  Hours fetched for {len(combined)} staff members.")
     for name, h in sorted(combined.items()):
         days_str = "  ".join(f"{d[:3]}={h[d]:.1f}h" for d in DAY_NAMES if h[d] > 0)
