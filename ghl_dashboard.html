@@ -707,8 +707,9 @@
             return map;
         }
 
-        function calcBonusTier(revPerHour, servicesExGst) {
+        function calcBonusTier(revPerHour, servicesExGst, occupancyPct) {
             if (revPerHour === null || servicesExGst <= 0) return null;
+            if ((parseFloat(occupancyPct) || 0) <= 75) return null;  // must exceed 75% occupancy
             if (revPerHour >= 90) return { pct: 6, amount: servicesExGst * 0.06, color: C.green, label: '6% Bonus' };
             if (revPerHour >= 80) return { pct: 4, amount: servicesExGst * 0.04, color: C.amber, label: '4% Bonus' };
             if (revPerHour >= 75) return { pct: 2, amount: servicesExGst * 0.02, color: C.gold,  label: '2% Bonus' };
@@ -800,7 +801,7 @@
                 const svcExGst = s._svcExGst;
                 const hrs = s._hrs;
                 const revPerHr = s._revPerHr;
-                const bonus = calcBonusTier(revPerHr, svcExGst);
+                const bonus = calcBonusTier(revPerHr, svcExGst, s.occupancy_pct);
                 const revHrCell = `<td class="r sh-show" style="font-weight:700;font-variant-numeric:tabular-nums;">${revPerHr !== null ? `$${revPerHr.toFixed(0)}/hr` : `<span style="color:${C.muted}">—</span>`}</td>`;
                 const bonusCell = bonus
                     ? `<td class="r sh-show"><div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.1rem;"><span style="font-weight:800;color:${bonus.color};font-variant-numeric:tabular-nums;">${fc(bonus.amount)}</span><span style="font-size:0.65rem;font-weight:700;color:${bonus.color};text-transform:uppercase;letter-spacing:0.06em;">${bonus.label}</span></div></td>`
