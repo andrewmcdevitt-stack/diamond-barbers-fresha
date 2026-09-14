@@ -142,20 +142,32 @@ LOCATION_TO_ORG = {
     "Diamond Barbers | Garbutt":        "Diamond Barbers Townsville",
 }
 
-# Manager commission overrides — commission = sum of location product sales / 1.1 * 0.10
-MANAGER_LOCATIONS = {
-    "Anthony Crispo":      ["Diamond Barbers - COOLALINGA"],
-    "Airol Basallo":       ["Diamond Barbers - BELLAMACK"],
-    "Wilfred Vidal":       ["Diamond Barbers - YARRAWONGA"],
-    "Marianne Escobar":    "__ALL_NT__",
-    "Avinash Borade":      ["Diamond Barbers - CASUARINA"],
-    "Vincenzo Vanzanella": ["Diamond Barbers - PARAP"],
-    "Jairo Espinosa":      ["Diamond Barbers - DARWIN CBD"],
-    "Jerry Guevarra":      ["Diamond Barbers Showgrounds", "Diamond Barbers Night Markets",
-                            "Diamond Barbers Northern Beaches"],
-    "Alfon Amora":         ["Diamond Barbers Rising Sun"],
-    "Brazil Lamsen":       ["Diamond Barbers Wulguru"],
-}
+def calc_product_commission(products_inc_gst):
+    """Flat dollar commission tiers on products (ex-GST)."""
+    ex_gst = (products_inc_gst or 0) / 1.1
+    if ex_gst >= 350: return 150
+    if ex_gst >= 300: return 100
+    if ex_gst >= 250: return  75
+    if ex_gst >= 200: return  50
+    if ex_gst >= 150: return  25
+    if ex_gst >= 100: return  15
+    return 0
+
+
+def calc_service_bonus(services_ex_gst, total_hours, occupancy_pct):
+    """Percentage bonus tiers on services (ex-GST), gated by occupancy >= 75%."""
+    if (occupancy_pct or 0) < 75:
+        return 0.0
+    if (services_ex_gst or 0) <= 0 or (total_hours or 0) <= 0:
+        return 0.0
+    rev_per_hour = services_ex_gst / total_hours
+    if   rev_per_hour >= 95: pct = 0.10
+    elif rev_per_hour >= 90: pct = 0.08
+    elif rev_per_hour >= 85: pct = 0.06
+    elif rev_per_hour >= 80: pct = 0.04
+    elif rev_per_hour >= 75: pct = 0.02
+    else: return 0.0
+    return round(services_ex_gst * pct, 2)
 
 # Normalise Fresha name variants → canonical GHL name before any lookup/create.
 # Keyed lowercase for case-insensitive matching.
@@ -540,7 +552,7 @@ def ghl_upsert_payroll(employee_name, week_start, week_end, xero_org, hours):
     raise Exception(f"GHL {r.status_code}: {r.text[:200]}")
 
 
-def ghl_update_performance(employee_name, week_start, tips, commissions, service_sales_exc_gst, occupancy_rate):
+def ghl_update_performance(employee_name, week_start, tips, commissions, service_sales_exc_gst, occupancy_rate, bonus=0.0):
     employee_name = FRESHA_NAME_MAP.get(employee_name.lower(), employee_name)
     if not GHL_API_KEY:
         return "no_key"
@@ -574,6 +586,7 @@ def ghl_update_performance(employee_name, week_start, tips, commissions, service
             "commissions":           commissions,
             "service_sales_exc_gst": service_sales_exc_gst,
             "occupancy_rate":        occupancy_rate,
+            "bonus":                 bonus,
         }},
     )
     if r.status_code in (200, 201):
@@ -1093,7 +1106,7 @@ CSV DATA:
     for s in staff:
         products = s.get("products", 0) or 0
         services = s.get("services", 0) or 0
-        s["commissions"]           = round(products / 1.1 * 0.10, 2)
+        s["commissions"]           = calc_product_commission(products)
         s["service_sales_exc_gst"] = round(services / 1.1, 2)
 
     print(f"  Parsed {len(staff)} staff members. "
@@ -1784,6 +1797,7 @@ async def run():
                 ok = skipped = 0
                 staff_for_email = []
                 _perf_skip = {n.lower() for n in account.get("skip_staff", set())}
+                _hours_lookup = {n.lower(): h for n, h in hours_data.items()}
                 for s in perf_data.get("staff", []):
                     name                  = s.get("name", "").strip()
                     tips                  = s.get("tips", 0) or 0
@@ -1795,17 +1809,12 @@ async def run():
                     if name.lower() in _perf_skip:
                         continue
 
-                    if name in MANAGER_LOCATIONS:
-                        spec = MANAGER_LOCATIONS[name]
-                        if spec == "__ALL_NT__":
-                            total_products = sum(loc_products.values())
-                        else:
-                            total_products = sum(loc_products.get(loc, 0) for loc in spec)
-                        commissions    = round(total_products / 1.1 * 0.10, 2)
-                        print(f"    MANAGER {name:28s}  products=${total_products:.2f}  comm=${commissions:.2f}")
+                    h_entry    = _hours_lookup.get(name.lower(), {})
+                    total_hrs  = h_entry.get("total", 0) or 0
+                    bonus      = calc_service_bonus(service_sales_exc_gst, total_hrs, occupancy_rate)
 
                     try:
-                        action = ghl_update_performance(name, date_from, tips, commissions, service_sales_exc_gst, occupancy_rate)
+                        action = ghl_update_performance(name, date_from, tips, commissions, service_sales_exc_gst, occupancy_rate, bonus)
                         if action == "no_record":
                             print(f"    SKIP  {name:30s}  (no payroll record)")
                             acct["issues"].append(f"No GHL record for {name} — tips/commissions not pushed (hours may not have synced)")
@@ -1813,7 +1822,7 @@ async def run():
                             if acct["status"] == "ok":
                                 acct["status"] = "partial"
                         else:
-                            print(f"    OK    {name:30s}  tips=${tips:.2f}  comm=${commissions:.2f}")
+                            print(f"    OK    {name:30s}  tips=${tips:.2f}  comm=${commissions:.2f}  bonus=${bonus:.2f}")
                             ok += 1
                     except Exception as e:
                         print(f"    ERROR {name}: {e}")
@@ -1824,6 +1833,7 @@ async def run():
                         "tips":                  tips,
                         "commissions":           commissions,
                         "service_sales_exc_gst": service_sales_exc_gst,
+                        "bonus":                 bonus,
                     })
 
                 acct["perf_updated"] = ok

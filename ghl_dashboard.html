@@ -709,10 +709,12 @@
 
         function calcBonusTier(revPerHour, servicesExGst, occupancyPct) {
             if (revPerHour === null || servicesExGst <= 0) return null;
-            if ((parseFloat(occupancyPct) || 0) <= 75) return null;  // must exceed 75% occupancy
-            if (revPerHour >= 90) return { pct: 6, amount: servicesExGst * 0.06, color: C.green, label: '6% Bonus' };
-            if (revPerHour >= 80) return { pct: 4, amount: servicesExGst * 0.04, color: C.amber, label: '4% Bonus' };
-            if (revPerHour >= 75) return { pct: 2, amount: servicesExGst * 0.02, color: C.gold,  label: '2% Bonus' };
+            if ((parseFloat(occupancyPct) || 0) < 75) return null;  // must be >= 75% occupancy
+            if (revPerHour >= 95) return { pct: 10, amount: servicesExGst * 0.10, color: C.green, label: '10% Bonus' };
+            if (revPerHour >= 90) return { pct:  8, amount: servicesExGst * 0.08, color: C.green, label: '8% Bonus' };
+            if (revPerHour >= 85) return { pct:  6, amount: servicesExGst * 0.06, color: C.amber, label: '6% Bonus' };
+            if (revPerHour >= 80) return { pct:  4, amount: servicesExGst * 0.04, color: C.amber, label: '4% Bonus' };
+            if (revPerHour >= 75) return { pct:  2, amount: servicesExGst * 0.02, color: C.gold,  label: '2% Bonus' };
             return null;
         }
 
