@@ -684,6 +684,108 @@ def ghl_update_bonus(employee_name, week_start, bonus):
     raise Exception(f"GHL {r.status_code}: {r.text[:200]}")
 
 
+# ── Xero leave hours ──────────────────────────────────────────────────────────
+
+def fetch_xero_leave(date_from, date_to):
+    """Return approved annual/sick leave hours per staff member from all Xero orgs.
+
+    Reads data/xero_token.json (written by the workflow before weekly_sync runs).
+    Returns {name_lower: hours} combining all orgs. Returns {} if token missing.
+    """
+    import base64
+    import urllib.parse
+    import urllib.request
+    import urllib.error
+
+    token_file = DATA_DIR / "xero_token.json"
+    if not token_file.exists():
+        print("  Xero token not found — skipping leave fetch.")
+        return {}
+
+    xero_client_id     = os.environ.get("XERO_CLIENT_ID", "")
+    xero_client_secret = os.environ.get("XERO_CLIENT_SECRET", "")
+    if not xero_client_id or not xero_client_secret:
+        print("  XERO_CLIENT_ID/SECRET not set — skipping leave fetch.")
+        return {}
+
+    try:
+        token_data = json.loads(token_file.read_text())
+
+        # Refresh token
+        creds = base64.b64encode(f"{xero_client_id}:{xero_client_secret}".encode()).decode()
+        body  = urllib.parse.urlencode({
+            "grant_type":    "refresh_token",
+            "refresh_token": token_data["refresh_token"],
+        }).encode()
+        req = urllib.request.Request(
+            "https://identity.xero.com/connect/token", data=body,
+            headers={"Authorization": f"Basic {creds}",
+                     "Content-Type":  "application/x-www-form-urlencoded"},
+        )
+        with urllib.request.urlopen(req) as r:
+            new_token = json.loads(r.read())
+        new_token["tenants"] = token_data.get("tenants", [])
+        token_file.write_text(json.dumps(new_token, indent=2))
+        access_token = new_token["access_token"]
+        tenants      = new_token.get("tenants", [])
+    except Exception as e:
+        print(f"  Xero token refresh failed — skipping leave fetch: {e}")
+        return {}
+
+    leave_hours = {}
+    leave_types_wanted = {"annual leave", "sick leave"}
+
+    for tenant in tenants:
+        tenant_id   = tenant["id"]
+        tenant_name = tenant["name"]
+        try:
+            url = (f"https://api.xero.com/payroll.xro/1.0/LeaveApplications"
+                   f"?startDate={date_from}&endDate={date_to}")
+            req = urllib.request.Request(
+                url,
+                headers={"Authorization": f"Bearer {access_token}",
+                         "Xero-Tenant-Id": tenant_id,
+                         "Accept":         "application/json"},
+            )
+            with urllib.request.urlopen(req) as r:
+                data = json.loads(r.read())
+
+            for la in data.get("LeaveApplications", []):
+                if la.get("LeaveApplicationStatus") != "APPROVED":
+                    continue
+                leave_type = (la.get("LeavePeriods", [{}])[0]
+                              .get("PayPeriodStatus", "")).lower()
+                type_name  = (la.get("Title") or "").lower()
+                if not any(t in type_name for t in leave_types_wanted):
+                    continue
+
+                emp_name = (la.get("EmployeeName") or "").strip().lower()
+                if not emp_name:
+                    continue
+
+                hrs = sum(
+                    float(lp.get("NumberOfUnits", 0) or 0)
+                    for lp in la.get("LeavePeriods", [])
+                    if lp.get("LeavePeriodStatus") == "SCHEDULED"
+                )
+                if hrs > 0:
+                    leave_hours[emp_name] = leave_hours.get(emp_name, 0) + hrs
+
+        except urllib.error.HTTPError as e:
+            print(f"  Xero leave fetch error for {tenant_name}: HTTP {e.code}")
+        except Exception as e:
+            print(f"  Xero leave fetch error for {tenant_name}: {e}")
+
+    if leave_hours:
+        print(f"  Xero approved leave: {len(leave_hours)} staff with leave hours")
+        for n, h in sorted(leave_hours.items()):
+            print(f"    {n:35s}  {h:.2f} hrs")
+    else:
+        print("  Xero approved leave: none found for this period.")
+
+    return leave_hours
+
+
 # ── Issue-detection checklist ───────────────────────────────────────────────────
 # Every notable click/login/download/push step gets recorded here as
 # OK / FAIL / SKIP / FLAG so the end-of-run report is a copy-pasteable
@@ -1548,6 +1650,15 @@ async def run():
     sync_results     = []
     all_fresha_names = set()  # accumulated across all accounts for new-barber detection
 
+    # Compute week dates once (all accounts use the same week)
+    _today     = datetime.now(timezone(timedelta(hours=9, minutes=30)))
+    _last_mon  = _today - timedelta(days=_today.weekday() + 7)
+    _week_from = (_last_mon).strftime("%Y-%m-%d")
+    _week_to   = (_last_mon + timedelta(days=6)).strftime("%Y-%m-%d")
+
+    print(f"\nFetching Xero approved leave for {_week_from} to {_week_to}...")
+    xero_leave = fetch_xero_leave(_week_from, _week_to)
+
     async with async_playwright() as p:
         for account in ACCOUNTS:
             label        = account["label"]
@@ -1809,9 +1920,11 @@ async def run():
                     if name.lower() in _perf_skip:
                         continue
 
-                    h_entry    = _hours_lookup.get(name.lower(), {})
-                    total_hrs  = h_entry.get("total", 0) or 0
-                    bonus      = calc_service_bonus(service_sales_exc_gst, total_hrs, occupancy_rate)
+                    h_entry      = _hours_lookup.get(name.lower(), {})
+                    fresha_hrs   = h_entry.get("total", 0) or 0
+                    leave_hrs    = xero_leave.get(name.lower(), 0)
+                    total_hrs    = fresha_hrs + leave_hrs
+                    bonus        = calc_service_bonus(service_sales_exc_gst, total_hrs, occupancy_rate)
 
                     try:
                         action = ghl_update_performance(name, date_from, tips, commissions, service_sales_exc_gst, occupancy_rate, bonus)
@@ -1822,7 +1935,8 @@ async def run():
                             if acct["status"] == "ok":
                                 acct["status"] = "partial"
                         else:
-                            print(f"    OK    {name:30s}  tips=${tips:.2f}  comm=${commissions:.2f}  bonus=${bonus:.2f}")
+                            leave_note = f"  (+{leave_hrs:.1f}h leave)" if leave_hrs else ""
+                            print(f"    OK    {name:30s}  tips=${tips:.2f}  comm=${commissions:.2f}  bonus=${bonus:.2f}{leave_note}")
                             ok += 1
                     except Exception as e:
                         print(f"    ERROR {name}: {e}")
