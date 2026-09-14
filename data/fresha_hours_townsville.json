@@ -1,73 +1,73 @@
 {
-  "date_from": "2026-08-31",
-  "date_to": "2026-09-06",
-  "generated": "2026-09-07T05:40:02.101523+00:00",
+  "date_from": "2026-09-07",
+  "date_to": "2026-09-13",
+  "generated": "2026-09-14T05:11:24.903561+00:00",
   "summary": {
     "Michel Medina": {
       "monday": 7.0,
       "tuesday": 9.0,
       "wednesday": 6.0,
-      "thursday": 11.0,
+      "thursday": 9.0,
       "friday": 4.0,
       "saturday": 0.0,
-      "sunday": 6.0,
+      "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 43.0
+      "total_hrs": 35.0
     },
     "Jack William Bastock": {
       "monday": 0.0,
       "tuesday": 8.0,
-      "wednesday": 8.0,
-      "thursday": 0.0,
-      "friday": 8.0,
-      "saturday": 7.5,
+      "wednesday": 0.0,
+      "thursday": 7.0,
+      "friday": 7.08,
+      "saturday": 9.0,
       "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 31.5
+      "total_hrs": 31.08
     },
     "D Mataele": {
       "monday": 8.0,
-      "tuesday": 0.0,
+      "tuesday": 7.0,
       "wednesday": 0.0,
-      "thursday": 0.0,
-      "friday": 0.0,
-      "saturday": 0.0,
-      "sunday": 0.0,
+      "thursday": 8.0,
+      "friday": 6.0,
+      "saturday": 9.0,
+      "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 8.0
+      "total_hrs": 43.0
     },
     "Alfon Amora": {
-      "monday": 9.0,
+      "monday": 6.0,
       "tuesday": 0.0,
       "wednesday": 9.0,
-      "thursday": 9.0,
+      "thursday": 6.0,
       "friday": 9.0,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 50.0
+      "total_hrs": 44.0
     },
     "Nelson Diwa": {
       "monday": 0.0,
-      "tuesday": 9.0,
+      "tuesday": 0.0,
       "wednesday": 9.0,
       "thursday": 9.0,
       "friday": 8.5,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 49.5
+      "total_hrs": 40.5
     },
     "Brazil Lamsen": {
-      "monday": 0.0,
-      "tuesday": 0.0,
+      "monday": 9.0,
+      "tuesday": 9.0,
       "wednesday": 0.0,
-      "thursday": 0.0,
-      "friday": 0.0,
+      "thursday": 6.0,
+      "friday": 9.0,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 14.0
+      "total_hrs": 47.0
     }
   }
 }
