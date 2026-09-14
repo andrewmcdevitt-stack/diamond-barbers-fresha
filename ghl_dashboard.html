@@ -1381,6 +1381,7 @@
                 if (!res.ok) return;
                 ntHoursData = await res.json();
                 if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+                else if (activeTab === 'darwin' && records.length) render(records[current]);
                 setTimeout(loadNTHours, 24 * 60 * 60 * 1000);
             } catch (err) { }
         }
@@ -1391,6 +1392,7 @@
                 if (!res.ok) return;
                 qldHoursData = await res.json();
                 if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+                else if (activeTab === 'cairns' && cairnsRecords.length) render(cairnsRecords[cairnsCurrent]);
                 setTimeout(loadQLDHours, 24 * 60 * 60 * 1000);
             } catch (err) { }
         }
@@ -1419,6 +1421,7 @@
                 if (!res.ok) return;
                 townsvilleHoursData = await res.json();
                 if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+                else if (activeTab === 'townsville' && townsvilleRecords.length) render(townsvilleRecords[townsvilleCurrent]);
                 setTimeout(loadTownsvilleHours, 24 * 60 * 60 * 1000);
             } catch (err) { }
         }
