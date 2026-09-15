@@ -579,15 +579,15 @@
 
         function occColor(v) {
             v = parseFloat(v) || 0;
-            return v >= 80 ? C.blue : v >= 60 ? C.green : C.red;
+            return v >= 80 ? C.blue : v >= 75 ? C.green : C.red;
         }
         function occBgColor(v) {
             v = parseFloat(v) || 0;
-            return v >= 80 ? C.blueBg : v >= 60 ? C.greenBg : C.redBg;
+            return v >= 80 ? C.blueBg : v >= 75 ? C.greenBg : C.redBg;
         }
         function occLabel(v) {
             v = parseFloat(v) || 0;
-            return v >= 80 ? 'On target ≥ 80%' : v >= 60 ? 'Needs attention 60–79%' : 'Below target < 60%';
+            return v >= 80 ? 'On target ≥ 80%' : v >= 75 ? 'Needs attention 75–79%' : 'Below target < 75%';
         }
 
         // ── Share-view helpers ────────────────────────────────────────────────────────
@@ -967,7 +967,7 @@
                 annotations: annotations,
                 shapes: [
                     { type: 'line', x0: 80, x1: 80, y0: 0, y1: 1, yref: 'paper', layer: 'below', line: { color: C.blue, width: 1.5, dash: 'dot' } },
-                    { type: 'line', x0: 60, x1: 60, y0: 0, y1: 1, yref: 'paper', layer: 'below', line: { color: C.green, width: 1.5, dash: 'dot' } },
+                    { type: 'line', x0: 75, x1: 75, y0: 0, y1: 1, yref: 'paper', layer: 'below', line: { color: C.red, width: 1.5, dash: 'dot' } },
                     ...Array.from({ length: total - 1 }, (_, i) => ({
                         type: 'line', x0: -1, x1: 1, xref: 'paper',
                         y0: i + 0.5, y1: i + 0.5, yref: 'y',
