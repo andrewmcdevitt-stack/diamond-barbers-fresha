@@ -808,6 +808,19 @@
                 const bonusCell = bonus
                     ? `<td class="r sh-show"><div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.1rem;"><span style="font-weight:800;color:${bonus.color};font-variant-numeric:tabular-nums;">${fc(bonus.amount)}</span><span style="font-size:0.65rem;font-weight:700;color:${bonus.color};text-transform:uppercase;letter-spacing:0.06em;">${bonus.label}</span></div></td>`
                     : `<td class="r sh-show"><span style="color:${C.muted}">—</span></td>`;
+                const commVal  = parseFloat(s.commissions) || 0;
+                const tipsVal  = parseFloat(s.tips) || 0;
+                const bonusVal = bonus ? bonus.amount : 0;
+                const totalExtras = bonusVal + commVal + tipsVal;
+                const commCell  = commVal > 0
+                    ? `<td class="r sh-show" style="font-variant-numeric:tabular-nums;">${fc(commVal)}</td>`
+                    : `<td class="r sh-show"><span style="color:${C.muted}">—</span></td>`;
+                const tipsShowCell = tipsVal > 0
+                    ? `<td class="r sh-show" style="font-variant-numeric:tabular-nums;">${fc(tipsVal)}</td>`
+                    : `<td class="r sh-show"><span style="color:${C.muted}">—</span></td>`;
+                const totalCell = totalExtras > 0
+                    ? `<td class="r sh-show" style="font-weight:700;color:${C.gold};font-variant-numeric:tabular-nums;">${fc(totalExtras)}</td>`
+                    : `<td class="r sh-show"><span style="color:${C.muted}">—</span></td>`;
                 return `
         <tr>
             <td class="sh-hide"><span class="rank ${cls}">#${rank}</span></td>
@@ -820,6 +833,9 @@
             ${occCell}
             ${revHrCell}
             ${bonusCell}
+            ${commCell}
+            ${tipsShowCell}
+            ${totalCell}
         </tr>`;
             }).join('');
 
@@ -879,6 +895,9 @@
                             ${hasOccCol ? '<th class="r">Occupancy</th>' : ''}
                             <th class="r sh-show">$/hr</th>
                             <th class="r sh-show">Bonus</th>
+                            <th class="r sh-show">Commission</th>
+                            <th class="r sh-show">Tips</th>
+                            <th class="r sh-show">Total</th>
                         </tr></thead>
                         <tbody>${staffRows}</tbody>
                     </table>
