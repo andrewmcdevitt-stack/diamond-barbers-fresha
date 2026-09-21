@@ -1032,6 +1032,25 @@ async def download_performance_csvs(account, page, context, checklist, date_from
     # Switch to the correct Fresha workspace before loading reports
     await switch_workspace(account, page)
 
+    # Verify the switch actually worked — abort if we're on the wrong workspace
+    target_ws = account.get("workspace_name")
+    if target_ws:
+        actual_ws = None
+        for name in _KNOWN_WORKSPACES:
+            for loc in [page.get_by_role("button", name=name, exact=True),
+                        page.locator(f'text="{name}"').first]:
+                try:
+                    if await loc.count() > 0:
+                        actual_ws = name
+                        break
+                except Exception:
+                    continue
+            if actual_ws:
+                break
+        if actual_ws and actual_ws != target_ws:
+            raise Exception(f"Workspace switch failed: expected '{target_ws}', currently on '{actual_ws}' — aborting to avoid saving wrong data")
+        print(f"  [WORKSPACE] Confirmed on '{actual_ws or target_ws}'.")
+
     await page.goto(
         "https://partners.fresha.com/reports/table/performance-summary",
         wait_until="networkidle"
