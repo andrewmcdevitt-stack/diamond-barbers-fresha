@@ -152,6 +152,17 @@ def resolve_fresha_name(xero_name):
     return XERO_TO_FRESHA.get(n, n)
 
 
+def calc_product_commission(products):
+    v = products or 0
+    if v >= 350: return 150
+    if v >= 300: return 100
+    if v >= 250: return  75
+    if v >= 200: return  50
+    if v >= 150: return  25
+    if v >= 100: return  15
+    return 0
+
+
 def parse_xero_date(date_str):
     """Parse Xero /Date(ms)/ or ISO date string → 'YYYY-MM-DD'."""
     if not date_str:
@@ -298,7 +309,7 @@ def load_performance():
             products = s.get("products", 0) or 0
             perf[key] = {
                 "tips":       s.get("tips", 0) or 0,
-                "commission": round((products / 1.1) * 0.1, 2),
+                "commission": calc_product_commission(products),
             }
     return perf
 
@@ -413,17 +424,7 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None, loc_nt=None
             skipped.append(f"{xero_nm_norm} (no hours)")
             continue
 
-        # Commission: location managers get 10% of assigned location(s) product sales ex-GST;
-        # all other barbers get 10% of their own personal product sales ex-GST.
-        loc_spec = LOCATION_COMMISSION.get(xero_nm_norm)
-        if loc_spec == "__ALL_NT__":
-            raw_products = sum((loc_nt or {}).values())
-            commission = round((raw_products / 1.1) * 0.1, 2) if raw_products else 0
-        elif loc_spec:
-            raw_products = sum(all_locs.get(loc, 0) for loc in loc_spec)
-            commission = round((raw_products / 1.1) * 0.1, 2) if raw_products else 0
-        else:
-            commission = p.get("commission", 0) or 0
+        commission = p.get("commission", 0) or 0
 
         lines = []
         for day in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "public_holiday"):
