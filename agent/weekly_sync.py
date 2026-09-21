@@ -1095,7 +1095,7 @@ async def download_performance_csvs(account, page, context, checklist, date_from
     print("  Downloading team member CSV...")
     try:
         async with page.expect_download(timeout=30000) as dl_info:
-            await page.get_by_role("button", name="Options").click(timeout=10000)
+            await page.get_by_role("button", name="Options").click(timeout=30000)
             await page.wait_for_timeout(1500)
             await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
         checklist.append({"check": "Team member CSV: Options -> CSV menu clicked", "status": "OK"})
@@ -1126,7 +1126,7 @@ async def download_performance_csvs(account, page, context, checklist, date_from
 
         print("  Downloading location CSV...")
         async with page.expect_download(timeout=30000) as dl_info2:
-            await page.get_by_role("button", name="Options").click(timeout=10000)
+            await page.get_by_role("button", name="Options").click(timeout=30000)
             await page.wait_for_timeout(1500)
             await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
 
@@ -1297,7 +1297,7 @@ async def download_night_markets_csv(account, page, context, checklist, date_fro
     # Download team-member CSV
     try:
         async with page.expect_download(timeout=30000) as dl_info:
-            await page.get_by_role("button", name="Options").click(timeout=10000)
+            await page.get_by_role("button", name="Options").click(timeout=30000)
             await page.wait_for_timeout(1500)
             await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
         download = await dl_info.value
