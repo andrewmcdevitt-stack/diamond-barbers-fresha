@@ -503,17 +503,16 @@ def ghl_upsert_payroll(employee_name, week_start, week_end, xero_org, hours):
         json={
             "locationId": GHL_LOCATION_ID,
             "page":        1,
-            "pageLimit":   5,
+            "pageLimit":   100,
             "filters": [
                 {"field": "properties.employee_name", "operator": "eq", "value": employee_name},
-                {"field": "properties.week_start",    "operator": "eq", "value": week_start},
             ],
         },
     )
     if r.status_code not in (200, 201):
         raise Exception(f"Search failed {r.status_code}: {r.text[:200]}")
 
-    records = r.json().get("records", [])
+    records = [rec for rec in r.json().get("records", []) if rec.get("properties", {}).get("week_start") == week_start]
 
     props = {
         "employee_name":        employee_name,
@@ -563,17 +562,16 @@ def ghl_update_performance(employee_name, week_start, tips, commissions, service
         json={
             "locationId": GHL_LOCATION_ID,
             "page":        1,
-            "pageLimit":   5,
+            "pageLimit":   100,
             "filters": [
                 {"field": "properties.employee_name", "operator": "eq", "value": employee_name},
-                {"field": "properties.week_start",    "operator": "eq", "value": week_start},
             ],
         },
     )
     if r.status_code not in (200, 201):
         raise Exception(f"Search failed {r.status_code}: {r.text[:200]}")
 
-    records = r.json().get("records", [])
+    records = [rec for rec in r.json().get("records", []) if rec.get("properties", {}).get("week_start") == week_start]
     if not records:
         return "no_record"
 
