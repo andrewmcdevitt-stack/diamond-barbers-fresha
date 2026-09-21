@@ -142,15 +142,14 @@ LOCATION_TO_ORG = {
     "Diamond Barbers | Garbutt":        "Diamond Barbers Townsville",
 }
 
-def calc_product_commission(products_inc_gst):
-    """Flat dollar commission tiers on products (ex-GST)."""
-    ex_gst = (products_inc_gst or 0) / 1.1
-    if ex_gst >= 350: return 150
-    if ex_gst >= 300: return 100
-    if ex_gst >= 250: return  75
-    if ex_gst >= 200: return  50
-    if ex_gst >= 150: return  25
-    if ex_gst >= 100: return  15
+def calc_product_commission(products):
+    v = products or 0
+    if v >= 350: return 150
+    if v >= 300: return 100
+    if v >= 250: return  75
+    if v >= 200: return  50
+    if v >= 150: return  25
+    if v >= 100: return  15
     return 0
 
 
