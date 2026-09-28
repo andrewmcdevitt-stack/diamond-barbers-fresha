@@ -5364,5 +5364,131 @@
     ],
     "report_date": "2026-09-28",
     "report_type": "performance_summary"
+  },
+  {
+    "period_start": "2026-09-21",
+    "period_end": "2026-09-27",
+    "sales_summary": {
+      "services": 19914.25,
+      "products": 600.0,
+      "tips": 218.1,
+      "total_sales": 20614.0
+    },
+    "staff": [
+      {
+        "name": "Alex Khaq",
+        "services": 3414.25,
+        "products": 126.0,
+        "tips": 71.94,
+        "total_sales": 3550.25,
+        "total_appts": 70,
+        "cancelled_appts": 2,
+        "no_show_appts": 2,
+        "services_sold": 90,
+        "occupancy_pct": 75.41,
+        "commissions": 15,
+        "service_sales_exc_gst": 3103.86
+      },
+      {
+        "name": "Ashleigh Campbell",
+        "services": 933.5,
+        "products": 34.0,
+        "tips": 4.0,
+        "total_sales": 1026.5,
+        "total_appts": 25,
+        "cancelled_appts": 2,
+        "no_show_appts": 1,
+        "services_sold": 25,
+        "occupancy_pct": 52.53,
+        "commissions": 0,
+        "service_sales_exc_gst": 848.64
+      },
+      {
+        "name": "Dipen Magar",
+        "services": 1648.0,
+        "products": 0.0,
+        "tips": 34.16,
+        "total_sales": 1648.0,
+        "total_appts": 32,
+        "cancelled_appts": 0,
+        "no_show_appts": 0,
+        "services_sold": 40,
+        "occupancy_pct": 61.59,
+        "commissions": 0,
+        "service_sales_exc_gst": 1498.18
+      },
+      {
+        "name": "Ethan Byrne",
+        "services": 3440.0,
+        "products": 34.0,
+        "tips": 15.0,
+        "total_sales": 3474.0,
+        "total_appts": 71,
+        "cancelled_appts": 3,
+        "no_show_appts": 1,
+        "services_sold": 80,
+        "occupancy_pct": 84.14,
+        "commissions": 0,
+        "service_sales_exc_gst": 3127.27
+      },
+      {
+        "name": "Jerry Guevarra",
+        "services": 3940.0,
+        "products": 102.0,
+        "tips": 52.0,
+        "total_sales": 4048.25,
+        "total_appts": 87,
+        "cancelled_appts": 2,
+        "no_show_appts": 1,
+        "services_sold": 100,
+        "occupancy_pct": 81.09,
+        "commissions": 15,
+        "service_sales_exc_gst": 3581.82
+      },
+      {
+        "name": "Kyle Abe-Abe",
+        "services": 2495.0,
+        "products": 68.0,
+        "tips": 15.0,
+        "total_sales": 2575.5,
+        "total_appts": 62,
+        "cancelled_appts": 6,
+        "no_show_appts": 0,
+        "services_sold": 63,
+        "occupancy_pct": 61.96,
+        "commissions": 0,
+        "service_sales_exc_gst": 2268.18
+      },
+      {
+        "name": "Michael Dobbs",
+        "services": 1421.5,
+        "products": 168.0,
+        "tips": 9.0,
+        "total_sales": 1589.5,
+        "total_appts": 30,
+        "cancelled_appts": 1,
+        "no_show_appts": 0,
+        "services_sold": 36,
+        "occupancy_pct": 54.72,
+        "commissions": 25,
+        "service_sales_exc_gst": 1292.27
+      },
+      {
+        "name": "Yong Yansah",
+        "services": 2622.0,
+        "products": 68.0,
+        "tips": 17.0,
+        "total_sales": 2702.0,
+        "total_appts": 58,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 65,
+        "occupancy_pct": 66.44,
+        "commissions": 0,
+        "service_sales_exc_gst": 2383.64
+      }
+    ],
+    "report_date": "2026-09-28",
+    "report_type": "performance_summary"
   }
 ]
