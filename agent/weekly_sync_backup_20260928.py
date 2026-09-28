@@ -1051,13 +1051,10 @@ async def download_performance_csvs(account, page, context, checklist, date_from
             raise Exception(f"Workspace switch failed: expected '{target_ws}', currently on '{actual_ws}' — aborting to avoid saving wrong data")
         print(f"  [WORKSPACE] Confirmed on '{actual_ws or target_ws}'.")
 
-    pid = account["provider_id"]
-    perf_url = (
-        f"https://partners.fresha.com/reports/table/performance-summary"
-        f"?__pid={pid}&groupBy=employee_name&employee_id=all"
-        f"&dateFrom={date_from_fallback}&dateTo={date_to_fallback}"
+    await page.goto(
+        "https://partners.fresha.com/reports/table/performance-summary",
+        wait_until="networkidle"
     )
-    await page.goto(perf_url, wait_until="networkidle")
     await page.wait_for_timeout(4000)
 
     # Dismiss any popups/modals that may be blocking interaction
@@ -1308,38 +1305,30 @@ async def download_night_markets_csv(account, page, context, checklist, date_fro
     )
     try:
         await page.goto(url, wait_until="networkidle", timeout=60000)
-        await page.wait_for_timeout(7000)
+        await page.wait_for_timeout(3000)
         checklist.append({"check": "Night Markets: performance page loaded", "status": "OK"})
     except Exception as e:
         checklist.append({"check": "Night Markets: performance page loaded", "status": "FAIL",
                           "detail": str(e).splitlines()[0][:160]})
         return None
 
-    # Download team-member CSV — retry once if Options button times out
-    csv_path = None
-    for _nm_attempt in range(1, 3):
-        try:
-            async with page.expect_download(timeout=30000) as dl_info:
-                await page.get_by_role("button", name="Options").click(timeout=30000)
-                await page.wait_for_timeout(1500)
-                await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
-            download = await dl_info.value
-            csv_path = DATA_DIR / f"fresha_night_markets_{datetime.now().strftime('%Y%m%d')}.csv"
-            await download.save_as(str(csv_path))
-            checklist.append({"check": "Night Markets: CSV downloaded", "status": "OK",
-                              "detail": csv_path.name})
-            print(f"  Night Markets CSV saved: {csv_path.name}")
-            break
-        except Exception as e:
-            if _nm_attempt < 2:
-                print(f"  [NIGHT MARKETS] RETRY {_nm_attempt}/2 — CSV download failed, retrying in 10s...")
-                await page.wait_for_timeout(10000)
-                await page.goto(url, wait_until="networkidle", timeout=60000)
-                await page.wait_for_timeout(7000)
-            else:
-                checklist.append({"check": "Night Markets: CSV downloaded", "status": "FAIL",
-                                  "detail": str(e).splitlines()[0][:160]})
-    return str(csv_path) if csv_path else None
+    # Download team-member CSV
+    try:
+        async with page.expect_download(timeout=30000) as dl_info:
+            await page.get_by_role("button", name="Options").click(timeout=30000)
+            await page.wait_for_timeout(1500)
+            await page.get_by_role("menuitem", name="CSV").click(timeout=10000)
+        download = await dl_info.value
+        csv_path = DATA_DIR / f"fresha_night_markets_{datetime.now().strftime('%Y%m%d')}.csv"
+        await download.save_as(str(csv_path))
+        checklist.append({"check": "Night Markets: CSV downloaded", "status": "OK",
+                          "detail": csv_path.name})
+        print(f"  Night Markets CSV saved: {csv_path.name}")
+        return str(csv_path)
+    except Exception as e:
+        checklist.append({"check": "Night Markets: CSV downloaded", "status": "FAIL",
+                          "detail": str(e).splitlines()[0][:160]})
+        return None
 
 
 def parse_night_markets_csv(csv_path, api_key):
