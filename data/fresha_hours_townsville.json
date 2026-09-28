@@ -1,36 +1,36 @@
 {
-  "date_from": "2026-09-14",
-  "date_to": "2026-09-20",
-  "generated": "2026-09-21T04:23:58.346734+00:00",
+  "date_from": "2026-09-21",
+  "date_to": "2026-09-27",
+  "generated": "2026-09-28T03:38:38.111219+00:00",
   "summary": {
     "Michel Medina": {
-      "monday": 7.0,
+      "monday": 0.0,
       "tuesday": 9.0,
       "wednesday": 6.0,
       "thursday": 9.0,
       "friday": 4.0,
       "saturday": 0.0,
-      "sunday": 5.0,
+      "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 40.0
+      "total_hrs": 28.0
     },
     "Jack William Bastock": {
       "monday": 0.0,
       "tuesday": 8.0,
       "wednesday": 8.0,
       "thursday": 7.0,
-      "friday": 6.5,
-      "saturday": 9.0,
+      "friday": 6.0,
+      "saturday": 0.0,
       "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 38.5
+      "total_hrs": 29.0
     },
     "D Mataele": {
-      "monday": 8.0,
+      "monday": 7.5,
       "tuesday": 7.0,
       "wednesday": 0.0,
       "thursday": 8.0,
-      "friday": 5.5,
+      "friday": 6.0,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
@@ -52,11 +52,11 @@
       "tuesday": 0.0,
       "wednesday": 9.0,
       "thursday": 9.0,
-      "friday": 8.0,
+      "friday": 8.5,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 40.0
+      "total_hrs": 40.5
     },
     "Brazil Lamsen": {
       "monday": 9.0,
