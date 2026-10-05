@@ -3554,5 +3554,117 @@
     ],
     "report_date": "2026-09-28",
     "report_type": "performance_summary"
+  },
+  {
+    "period_start": "2026-09-28",
+    "period_end": "2026-10-04",
+    "sales_summary": {
+      "services": 17833.0,
+      "products": 334.0,
+      "tips": 100.35,
+      "total_sales": 18562.75
+    },
+    "staff": [
+      {
+        "name": "Alfon Amora",
+        "services": 4635.0,
+        "products": 68.0,
+        "tips": 20.25,
+        "total_sales": 4816.75,
+        "total_appts": 105,
+        "cancelled_appts": 11,
+        "no_show_appts": 1,
+        "services_sold": 110,
+        "occupancy_pct": 90.43,
+        "commissions": 0,
+        "service_sales_exc_gst": 4213.64
+      },
+      {
+        "name": "Brazil Lamsen",
+        "services": 3529.0,
+        "products": 68.0,
+        "tips": 8.0,
+        "total_sales": 3597.0,
+        "total_appts": 79,
+        "cancelled_appts": 6,
+        "no_show_appts": 1,
+        "services_sold": 81,
+        "occupancy_pct": 61.54,
+        "commissions": 0,
+        "service_sales_exc_gst": 3208.18
+      },
+      {
+        "name": "D Mataele",
+        "services": 3430.0,
+        "products": 66.0,
+        "tips": 41.71,
+        "total_sales": 3496.0,
+        "total_appts": 77,
+        "cancelled_appts": 0,
+        "no_show_appts": 3,
+        "services_sold": 82,
+        "occupancy_pct": 70.08,
+        "commissions": 0,
+        "service_sales_exc_gst": 3118.18
+      },
+      {
+        "name": "Jacelyn Dahl",
+        "services": 1063.0,
+        "products": 0.0,
+        "tips": 20.24,
+        "total_sales": 1125.0,
+        "total_appts": 24,
+        "cancelled_appts": 0,
+        "no_show_appts": 1,
+        "services_sold": 25,
+        "occupancy_pct": 44.06,
+        "commissions": 0,
+        "service_sales_exc_gst": 966.36
+      },
+      {
+        "name": "Jack William Bastock",
+        "services": 3065.0,
+        "products": 132.0,
+        "tips": 5.1,
+        "total_sales": 3307.0,
+        "total_appts": 72,
+        "cancelled_appts": 8,
+        "no_show_appts": 4,
+        "services_sold": 75,
+        "occupancy_pct": 72.71,
+        "commissions": 15,
+        "service_sales_exc_gst": 2786.36
+      },
+      {
+        "name": "Michel Medina",
+        "services": 0.0,
+        "products": 0.0,
+        "tips": 0.0,
+        "total_sales": 0.0,
+        "total_appts": 2,
+        "cancelled_appts": 2,
+        "no_show_appts": 0,
+        "services_sold": 0,
+        "occupancy_pct": 0.0,
+        "commissions": 0,
+        "service_sales_exc_gst": 0.0
+      },
+      {
+        "name": "Nelson Diwa",
+        "services": 2111.0,
+        "products": 0.0,
+        "tips": 5.05,
+        "total_sales": 2221.0,
+        "total_appts": 52,
+        "cancelled_appts": 7,
+        "no_show_appts": 3,
+        "services_sold": 51,
+        "occupancy_pct": 84.42,
+        "commissions": 0,
+        "service_sales_exc_gst": 1919.09
+      }
+    ],
+    "report_date": "2026-10-05",
+    "report_type": "performance_summary"
   }
 ]
