@@ -1,73 +1,106 @@
 {
-  "date_from": "2026-09-28",
-  "date_to": "2026-10-04",
-  "generated": "2026-10-05T01:59:46.844523+00:00",
+  "date_from": "2026-10-05",
+  "date_to": "2026-10-11",
+  "generated": "2026-10-11T22:54:57.202672+00:00",
   "summary": {
-    "Jack William Bastock": {
+    "Joshua Walsh": {
+      "monday": 0.0,
+      "tuesday": 0.0,
+      "wednesday": 9.0,
+      "thursday": 7.0,
+      "friday": 3.0,
+      "saturday": 9.0,
+      "sunday": 0.0,
+      "public_holiday": 0.0,
+      "total_hrs": 28.0
+    },
+    "Stanley Mohoki": {
+      "monday": 0.0,
+      "tuesday": 7.0,
+      "wednesday": 6.83,
+      "thursday": 9.0,
+      "friday": 7.0,
+      "saturday": 5.5,
+      "sunday": 0.0,
+      "public_holiday": 0.0,
+      "total_hrs": 35.33
+    },
+    "Michel Medina": {
       "monday": 0.0,
       "tuesday": 9.0,
+      "wednesday": 6.0,
+      "thursday": 9.0,
+      "friday": 4.0,
+      "saturday": 0.0,
+      "sunday": 5.0,
+      "public_holiday": 5.0,
+      "total_hrs": 38.0
+    },
+    "Jack William Bastock": {
+      "monday": 0.0,
+      "tuesday": 8.0,
       "wednesday": 8.0,
-      "thursday": 7.0,
+      "thursday": 0.0,
       "friday": 7.0,
       "saturday": 9.0,
       "sunday": 0.0,
       "public_holiday": 0.0,
-      "total_hrs": 40.0
+      "total_hrs": 32.0
     },
     "D Mataele": {
-      "monday": 8.0,
+      "monday": 0.0,
       "tuesday": 7.0,
       "wednesday": 0.0,
-      "thursday": 9.0,
-      "friday": 6.0,
-      "saturday": 9.0,
+      "thursday": 8.0,
+      "friday": 5.0,
+      "saturday": 0.0,
       "sunday": 5.0,
-      "public_holiday": 0.0,
-      "total_hrs": 44.0
+      "public_holiday": 5.0,
+      "total_hrs": 30.0
     },
     "Alfon Amora": {
-      "monday": 6.0,
+      "monday": 0.0,
       "tuesday": 0.0,
       "wednesday": 9.0,
-      "thursday": 9.0,
+      "thursday": 7.0,
       "friday": 9.0,
       "saturday": 9.0,
       "sunday": 5.0,
-      "public_holiday": 0.0,
-      "total_hrs": 47.0
+      "public_holiday": 5.0,
+      "total_hrs": 44.0
     },
     "Nelson Diwa": {
       "monday": 0.0,
       "tuesday": 0.0,
       "wednesday": 9.0,
-      "thursday": 0.0,
-      "friday": 0.0,
+      "thursday": 9.0,
+      "friday": 8.5,
       "saturday": 9.0,
       "sunday": 5.0,
       "public_holiday": 0.0,
-      "total_hrs": 23.0
+      "total_hrs": 40.5
     },
     "Jacelyn Dahl": {
-      "monday": 7.5,
+      "monday": 0.0,
       "tuesday": 0.0,
       "wednesday": 0.0,
       "thursday": 0.0,
       "friday": 0.0,
       "saturday": 9.5,
-      "sunday": 4.75,
-      "public_holiday": 0.0,
-      "total_hrs": 21.75
+      "sunday": 5.0,
+      "public_holiday": 5.0,
+      "total_hrs": 19.5
     },
     "Brazil Lamsen": {
-      "monday": 9.0,
+      "monday": 0.0,
       "tuesday": 9.0,
       "wednesday": 0.0,
       "thursday": 11.0,
       "friday": 9.0,
       "saturday": 9.0,
       "sunday": 5.0,
-      "public_holiday": 0.0,
-      "total_hrs": 52.0
+      "public_holiday": 5.0,
+      "total_hrs": 48.0
     }
   }
 }
