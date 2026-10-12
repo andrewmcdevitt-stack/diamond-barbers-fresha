@@ -1,9 +1,7 @@
 name: Tuesday Xero Payroll Sync
 
+# Manual trigger only — run from the Actions tab when needed.
 on:
-  schedule:
-    # Tuesday 12:00pm Darwin time (UTC+9:30) = Tuesday 02:30 UTC
-    - cron: '30 2 * * 2'
   workflow_dispatch:
 
 jobs:
