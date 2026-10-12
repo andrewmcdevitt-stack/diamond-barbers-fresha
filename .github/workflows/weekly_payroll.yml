@@ -5,6 +5,11 @@ name: Weekly Payroll Sync
 # before they silently break the sync. Cron schedule intentionally removed.
 on:
   workflow_dispatch:
+    inputs:
+      skip_payroll:
+        description: 'Dashboard only (skip Xero pay runs)'
+        type: boolean
+        default: false
 
 jobs:
   sync:
@@ -45,9 +50,11 @@ jobs:
           echo "${{ secrets.XERO_TOKEN_B64 }}" | base64 --decode > data/xero_token.json
 
       - name: Run weekly sync (hours + performance -> GHL + hours/bonus JSON)
+        id: sync
         run: python agent/weekly_sync.py
 
       - name: Create Xero draft pay runs with hours, tips, commissions and bonus
+        if: ${{ !inputs.skip_payroll }}
         run: python agent/xero_create_payrun.py
 
       - name: Save updated Xero token back to secret
@@ -60,7 +67,9 @@ jobs:
             gh secret set XERO_TOKEN_B64 --body "$TOKEN_B64" --repo ${{ github.repository }}
           fi
 
+      # Dashboard data only depends on the Fresha sync — save it even if a payslip fails
       - name: Commit and push updated JSON files
+        if: always() && steps.sync.outcome == 'success'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "GitHub Actions"

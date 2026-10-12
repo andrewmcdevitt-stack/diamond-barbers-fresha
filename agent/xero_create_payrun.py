@@ -113,6 +113,7 @@ EXCLUDED_EMPLOYEES = {
     "andrew  mcdevitt",
     "nicole diamantis",
     "nicole  diamantis",
+    "nikolaos diamantis",   # business partner — paid manually
 }
 
 # Xero employee name (normalised lowercase) → Fresha name in hours JSON
