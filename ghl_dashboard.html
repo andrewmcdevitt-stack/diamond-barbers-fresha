@@ -741,8 +741,16 @@
             const tabHoursMap = buildTabHoursMap();
 
             // Pre-compute revPerHr so we can sort by it in share mode
+            // Night Markets is paid as a 50-50 bonus, so its services are left out of
+            // $/hr and the service bonus (its hours are already left out of total_hrs).
+            const nmServices = {};
+            if (nightMarketsBonus) {
+                for (const [name, d] of Object.entries(nightMarketsBonus)) {
+                    nmServices[normName(name)] = d.services_ex_gst || 0;
+                }
+            }
             const enrichedStaff = staff.map(s => {
-                const svcExGst = (parseFloat(s.services) || 0) / 1.1;
+                const svcExGst = Math.max(0, (parseFloat(s.services) || 0) / 1.1 - (nmServices[normName(s.name || '')] || 0));
                 const hrs = matchHours(s.name, tabHoursMap);
                 const revPerHr = (hrs !== null && hrs > 0) ? svcExGst / hrs : null;
                 return { ...s, _svcExGst: svcExGst, _hrs: hrs, _revPerHr: revPerHr };
@@ -800,7 +808,6 @@
             <td class="r sh-hide">${fc(s.tips)}</td>
             <td class="r sh-hide" style="font-variant-numeric:tabular-nums;">${hrs !== null ? `${hrs.toFixed(1)} hrs` : `<span style="color:${C.muted}">—</span>`}</td>
             ${occCell}
-            <td class="r sh-show" style="font-variant-numeric:tabular-nums;">${hrs !== null ? `${hrs.toFixed(1)} hrs` : `<span style="color:${C.muted}">—</span>`}</td>
             ${revHrCell}
             ${bonusCell}
             ${commCell}
@@ -863,7 +870,6 @@
                             <th class="r sh-hide">Tips</th>
                             <th class="r sh-hide">Hours</th>
                             ${hasOccCol ? '<th class="r">Occupancy</th>' : ''}
-                            <th class="r sh-show">Hours</th>
                             <th class="r sh-show">$/hr</th>
                             <th class="r sh-show">Bonus</th>
                             <th class="r sh-show">Commission</th>
@@ -1422,6 +1428,7 @@
                 if (!res.ok) return;
                 nightMarketsBonus = await res.json();
                 if (activeTab === 'payroll' && payrollData) renderPayroll(payrollData);
+                else if (activeTab === 'cairns' && cairnsRecords.length) render(cairnsRecords[cairnsCurrent]);
                 setTimeout(loadNightMarketsBonus, 24 * 60 * 60 * 1000);
             } catch (err) { }
         }

@@ -1825,21 +1825,17 @@ async def run():
                         "public_holiday": round(_h.get("public_holiday", 0), 2),
                         "total_hrs":      round(_h.get("total", 0), 2),
                     }
-                # Add Night Markets hours to each staff member's total so that
-                # the dashboard $/hr calculation uses their full hours worked.
-                # These hours are NOT pushed to GHL (Night Markets is bonus-only pay).
+                # Night Markets hours are recorded separately and NOT added to
+                # total_hrs — Night Markets is 50-50 bonus pay, so its hours (and
+                # services) are excluded from $/hr and the service bonus.
                 for _nm, _nh in night_markets_hours.items():
-                    if _nm in hours_summary:
-                        hours_summary[_nm]["total_hrs"] = round(
-                            hours_summary[_nm]["total_hrs"] + _nh.get("total", 0), 2
-                        )
-                    else:
+                    if _nm not in hours_summary:
                         hours_summary[_nm] = {
                             "monday": 0.0, "tuesday": 0.0, "wednesday": 0.0,
                             "thursday": 0.0, "friday": 0.0, "saturday": 0.0,
-                            "sunday": 0.0, "public_holiday": 0.0,
-                            "total_hrs": round(_nh.get("total", 0), 2),
+                            "sunday": 0.0, "public_holiday": 0.0, "total_hrs": 0.0,
                         }
+                    hours_summary[_nm]["night_markets_hrs"] = round(_nh.get("total", 0), 2)
                 hours_json_path.write_text(json.dumps({
                     "date_from":  date_from,
                     "date_to":    date_to,
@@ -1940,6 +1936,29 @@ async def run():
             output_file.write_text(json.dumps(history, indent=2))
             print(f"\n  Dashboard JSON saved to {output_file.name}")
 
+            # Night Markets services (QLD only) — fetched before Step 4 so the
+            # service bonus excludes Night Markets work (paid as 50-50 bonus instead)
+            nm_bonuses = {}
+            if account.get("night_markets_loc"):
+                print(f"\n  [NIGHT MARKETS] Fetching Night Markets services...")
+                try:
+                    nm_csv = await download_night_markets_csv(
+                        account, page, context, checklist, date_from, date_to
+                    )
+                    if not nm_csv:
+                        raise Exception("CSV not downloaded")
+                    nm_bonuses = parse_night_markets_csv(nm_csv, api_key)
+                    # Save for xero_create_payrun.py and the dashboard
+                    (DATA_DIR / "night_markets_bonus.json").write_text(
+                        json.dumps(nm_bonuses, indent=2)
+                    )
+                except Exception as e:
+                    msg = f"Night Markets services failed: {str(e).splitlines()[0][:160]}"
+                    print(f"  ERROR {msg}")
+                    acct["issues"].append(msg)
+                    checklist.append({"check": "Night Markets: services CSV", "status": "FAIL", "detail": msg})
+            _nm_services = {n.lower(): d.get("services_ex_gst", 0) or 0 for n, d in nm_bonuses.items()}
+
             # ── Step 4: Update GHL payroll records with tips/commissions ──────
             if has_ghl:
                 loc_products = {loc["name"]: loc.get("products", 0) or 0 for loc in locations}
@@ -1959,12 +1978,14 @@ async def run():
                         continue
                     if name.lower() in _perf_skip:
                         continue
+                    # Service bonus is on regular-shop services only (hours already exclude Night Markets)
+                    bonus_services = max(0.0, service_sales_exc_gst - _nm_services.get(name.lower(), 0))
 
                     h_entry      = _hours_lookup.get(name.lower(), {})
                     fresha_hrs   = h_entry.get("total", 0) or 0
                     leave_hrs    = xero_leave.get(name.lower(), 0)
                     total_hrs    = fresha_hrs + leave_hrs
-                    bonus        = calc_service_bonus(service_sales_exc_gst, total_hrs, occupancy_rate)
+                    bonus        = calc_service_bonus(bonus_services, total_hrs, occupancy_rate)
 
                     try:
                         action = ghl_update_performance(name, date_from, tips, commissions, service_sales_exc_gst, occupancy_rate, bonus)
@@ -2031,57 +2052,40 @@ async def run():
                     })
 
             # ── Step 6: Night Markets 50-50 bonus (QLD only) ─────────────────
-            if has_ghl and account.get("night_markets_loc"):
-                print(f"\n  [NIGHT MARKETS] Processing 50-50 service bonus...")
-                nm_csv = None
+            # (Night Markets services were fetched and saved before Step 4.)
+            if has_ghl and nm_bonuses:
+                print(f"\n  [NIGHT MARKETS] Pushing 50-50 service bonus...")
                 try:
-                    nm_csv = await download_night_markets_csv(
-                        account, page, context, checklist, date_from, date_to
-                    )
+                    nm_ok = nm_skip = 0
+                    for nm_name, nm_data in nm_bonuses.items():
+                        try:
+                            action = ghl_update_bonus(nm_name, date_from, nm_data["bonus"])
+                            if action == "no_record":
+                                print(f"    SKIP  {nm_name:30s}  (no payroll record)")
+                                nm_skip += 1
+                            elif action == "no_key":
+                                nm_skip += 1
+                            else:
+                                print(f"    OK    {nm_name:30s}  bonus=${nm_data['bonus']:.2f}")
+                                nm_ok += 1
+                                # Attach bonus to staff_for_email if present
+                                for s in acct.get("staff", []):
+                                    if s["name"] == nm_name:
+                                        s["bonus"] = nm_data["bonus"]
+                        except Exception as e:
+                            print(f"    ERROR {nm_name}: {e}")
+                            acct["issues"].append(f"Night Markets bonus push failed for {nm_name}: {e}")
+                    checklist.append({
+                        "check": "Night Markets: bonus GHL push",
+                        "status": "OK" if nm_skip == 0 else "FLAG",
+                        "detail": f"{nm_ok} updated, {nm_skip} skipped",
+                    })
                 except Exception as e:
                     checklist.append({
-                        "check": "Night Markets: CSV download",
+                        "check": "Night Markets: bonus GHL push",
                         "status": "FAIL",
                         "detail": str(e).splitlines()[0][:160],
                     })
-
-                if nm_csv:
-                    try:
-                        nm_bonuses = parse_night_markets_csv(nm_csv, api_key)
-                        # Save for xero_payrun.py to pick up
-                        (DATA_DIR / "night_markets_bonus.json").write_text(
-                            json.dumps(nm_bonuses, indent=2)
-                        )
-                        nm_ok = nm_skip = 0
-                        for nm_name, nm_data in nm_bonuses.items():
-                            try:
-                                action = ghl_update_bonus(nm_name, date_from, nm_data["bonus"])
-                                if action == "no_record":
-                                    print(f"    SKIP  {nm_name:30s}  (no payroll record)")
-                                    nm_skip += 1
-                                elif action == "no_key":
-                                    nm_skip += 1
-                                else:
-                                    print(f"    OK    {nm_name:30s}  bonus=${nm_data['bonus']:.2f}")
-                                    nm_ok += 1
-                                    # Attach bonus to staff_for_email if present
-                                    for s in acct.get("staff", []):
-                                        if s["name"] == nm_name:
-                                            s["bonus"] = nm_data["bonus"]
-                            except Exception as e:
-                                print(f"    ERROR {nm_name}: {e}")
-                                acct["issues"].append(f"Night Markets bonus push failed for {nm_name}: {e}")
-                        checklist.append({
-                            "check": "Night Markets: bonus GHL push",
-                            "status": "OK" if nm_skip == 0 else "FLAG",
-                            "detail": f"{nm_ok} updated, {nm_skip} skipped",
-                        })
-                    except Exception as e:
-                        checklist.append({
-                            "check": "Night Markets: bonus CSV parse",
-                            "status": "FAIL",
-                            "detail": str(e).splitlines()[0][:160],
-                        })
 
             if acct["status"] == "ok" and any(item["status"] in ("FAIL", "FLAG") for item in checklist):
                 acct["status"] = "partial"
@@ -2127,7 +2131,8 @@ async def run():
     # stale tips/commission/bonus data while the run still shows "success".
     failed = [r["label"] for r in sync_results
               if r.get("status") == "error"
-              or any("Performance CSV download failed" in i for i in r.get("issues", []))]
+              or any("Performance CSV download failed" in i or "Night Markets services failed" in i
+                     for i in r.get("issues", []))]
     if failed:
         print(f"\nFAILED — sales report missing for: {', '.join(failed)}. "
               f"Xero pay runs were NOT created. Re-run once fixed.")
