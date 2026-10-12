@@ -1,10 +1,9 @@
-Push all changes to GitHub for all 4 Diamond Barbers repositories.
+Push all changes to GitHub for all 3 Diamond Barbers repositories.
 
 For each of these directories (in order):
 1. `C:\Projects\DIAMOND BARBERS\diamond-barbers-fresha`
 2. `C:\Projects\DIAMOND BARBERS\diamond-barbers-cash`
-3. `C:\Projects\DIAMOND BARBERS\diamond-barbers-xero`
-4. `C:\Projects\DIAMOND BARBERS\diamond-barbers-history`
+3. `C:\Projects\DIAMOND BARBERS\diamond-barbers-history`
 
 Do the following:
 - Run `git status` to check if there are any changes

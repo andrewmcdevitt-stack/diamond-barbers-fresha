@@ -38,6 +38,14 @@ TOKEN_FILE    = DATA_DIR / "xero_token.json"
 CLIENT_ID     = os.environ["XERO_CLIENT_ID"]
 CLIENT_SECRET = os.environ["XERO_CLIENT_SECRET"]
 
+# Orgs where payslips could not be written — any entry makes the run exit non-zero
+FAILURES = []
+
+
+def fail(tenant_name, msg):
+    print(f"  ERROR: {msg}")
+    FAILURES.append(f"{tenant_name}: {msg}")
+
 
 # ── Active earnings rate IDs per Xero org ─────────────────────────────────────
 # Confirmed via xero_setup_check.py — only ACTIVE rates used
@@ -178,7 +186,7 @@ def last_week_dates():
     """Return (monday, sunday) date objects for last Mon–Sun (Darwin time)."""
     DARWIN_TZ = timezone(timedelta(hours=9, minutes=30))
     today          = datetime.now(DARWIN_TZ).date()
-    last_monday    = today - timedelta(days=today.weekday())
+    last_monday    = today - timedelta(days=today.weekday() + 7)  # same week weekly_sync.py uses
     last_sunday    = last_monday + timedelta(days=6)
     return last_monday, last_sunday
 
@@ -278,7 +286,7 @@ def xero_post(path, tenant_id, access_token, body):
 def load_hours():
     """Merge NT + QLD hours into one dict keyed by normalised Fresha name."""
     combined = {}
-    for fname in ("fresha_hours_nt.json", "fresha_hours_qld.json", "fresha_hours_townsville.json"):
+    for fname in HOURS_FILES:
         path = DATA_DIR / fname
         if not path.exists():
             print(f"  WARNING: {fname} not found.")
@@ -289,12 +297,40 @@ def load_hours():
     return combined
 
 
+HOURS_FILES       = ("fresha_hours_nt.json", "fresha_hours_qld.json", "fresha_hours_townsville.json")
+PERFORMANCE_FILES = ("performance_summary.json", "cairns_performance_summary.json",
+                     "townsville_performance_summary.json")
+
+
+def check_data_week(week_from, week_to):
+    """Return a list of problems if any Fresha data file isn't for the week being paid."""
+    problems = []
+    for fname in HOURS_FILES:
+        path = DATA_DIR / fname
+        if not path.exists():
+            problems.append(f"{fname}: missing")
+            continue
+        d = json.loads(path.read_text())
+        if (d.get("date_from"), d.get("date_to")) != (week_from, week_to):
+            problems.append(f"{fname}: has {d.get('date_from')} to {d.get('date_to')}")
+    for fname in PERFORMANCE_FILES:
+        path = DATA_DIR / fname
+        if not path.exists():
+            problems.append(f"{fname}: missing")
+            continue
+        history = json.loads(path.read_text())
+        if not isinstance(history, list):
+            history = [history]
+        record = next((r for r in reversed(history) if r.get("staff")), {})
+        if (record.get("period_start"), record.get("period_end")) != (week_from, week_to):
+            problems.append(f"{fname}: latest sales are {record.get('period_start')} to {record.get('period_end')}")
+    return problems
+
+
 def load_performance():
     """Load tips per employee from performance JSONs. Commission is location-based — see LOCATION_COMMISSION."""
     perf = {}
-    for fname in ("fresha_performance_nt.json", "fresha_performance_qld.json",
-                  "performance_summary.json", "cairns_performance_summary.json",
-                  "townsville_performance_summary.json"):
+    for fname in PERFORMANCE_FILES:
         path = DATA_DIR / fname
         if not path.exists():
             continue
@@ -480,7 +516,7 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
         emp_data  = xero_get("/payroll.xro/1.0/Employees", tenant_id, access_token)
         employees = emp_data.get("Employees", [])
     except Exception as e:
-        print(f"  ERROR fetching employees: {e}")
+        fail(tenant_name, f"fetching employees: {e}")
         return
 
     emp_id_map = {}
@@ -501,11 +537,11 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
         runs_data = xero_get("/payroll.xro/1.0/PayRuns", tenant_id, access_token)
         all_runs  = runs_data.get("PayRuns", [])
     except Exception as e:
-        print(f"  ERROR fetching pay runs: {e}")
+        fail(tenant_name, f"fetching pay runs: {e}")
         return
 
     if not all_runs:
-        print("  No existing pay runs found.")
+        fail(tenant_name, "no existing pay runs found (needed for the payroll calendar)")
         return
 
     all_runs.sort(
@@ -514,20 +550,26 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
     )
     calendar_id = all_runs[0].get("PayrollCalendarID")
     if not calendar_id:
-        print("  Could not determine PayrollCalendarID.")
+        fail(tenant_name, "could not determine PayrollCalendarID")
         return
 
     # ── Check for existing draft/posted pay run for this period ───────────────
-    # First check if there's any existing DRAFT (created via web UI or previously)
-    existing = next((r for r in all_runs if r.get("PayRunStatus") == "DRAFT"), None)
-    # If no draft, check if this period is already posted
-    if not existing:
-        for r in all_runs:
-            p_start = parse_xero_date(r.get("PayRunPeriodStartDate", ""))
-            p_end   = parse_xero_date(r.get("PayRunPeriodEndDate", ""))
-            if p_start == date_from_str and p_end == date_to_str:
-                existing = r
-                break
+    def period_of(r):
+        return (parse_xero_date(r.get("PayRunPeriodStartDate", "")),
+                parse_xero_date(r.get("PayRunPeriodEndDate", "")))
+
+    # Only reuse a pay run (DRAFT or POSTED) for exactly this period
+    existing = next((r for r in all_runs if period_of(r) == (date_from_str, date_to_str)), None)
+
+    # A DRAFT for a different week means something is out of step — never
+    # write this week's figures into it, and don't stack a second draft on top.
+    other_draft = next((r for r in all_runs
+                        if r.get("PayRunStatus") == "DRAFT" and r is not existing), None)
+    if other_draft and not existing:
+        p_start, p_end = period_of(other_draft)
+        fail(tenant_name, f"a DRAFT pay run already exists for {p_start} to {p_end} "
+                          f"(expected {date_from_str} to {date_to_str}) — post or delete it in Xero, then re-run")
+        return
 
     if existing:
         status = existing.get("PayRunStatus")
@@ -551,15 +593,16 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
             runs   = result if isinstance(result, list) else result.get("PayRuns", [{}])
             run_id = runs[0].get("PayRunID")
             if not run_id:
-                print(f"  ERROR: No PayRunID in response: {result}")
+                fail(tenant_name, f"no PayRunID in response: {result}")
                 return
             print(f"  Created: {run_id}")
         except Exception as e:
-            print(f"  ERROR creating pay run: {e}")
+            fail(tenant_name, f"creating pay run: {e}")
             return
 
     # ── Activate each payslip via PUT ─────────────────────────────────────────
     print("  Activating payslips...")
+    activated = 0
     try:
         # Xero generates payslips asynchronously after pay run creation — retry up to 6x
         emp_to_slip = {}
@@ -574,6 +617,10 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
                 print(f"  No payslips yet, waiting 5s... (attempt {_attempt + 1}/6)")
                 import time; time.sleep(5)
         print(f"  Found {len(emp_to_slip)} PayslipIDs")
+        if not emp_to_slip and payslip_list:
+            fail(tenant_name, f"pay run {run_id} has no payslips after 30s — nothing was written. "
+                              f"Open it in Xero (or delete it) and re-run")
+            return
 
         # ── DEBUG: read one payslip to see what Xero stored after auto-generation ──
         first_slip_id = next(iter(emp_to_slip.values()), None)
@@ -587,7 +634,6 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
             except Exception as dbg_e:
                 print(f"  DEBUG fetch failed: {dbg_e}")
 
-        activated = 0
         for ps in payslip_list:
             slip_id = emp_to_slip.get(ps["EmployeeID"])
             if not slip_id:
@@ -610,9 +656,13 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
                     "EarningsLines": earnings,
                 }])
                 activated += 1
+                ps["_written"] = True
             except Exception as e:
                 print(f"  ERROR writing {ps['_name']}: {e}")
         print(f"  Activated {activated}/{len(payslip_list)} payslips.")
+        if activated < len(payslip_list):
+            missing = [ps["_name"] for ps in payslip_list if not ps.get("_written")]
+            fail(tenant_name, f"{len(missing)} payslip(s) NOT written: {', '.join(missing)}")
 
         # Zero out payslips for employees with no Fresha hours so the
         # PayTemplate auto-fill doesn't result in an unearned payment.
@@ -636,11 +686,11 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
                 print(f"  ERROR zeroing {xero_name}: {e}")
         print(f"  Zeroed {zeroed} payslips with no hours.")
     except Exception as e:
-        print(f"  ERROR in activation: {e}")
+        fail(tenant_name, f"activation: {e}")
         import traceback; traceback.print_exc()
 
     # ── Print summary ─────────────────────────────────────────────────────────
-    print(f"\n  Filled {len(payslip_list)} payslips:\n")
+    print(f"\n  Written {activated} of {len(payslip_list)} payslips:\n")
     for ps in payslip_list:
         h     = ps["_h"]
         tips  = ps["_tips"]
@@ -652,9 +702,10 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
             for d in ("monday","tuesday","wednesday","thursday","friday","saturday","sunday")
             if h.get(d, 0) > 0
         )
-        print(f"  OK  {ps['_name']:30s}  {day_str}  tips=${tips:6.2f}  comm=${comm:6.2f}{bonus_str}")
+        mark = "OK " if ps.get("_written") else "NOT"
+        print(f"  {mark} {ps['_name']:30s}  {day_str}  tips=${tips:6.2f}  comm=${comm:6.2f}{bonus_str}")
 
-    print(f"\n  Summary — filled: {len(payslip_list)}  skipped: {len(skipped)}")
+    print(f"\n  Summary — written: {activated}/{len(payslip_list)}  skipped: {len(skipped)}")
     if skipped:
         for s in skipped:
             print(f"    skipped: {s}")
@@ -663,6 +714,18 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
+    # ── Week check: only ever pay the previous Mon–Sun, and only from data for that week
+    week_from, week_to = (d.strftime("%Y-%m-%d") for d in last_week_dates())
+    print(f"PROCESSING WEEK: {week_from} to {week_to}")
+    problems = check_data_week(week_from, week_to)
+    if problems:
+        print("\nSTOPPED — Fresha data is not all for this week, so no pay runs were touched:")
+        for p in problems:
+            print(f"  - {p}")
+        print("Re-run the weekly sync for this week, then re-run this step.")
+        raise SystemExit(1)
+    print("  OK  all Fresha hours and sales files are for this week\n")
+
     print("Refreshing Xero token...")
     token        = json.loads(TOKEN_FILE.read_text())
     token        = refresh_token(token)
@@ -681,6 +744,12 @@ def main():
 
     for tenant in tenants:
         process_org(tenant["id"], tenant["name"], access_token, hours, perf, bonuses, loc_nt=loc_nt, loc_qld=loc_qld)
+
+    if FAILURES:
+        print("\n\nFAILED — these orgs need attention before posting:")
+        for f in FAILURES:
+            print(f"  - {f}")
+        raise SystemExit(1)
 
     print("\n\nDone. Log in to Xero to review and post the draft pay runs.")
 

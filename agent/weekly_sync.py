@@ -1024,6 +1024,17 @@ async def switch_workspace(account, page):
 
 # ── Fresha performance CSV download ───────────────────────────────────────────
 
+async def _wait_report_ready(page, timeout=90000):
+    """Wait until the report table and its Options (export) button are on screen.
+
+    Don't wait for "networkidle": Fresha report pages fire ~350 requests plus
+    background polling, which from US-hosted GitHub runners regularly runs past
+    30s and made the whole download fail even though the report had loaded.
+    """
+    await page.locator("table").first.wait_for(state="visible", timeout=timeout)
+    await page.get_by_role("button", name="Options").wait_for(state="visible", timeout=timeout)
+
+
 async def download_performance_csvs(account, page, context, checklist, date_from_fallback, date_to_fallback):
     label = account["label"]
     pid   = account["provider_id"]
@@ -1057,7 +1068,8 @@ async def download_performance_csvs(account, page, context, checklist, date_from
         f"?__pid={pid}&groupBy=employee_name&employee_id=all"
         f"&dateFrom={date_from_fallback}&dateTo={date_to_fallback}"
     )
-    await page.goto(perf_url, wait_until="networkidle")
+    await page.goto(perf_url, wait_until="domcontentloaded", timeout=90000)
+    await _wait_report_ready(page)
     await page.wait_for_timeout(4000)
 
     # Dismiss any popups/modals that may be blocking interaction
@@ -1099,11 +1111,12 @@ async def download_performance_csvs(account, page, context, checklist, date_from
     await _try_click(checklist, "'Apply' button clicked",
                       page.get_by_role("button", name="Apply").click(timeout=5000))
 
-    await page.wait_for_load_state("networkidle")
+    await _wait_report_ready(page)
     await page.wait_for_timeout(10000)
 
     confirmed_url = page.url
-    await page.goto(confirmed_url, wait_until="networkidle")
+    await page.goto(confirmed_url, wait_until="domcontentloaded", timeout=90000)
+    await _wait_report_ready(page)
     await page.wait_for_timeout(8000)
 
     parsed    = urlparse(page.url)
@@ -1141,7 +1154,7 @@ async def download_performance_csvs(account, page, context, checklist, date_from
             await page.get_by_text("Team member").first.click(timeout=8000)
         await page.wait_for_timeout(1000)
         await page.get_by_text("Location", exact=True).click(timeout=5000)
-        await page.wait_for_load_state("networkidle")
+        await _wait_report_ready(page)
         await page.wait_for_timeout(6000)
         checklist.append({"check": "Switched grouping to 'Location'", "status": "OK"})
 
@@ -2108,6 +2121,17 @@ async def run():
         )
 
     print_final_checklist(sync_results, push_status)
+
+    # Fail the run (and stop the workflow before the Xero pay run step) if any
+    # account's sales report didn't download — otherwise payslips get built on
+    # stale tips/commission/bonus data while the run still shows "success".
+    failed = [r["label"] for r in sync_results
+              if r.get("status") == "error"
+              or any("Performance CSV download failed" in i for i in r.get("issues", []))]
+    if failed:
+        print(f"\nFAILED — sales report missing for: {', '.join(failed)}. "
+              f"Xero pay runs were NOT created. Re-run once fixed.")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
