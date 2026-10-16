@@ -178,68 +178,45 @@ FRESHA_NAME_MAP = {
 DAY_NAMES = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
 
-def _nth_weekday(year, month, weekday, n):
-    """Return the date of the nth occurrence of weekday (0=Mon) in the given month/year."""
-    from datetime import date as _date
-    first = _date(year, month, 1)
-    delta = (weekday - first.weekday()) % 7
-    first_occurrence = first + timedelta(days=delta)
-    return first_occurrence + timedelta(weeks=n - 1)
+# ── Public holidays (per region) ───────────────────────────────────────────────
+# State holidays come from the `holidays` package (NT for Darwin/Parap, QLD for
+# Cairns/Townsville), including weekend "observed" days. Local show days are
+# regional, so they're listed here.
+#
+# >>> EACH JANUARY: add that year's Cairns and Townsville show days below. <<<
+# Dates are gazetted by the QLD Government ("Show holiday dates" page).
+# Darwin Show Day is always the 4th Friday in July, so it's calculated.
+SHOW_DAYS = {
+    "QLD (Cairns)":     {2026: "2026-07-17"},
+    "QLD (Townsville)": {2026: "2026-07-06"},
+}
+ACCOUNT_STATE = {"NT (Darwin)": "NT", "QLD (Cairns)": "QLD", "QLD (Townsville)": "QLD"}
+# State-wide lists include Brisbane's Ekka, which isn't a holiday in Cairns/Townsville
+NOT_LOCAL = {"The Royal Queensland Show"}
 
 
-def _easter(year):
-    """Return Good Friday date for the given year (Anonymous Gregorian algorithm)."""
-    from datetime import date as _date
-    a = year % 19
-    b, c = divmod(year, 100)
-    d, e = divmod(b, 4)
-    f = (b + 8) // 25
-    g = (b - f + 1) // 3
-    h = (19 * a + b - d - g + 15) % 30
-    i, k = divmod(c, 4)
-    l = (32 + 2 * e + 2 * i - h - k) % 7
-    m = (a + 11 * h + 22 * l) // 451
-    month, day = divmod(h + l - 7 * m + 114, 31)
-    easter_sunday = _date(year, month, day + 1)
-    return easter_sunday - timedelta(days=2)  # Good Friday
-
-
-def get_public_holidays(year):
-    """Return a set of YYYY-MM-DD strings for all NT+QLD public holidays in the given year."""
+def get_public_holidays(account_label, years):
+    """Return {YYYY-MM-DD: name} of public holidays for this account's region."""
+    import holidays as hol
     from datetime import date as _date
 
-    good_friday    = _easter(year)
-    easter_sunday  = good_friday + timedelta(days=2)
-    easter_monday  = good_friday + timedelta(days=3)
-    easter_saturday = good_friday + timedelta(days=1)
-
-    boxing_day = _date(year, 12, 26)
-    # Boxing Day observed: if Dec 26 falls on Sat/Sun, move to next available weekday
-    if boxing_day.weekday() == 5:   # Saturday → Monday
-        boxing_observed = boxing_day + timedelta(days=2)
-    elif boxing_day.weekday() == 6: # Sunday → Monday (Christmas already moved to Mon)
-        boxing_observed = boxing_day + timedelta(days=1)
-    else:
-        boxing_observed = None
-
-    holidays = {
-        f"{year}-01-01",                                      # New Year's Day
-        f"{year}-01-26",                                      # Australia Day
-        good_friday.strftime("%Y-%m-%d"),                     # Good Friday
-        easter_saturday.strftime("%Y-%m-%d"),                 # Easter Saturday
-        easter_sunday.strftime("%Y-%m-%d"),                   # Easter Sunday
-        easter_monday.strftime("%Y-%m-%d"),                   # Easter Monday
-        f"{year}-04-25",                                      # ANZAC Day
-        _nth_weekday(year, 5, 0, 1).strftime("%Y-%m-%d"),    # May Day NT (1st Mon May)
-        _nth_weekday(year, 6, 0, 2).strftime("%Y-%m-%d"),    # Queen's Birthday QLD (2nd Mon Jun)
-        _nth_weekday(year, 8, 0, 1).strftime("%Y-%m-%d"),    # Picnic Day NT (1st Mon Aug)
-        _nth_weekday(year, 10, 0, 1).strftime("%Y-%m-%d"),   # Labour Day QLD (1st Mon Oct)
-        f"{year}-12-25",                                      # Christmas Day
-        boxing_day.strftime("%Y-%m-%d"),                      # Boxing Day
-    }
-    if boxing_observed:
-        holidays.add(boxing_observed.strftime("%Y-%m-%d"))
-    return holidays
+    state = ACCOUNT_STATE[account_label]
+    result = {}
+    for year in years:
+        for d, name in hol.Australia(subdiv=state, years=year).items():
+            if name not in NOT_LOCAL:
+                result[d.strftime("%Y-%m-%d")] = name
+        if account_label == "NT (Darwin)":
+            july1 = _date(year, 7, 1)
+            first_fri = july1 + timedelta(days=(4 - july1.weekday()) % 7)
+            result[(first_fri + timedelta(weeks=3)).strftime("%Y-%m-%d")] = "Darwin Show Day"
+        else:
+            show = SHOW_DAYS.get(account_label, {}).get(year)
+            if show:
+                result[show] = f"{account_label.split('(')[1].rstrip(')')} Show Day"
+            else:
+                print(f"  WARNING: no show day set for {account_label} {year} — add it to SHOW_DAYS")
+    return result
 
 GQL_QUERY = """
 query employeeWorkingDays($dateFrom: Date!, $dateTo: Date!, $locationId: IID!, $employeeIds: [IID!]!) {
@@ -276,9 +253,7 @@ def _day_bucket(date_str, holidays):
     return "public_holiday" if date_str in holidays else DAY_NAMES[_day_index(date_str)]
 
 
-def calc_hours_per_day(schedule_days, blocked_times, times_off, emp_ids, date_from, date_to):
-    year     = int(date_from[:4])
-    holidays = get_public_holidays(year)
+def calc_hours_per_day(schedule_days, blocked_times, times_off, emp_ids, date_from, date_to, holidays):
     results  = {}
     for emp_id in emp_ids:
         daily = {d: 0 for d in DAY_NAMES}
@@ -450,8 +425,12 @@ async def fetch_hours(account, context, date_from, date_to):
 
     # Calculate hours for all employees in one pass over the deduplicated data.
     all_emp_ids = list(all_employees.keys())
+    holidays    = get_public_holidays(account["label"], {int(date_from[:4]), int(date_to[:4])})
+    this_week   = sorted((d, n) for d, n in holidays.items() if date_from <= d <= date_to)
+    print(f"  Public holidays this week ({account['label']}): "
+          + (", ".join(f"{d} {n}" for d, n in this_week) if this_week else "none"))
     hours_map   = calc_hours_per_day(deduped_schedule_days, deduped_blocked, deduped_offs,
-                                     all_emp_ids, date_from, date_to)
+                                     all_emp_ids, date_from, date_to, holidays)
 
     combined = {}
     for emp_id, h in hours_map.items():
@@ -468,7 +447,7 @@ async def fetch_hours(account, context, date_from, date_to):
     night_markets_hours = {}
     if nm_employees:
         nm_emp_ids = list(nm_employees.keys())
-        nm_hours_map = calc_hours_per_day(nm_schedule_days, [], [], nm_emp_ids, date_from, date_to)
+        nm_hours_map = calc_hours_per_day(nm_schedule_days, [], [], nm_emp_ids, date_from, date_to, holidays)
         nm_names_with_hours = []
         for emp_id, h in nm_hours_map.items():
             if h["total"] == 0:
