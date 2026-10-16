@@ -676,14 +676,20 @@
             return map;
         }
 
+        function bonusStyle(pct, amount) {
+            const color = pct >= 8 ? C.green : pct >= 4 ? C.amber : C.gold;
+            return { pct, amount, color, label: `${pct}% Bonus` };
+        }
+
+        // Only used for older weeks saved before the sync recorded the paid bonus
         function calcBonusTier(revPerHour, servicesExGst, occupancyPct) {
             if (revPerHour === null || servicesExGst <= 0) return null;
             if ((parseFloat(occupancyPct) || 0) < 75) return null;  // must be >= 75% occupancy
-            if (revPerHour >= 95) return { pct: 10, amount: servicesExGst * 0.10, color: C.green, label: '10% Bonus' };
-            if (revPerHour >= 90) return { pct:  8, amount: servicesExGst * 0.08, color: C.green, label: '8% Bonus' };
-            if (revPerHour >= 85) return { pct:  6, amount: servicesExGst * 0.06, color: C.amber, label: '6% Bonus' };
-            if (revPerHour >= 80) return { pct:  4, amount: servicesExGst * 0.04, color: C.amber, label: '4% Bonus' };
-            if (revPerHour >= 75) return { pct:  2, amount: servicesExGst * 0.02, color: C.gold,  label: '2% Bonus' };
+            if (revPerHour >= 95) return bonusStyle(10, servicesExGst * 0.10);
+            if (revPerHour >= 90) return bonusStyle( 8, servicesExGst * 0.08);
+            if (revPerHour >= 85) return bonusStyle( 6, servicesExGst * 0.06);
+            if (revPerHour >= 80) return bonusStyle( 4, servicesExGst * 0.04);
+            if (revPerHour >= 75) return bonusStyle( 2, servicesExGst * 0.02);
             return null;
         }
 
@@ -750,10 +756,23 @@
                 }
             }
             const enrichedStaff = staff.map(s => {
+                // Weekly records carry the exact figures payroll used (Fresha hours +
+                // approved leave, Night Markets excluded) — show those so the dashboard
+                // always matches what's paid.
+                if (s.service_bonus !== undefined) {
+                    const hrs = parseFloat(s.bonus_hours) || 0;
+                    const svc = parseFloat(s.bonus_services) || 0;
+                    const amount = parseFloat(s.service_bonus) || 0;
+                    return { ...s, _svcExGst: svc, _hrs: hrs, _leaveHrs: parseFloat(s.leave_hours) || 0,
+                             _revPerHr: hrs > 0 ? svc / hrs : null,
+                             _bonus: amount > 0 ? bonusStyle(s.service_bonus_pct, amount) : null };
+                }
+                // Older weeks: estimate from Fresha hours
                 const svcExGst = Math.max(0, (parseFloat(s.services) || 0) / 1.1 - (nmServices[normName(s.name || '')] || 0));
                 const hrs = matchHours(s.name, tabHoursMap);
                 const revPerHr = (hrs !== null && hrs > 0) ? svcExGst / hrs : null;
-                return { ...s, _svcExGst: svcExGst, _hrs: hrs, _revPerHr: revPerHr };
+                return { ...s, _svcExGst: svcExGst, _hrs: hrs, _leaveHrs: 0, _revPerHr: revPerHr,
+                         _bonus: calcBonusTier(revPerHr, svcExGst, s.occupancy_pct) };
             });
 
             const sortedStaff = shareMode
@@ -780,7 +799,7 @@
                 const svcExGst = s._svcExGst;
                 const hrs = s._hrs;
                 const revPerHr = s._revPerHr;
-                const bonus = calcBonusTier(revPerHr, svcExGst, s.occupancy_pct);
+                const bonus = s._bonus;
                 const revHrCell = `<td class="r sh-show" style="font-weight:700;font-variant-numeric:tabular-nums;">${revPerHr !== null ? `$${revPerHr.toFixed(0)}/hr` : `<span style="color:${C.muted}">—</span>`}</td>`;
                 const bonusCell = bonus
                     ? `<td class="r sh-show"><div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.1rem;"><span style="font-weight:800;color:${bonus.color};font-variant-numeric:tabular-nums;">${fc(bonus.amount)}</span><span style="font-size:0.65rem;font-weight:700;color:${bonus.color};text-transform:uppercase;letter-spacing:0.06em;">${bonus.label}</span></div></td>`
@@ -806,7 +825,7 @@
             <td class="r sh-hide">${fc((parseFloat(s.services) || 0) / 1.1)}</td>
             <td class="r sh-hide">${fc((parseFloat(s.products) || 0) / 1.1)}</td>
             <td class="r sh-hide">${fc(s.tips)}</td>
-            <td class="r sh-hide" style="font-variant-numeric:tabular-nums;">${hrs !== null ? `${hrs.toFixed(1)} hrs` : `<span style="color:${C.muted}">—</span>`}</td>
+            <td class="r sh-hide" style="font-variant-numeric:tabular-nums;">${hrs !== null ? `${hrs.toFixed(1)} hrs` : `<span style="color:${C.muted}">—</span>`}${s._leaveHrs > 0 ? `<div style="font-size:0.65rem;opacity:0.7;">incl. ${s._leaveHrs.toFixed(1)} leave</div>` : ''}</td>
             ${occCell}
             ${revHrCell}
             ${bonusCell}

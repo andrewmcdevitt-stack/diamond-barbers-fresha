@@ -6,17 +6,18 @@ employee's earnings lines from Fresha roster data:
   - Monday-Friday hours
   - Saturday hours
   - Sunday hours
+  - Public holiday hours
   - Tips
-  - Commission (10% of product sales ex-GST)
+  - Commission (product sales tiers)
+  - Night Markets 50-50 bonus and service bonus (two separate Bonus lines)
 
 The pay run is left as DRAFT — log in to Xero to review and post it.
 
-Run with:  python agent/xero_create_payrun.py
-Requires:  data/xero_token.json          (from xero_auth.py)
-           data/fresha_hours_nt.json      (from fresha_hours_nt.py)
-           data/fresha_hours_qld.json     (from fresha_hours_qld.py)
-           data/fresha_performance_nt.json  (from fresha_performance_nt.py)
-           data/fresha_performance_qld.json (from fresha_performance_qld.py)
+Run with:  python agent/xero_create_payrun.py  (run by weekly_payroll.yml after weekly_sync.py)
+Requires:  data/xero_token.json
+           data/fresha_hours_{nt,qld,townsville}.json             (weekly_sync.py)
+           data/{,cairns_,townsville_}performance_summary.json    (weekly_sync.py)
+           data/night_markets_bonus.json, data/service_bonus.json (weekly_sync.py)
 """
 
 import base64
@@ -325,7 +326,20 @@ def check_data_week(week_from, week_to):
         record = next((r for r in reversed(history) if r.get("staff")), {})
         if (record.get("period_start"), record.get("period_end")) != (week_from, week_to):
             problems.append(f"{fname}: latest sales are {record.get('period_start')} to {record.get('period_end')}")
+    path = DATA_DIR / "service_bonus.json"
+    if not path.exists():
+        problems.append("service_bonus.json: missing")
+    else:
+        d = json.loads(path.read_text())
+        if (d.get("date_from"), d.get("date_to")) != (week_from, week_to):
+            problems.append(f"service_bonus.json: has {d.get('date_from')} to {d.get('date_to')}")
     return problems
+
+
+def load_service_bonus():
+    """Service bonus per employee (Fresha hours + approved leave), from weekly_sync.py."""
+    data = json.loads((DATA_DIR / "service_bonus.json").read_text())
+    return {norm(name): round(float(d.get("bonus", 0)), 2) for name, d in data.get("bonuses", {}).items()}
 
 
 def load_performance():
@@ -432,10 +446,11 @@ def load_night_markets_bonus():
 
 # ── Pay run processing per org ────────────────────────────────────────────────
 
-def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None, loc_nt=None, loc_qld=None):
+def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None, loc_nt=None, loc_qld=None, service_bonuses=None):
     """Build payslip entries for all employees with hours data."""
-    payslip_list = []
-    skipped      = []
+    payslip_list  = []
+    skipped       = []
+    missing_bonus = []
     all_locs     = {**(loc_nt or {}), **(loc_qld or {})}
 
     for xero_nm_norm, emp_id in emp_id_map.items():
@@ -457,7 +472,10 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None, loc_nt=None
             first = fname.split()[0]
             bonus = next((v for k, v in (bonuses or {}).items() if k.split()[0] == first), 0)
 
-        if (not h or h.get("total_hrs", 0) == 0) and not bonus:
+        # Service bonus (2-10% of services) — exact name match only
+        svc_bonus = (service_bonuses or {}).get(fname, 0) or 0
+
+        if (not h or h.get("total_hrs", 0) == 0) and not bonus and not svc_bonus:
             skipped.append(f"{xero_nm_norm} (no hours)")
             continue
 
@@ -473,8 +491,13 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None, loc_nt=None
             lines.append({"EarningsRateID": rates["tips"], "NumberOfUnits": 1, "RatePerUnit": round(tips, 2)})
         if commission > 0:
             lines.append({"EarningsRateID": rates["commission"], "NumberOfUnits": 1, "RatePerUnit": round(commission, 2)})
+        # Night Markets 50-50 bonus and service bonus go on separate Bonus lines
         if bonus > 0 and "bonus" in rates:
             lines.append({"EarningsRateID": rates["bonus"], "NumberOfUnits": 1, "RatePerUnit": round(bonus, 2)})
+        if svc_bonus > 0 and "bonus" in rates:
+            lines.append({"EarningsRateID": rates["bonus"], "NumberOfUnits": 1, "RatePerUnit": round(svc_bonus, 2)})
+        if (bonus > 0 or svc_bonus > 0) and "bonus" not in rates:
+            missing_bonus.append(xero_nm_norm)
 
         if not lines:
             skipped.append(f"{xero_nm_norm} (all values zero)")
@@ -488,12 +511,13 @@ def build_payslip_list(emp_id_map, hours, perf, rates, bonuses=None, loc_nt=None
             "_tips":         tips,
             "_commission":   commission,
             "_bonus":        bonus,
+            "_svc_bonus":    svc_bonus,
         })
 
-    return payslip_list, skipped
+    return payslip_list, skipped, missing_bonus
 
 
-def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None, loc_nt=None, loc_qld=None):
+def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None, loc_nt=None, loc_qld=None, service_bonuses=None):
     print(f"\n{'='*65}")
     print(f"ORG: {tenant_name}")
     print(f"{'='*65}")
@@ -526,8 +550,25 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
         emp_id = e["EmployeeID"]
         emp_id_map[norm(full)] = emp_id
 
+    # ── Bonus pay item: use the configured ID, else find the active "Bonus" item in Xero
+    if "bonus" not in rates:
+        try:
+            items = xero_get("/payroll.xro/1.0/PayItems", tenant_id, access_token)
+            found = [r for r in items.get("PayItems", {}).get("EarningsRates", [])
+                     if r.get("Name", "").strip().lower() == "bonus" and r.get("CurrentRecord", True)]
+            if len(found) == 1:
+                rates = {**rates, "bonus": found[0]["EarningsRateID"]}
+                print(f"  Bonus pay item found in Xero: {found[0]['EarningsRateID']}")
+            else:
+                print(f"  WARNING: expected 1 active 'Bonus' pay item, found {len(found)}")
+        except Exception as e:
+            print(f"  WARNING: could not look up Bonus pay item: {e}")
+
     # ── Build payslip data from Fresha ────────────────────────────────────────
-    payslip_list, skipped = build_payslip_list(emp_id_map, hours, perf, rates, bonuses, loc_nt=loc_nt, loc_qld=loc_qld)
+    payslip_list, skipped, missing_bonus = build_payslip_list(
+        emp_id_map, hours, perf, rates, bonuses, loc_nt=loc_nt, loc_qld=loc_qld, service_bonuses=service_bonuses)
+    if missing_bonus:
+        fail(tenant_name, f"bonus NOT added (no Bonus pay item ID) for: {', '.join(missing_bonus)}")
 
     # Strip internal keys before sending to Xero
     def clean(ps):
@@ -697,7 +738,8 @@ def process_org(tenant_id, tenant_name, access_token, hours, perf, bonuses=None,
         tips  = ps["_tips"]
         comm  = ps["_commission"]
         bonus = ps["_bonus"]
-        bonus_str = f"  bonus=${bonus:6.2f}" if bonus else ""
+        svc_b = ps.get("_svc_bonus", 0)
+        bonus_str = (f"  nm_bonus=${bonus:6.2f}" if bonus else "") + (f"  svc_bonus=${svc_b:6.2f}" if svc_b else "")
         day_str = "  ".join(
             f"{d[:3]}={h.get(d,0):.1f}h"
             for d in ("monday","tuesday","wednesday","thursday","friday","saturday","sunday")
@@ -737,14 +779,17 @@ def main():
     hours         = load_hours()
     perf          = load_performance()
     bonuses       = load_night_markets_bonus()
+    svc_bonuses   = load_service_bonus()
     loc_nt, loc_qld = load_location_products()
     print(f"  {len(hours)} employees in hours data")
     print(f"  {len(perf)} employees in performance data")
     print(f"  {len(bonuses)} employees with Night Markets bonus")
+    print(f"  {len(svc_bonuses)} employees with a service bonus")
     print(f"  {len(loc_nt)} NT locations / {len(loc_qld)} QLD locations loaded")
 
     for tenant in tenants:
-        process_org(tenant["id"], tenant["name"], access_token, hours, perf, bonuses, loc_nt=loc_nt, loc_qld=loc_qld)
+        process_org(tenant["id"], tenant["name"], access_token, hours, perf, bonuses,
+                    loc_nt=loc_nt, loc_qld=loc_qld, service_bonuses=svc_bonuses)
 
     if FAILURES:
         print("\n\nFAILED — these orgs need attention before posting:")

@@ -1668,6 +1668,7 @@ async def run():
     has_ghl = bool(GHL_API_KEY)
     sync_results     = []
     all_fresha_names = set()  # accumulated across all accounts for new-barber detection
+    service_bonuses  = {}     # name -> service bonus details, saved for xero_create_payrun.py
 
     # Compute week dates once (all accounts use the same week)
     _today     = datetime.now(timezone(timedelta(hours=9, minutes=30)))
@@ -1911,7 +1912,15 @@ async def run():
             else:
                 history = []
 
+            # A re-run replaces that week's record instead of adding another copy
+            week = (perf_data.get("period_start"), perf_data.get("period_end"))
+            replaced = len(history)
+            history = [r for r in history if (r.get("period_start"), r.get("period_end")) != week]
+            replaced -= len(history)
             history.append(perf_data)
+            history.sort(key=lambda r: r.get("period_start") or "")
+            if replaced:
+                print(f"  Replaced existing record for {week[0]} to {week[1]}")
             output_file.write_text(json.dumps(history, indent=2))
             print(f"\n  Dashboard JSON saved to {output_file.name}")
 
@@ -1966,6 +1975,14 @@ async def run():
                     total_hrs    = fresha_hrs + leave_hrs
                     bonus        = calc_service_bonus(bonus_services, total_hrs, occupancy_rate)
 
+                    # Saved on this week's dashboard record so the dashboard shows
+                    # exactly the figures that are paid (not its own estimate)
+                    s["bonus_hours"]       = round(total_hrs, 2)
+                    s["leave_hours"]       = round(leave_hrs, 2)
+                    s["bonus_services"]    = round(bonus_services, 2)
+                    s["service_bonus"]     = bonus
+                    s["service_bonus_pct"] = round(bonus / bonus_services * 100) if bonus else 0
+
                     try:
                         action = ghl_update_performance(name, date_from, tips, commissions, service_sales_exc_gst, occupancy_rate, bonus)
                         if action == "no_record":
@@ -1989,10 +2006,20 @@ async def run():
                         "service_sales_exc_gst": service_sales_exc_gst,
                         "bonus":                 bonus,
                     })
+                    if bonus > 0:
+                        service_bonuses[name] = {
+                            "bonus":          bonus,
+                            "bonus_services": round(bonus_services, 2),
+                            "hours":          round(total_hrs, 2),
+                            "leave_hours":    round(leave_hrs, 2),
+                            "occupancy_pct":  occupancy_rate,
+                        }
 
                 acct["perf_updated"] = ok
                 acct["perf_skipped"] = skipped
                 acct["staff"]        = staff_for_email
+                # Re-save the dashboard JSON now that each staff entry carries its bonus figures
+                output_file.write_text(json.dumps(history, indent=2))
                 print(f"\n  Performance: {ok} updated, {skipped} skipped.")
                 checklist.append({
                     "check": "GHL performance (tips/commissions) push",
@@ -2073,6 +2100,15 @@ async def run():
             sync_results.append(acct)
 
     print("\nAll accounts processed.")
+
+    # Service bonus (Fresha hours + approved leave) for the payroll step — kept
+    # out of git (.gitignore) since the repo is public; payroll reads it in the same run.
+    (DATA_DIR / "service_bonus.json").write_text(json.dumps({
+        "date_from": _week_from,
+        "date_to":   _week_to,
+        "bonuses":   service_bonuses,
+    }, indent=2))
+    print(f"  Saved service_bonus.json ({len(service_bonuses)} staff with a service bonus)")
 
     # ── Send sync summary email ────────────────────────────────────────────────
     tz       = ACCOUNTS[0]["timezone"]

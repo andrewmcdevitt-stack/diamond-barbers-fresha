@@ -93,7 +93,7 @@ def main():
             emp_id_map[norm(full)] = emp_id
 
         # Build payslip data
-        payslip_list, _ = build_payslip_list(emp_id_map, hours, perf, rates, bonuses, loc_nt=loc_nt, loc_qld=loc_qld)
+        payslip_list, _, _ = build_payslip_list(emp_id_map, hours, perf, rates, bonuses, loc_nt=loc_nt, loc_qld=loc_qld)
 
         def clean(ps):
             return {k: v for k, v in ps.items() if not k.startswith("_")}
